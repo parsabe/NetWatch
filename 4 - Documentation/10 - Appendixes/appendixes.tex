@@ -1,0 +1,16 @@
+\appendix
+\chapter{Mathematical Proofs}
+\label{app:proofs}
+
+\section{Forward Invariance of Control Barrier Functions}
+Let $\mathcal{C} = \{x \in \mathbb{R}^n : h(x) \ge 0\}$ denote the 0-superlevel set of a continuously differentiable function $h: \mathcal{D} \subset \mathbb{R}^n \to \mathbb{R}$. The function $h$ is a Control Barrier Function (CBF) if there exists an extended class $\mathcal{K}_\infty$ function $\alpha$ such that for the control system $\dot{x} = f(x) + g(x)u$:
+\begin{equation}
+    \sup_{u \in U} \left[ L_f h(x) + L_g h(x) u \right] \ge -\alpha(h(x)), \quad \forall x \in \mathcal{D}
+\end{equation}
+Any controller choosing $u \in K_{cbf}(x)$ renders the set $\mathcal{C}$ forward invariant, guaranteeing safety for all $t \ge 0$.
+
+\chapter{Architecture Configuration and Schemas}
+\label{app:config}
+
+\section{Middleware Configuration Schema}
+Sample configuration schema for deploying the NetWatch tri-hook runtime interception gateway.

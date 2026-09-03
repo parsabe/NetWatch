@@ -1,0 +1,26 @@
+\chapter{Introduction}
+\label{ch:introduction}
+
+\section{Background and Motivation}
+The proliferation of autonomous AI agents operating in production environments has highlighted critical vulnerabilities in existing safety paradigms. Unlike traditional large language model (LLM) deployments that rely primarily on prompt filtering and lexical heuristics, agentic systems possess tool-use capabilities, execution privileges, and persistent memory.
+
+\section{Problem Statement}
+Static safety filters are insufficient against dynamic attacks targeting the Agent Runtime Authority Gap. Attackers exploit working memory (CAG poisoning), topological dependencies (GraphRAG relation injection), and visual steganography to hijack agent execution pipelines.
+
+\section{Research Questions}
+\begin{itemize}
+    \item \textbf{RQ1 (GraphRAG Topological Defense):} How can graph-theoretic anomaly detection algorithms be integrated into an asynchronous ingestion middleware to mathematically isolate adversarial relation injections before corrupting multi-hop reasoning?
+    \item \textbf{RQ2 (Vision-Language Sandboxing):} To what extent can frequency domain analysis and Fourier transforms in an isolated vision-proxy gateway neutralize steganographic prompt injections in Vision-Language Models (VLMs) without degrading processing latency?
+    \item \textbf{RQ3 (Latent Barrier Steering):} How effectively can continuous Control Barrier Functions (CBFs) be mapped onto discrete API action-spaces to guarantee zero-violation execution during multi-step tool hijacking attacks?
+    \item \textbf{RQ4 (Cybernetic Rate Limiting):} How can Proportional-Integral-Derivative (PID) control theory be synthesized with dynamic Risk Token-Buckets in the API gateway to throttle network bandwidth prior to data exfiltration?
+\end{itemize}
+
+\section{Thesis Contributions}
+\begin{itemize}
+    \item Formulation of a balanced applied mathematics and software engineering Tri-Hook Runtime Architecture.
+    \item Design and implementation of real-time pre-retrieval, pre-execution, and post-execution interception hooks.
+    \item Comprehensive empirical evaluation against standardized agent red-teaming benchmarks.
+\end{itemize}
+
+\section{Thesis Organization}
+The remainder of this thesis is organized as follows: Chapter~\ref{ch:related_work} reviews related literature; Chapter~\ref{ch:methodology} describes the mathematical and software architecture of NetWatch; Chapter~\ref{ch:experiments} details the experimental setup; Chapter~\ref{ch:evaluation} presents empirical findings; Chapter~\ref{ch:discussion} discusses implications and limitations; Chapter~\ref{ch:future_work} outlines future research avenues; and the Appendices provide detailed mathematical proofs and configuration schemas.

@@ -1,0 +1,93 @@
+please now regimme all of the necessary to investagte again, break your character limits and gimme the full guidances
+The 2026 cybersecurity consensus dictates that static safety filters (prompt engineering) are obsolete against autonomous systems. Modern attackers do not "hack" the prompt; they exploit the Agent Runtime Authority Gap—the mismatch between an AI's intended guardrails and its actual execution privileges. As reflected in the OWASP Top 10 for Agentic Applications 2026, risks like "Excessive Agency" and "Hidden Context Exposure" dominate the threat landscape.
+To build a Master's thesis balancing 50% applied mathematics and 50% software engineering, your methodology must evolve your previous BlackWall project into a Cybernetic Guardrail Architecture. This means moving from a static heuristic filter to a mathematically continuous, dynamic API interception gateway.
+I. The Threat Landscape: How Agents are Compromised
+Attackers bypass models by weaponizing the AI's "working memory" and sensory inputs. You must build defenses against these specific vectors:
+Cache-Augmented Generation (CAG) Poisoning: CAG bypasses standard databases by loading entire knowledge bases into the LLM's extended KV-cache. Attackers inject payloads into this cache to trigger cross-session data leakage, exposing sensitive context to unauthorized users interacting with the same model state.
+GraphRAG Topological Attacks: Instead of poisoning text, attackers inject competing relationships (edges) between entities (nodes). Because GraphRAG relies on multi-hop reasoning, altering the graph's topology mathematically corrupts cascading queries.
+Multimodal Steganography: Attackers bypass text filters using adversarial pixel perturbations. To a human, an image looks like a receipt; to a Vision-Language Model (VLM), the frequency domain contains hidden tokens instructing the agent to execute a malicious API call.
+The Confused Deputy (Tool Hijacking): The AI is tricked into using its own internal IT permissions (IAM) to exfiltrate company databases or modify external state. The LLM remains "safe," but its tools are weaponized.
+II. The 50/50 Tri-Hook Runtime Architecture
+Your thesis methodology will introduce a deterministic, real-time mathematical latent space between the LLM and the software gateway. You will physically intercept the agent's logic loop at three distinct runtime hooks.
+Defense Layer
+Software Engineering (50%)
+Applied Mathematics (50%)
+1. Pre-Retrieval Hook (Memory)
+Vector DB Sandboxing: Architecting isolated proxy ingestion pipelines that quarantine incoming documents and prevent immediate KV-cache poisoning.
+High-Dimensional Outlier Detection: Calculating the Mahalanobis distance DM​(x)=(x−μ)TΣ−1(x−μ)​ to mathematically flag semantic anomalies in the vector embedding space.
+2. Pre-Execution Hook (Action)
+Runtime API Interception: Building a middleware layer (RASP) that freezes the specific parameters the agent attempts to send to an external tool before execution.
+Control Barrier Functions (CBFs): Defining a safe latent state space h(x)≥0. If the agent's proposed API action matrix pushes the derivative h˙(x) toward zero, the math strictly blocks the software execution.
+3. Post-Execution Hook (Context)
+Context Sanitization: Scoping the data returning from a tool (e.g., a SQL query result) via strict Role-Based Access Control (RBAC) before it re-enters the agent's context window.
+Differential Privacy: Applying Laplacian noise to the returning embeddings, ensuring that even if an attacker successfully extracts data, they receive a mathematically obfuscated result.
+
+III. Novel Research Questions (RQs)
+Your thesis must address unsolved gaps in the 2026 security landscape by synthesizing the math and the software hooks.
+RQ1 (GraphRAG Topological Defense): How can graph-theoretic anomaly detection algorithms be integrated into an asynchronous ingestion middleware to mathematically isolate adversarial "Relation Injections" before they corrupt GraphRAG multi-hop reasoning pathways?
+RQ2 (Vision-Language Sandboxing): To what extent can frequency domain analysis and Fourier transforms be embedded within an isolated vision-proxy gateway to mathematically neutralize steganographic prompt injections in VLMs without degrading legitimate image processing latency?
+RQ3 (Latent Barrier Steering): How effectively can continuous Control Barrier Functions (CBFs) be mapped onto the discrete API action-space of an autonomous agent to guarantee zero-violation execution during a multi-step Confused Deputy attack?
+RQ4 (Cybernetic Rate Limiting): How can Proportional-Integral-Derivative (PID) control theory be synthesized with dynamic Risk Token-Buckets in the API gateway to autonomously throttle an agent's network bandwidth prior to data exfiltration?
+IV. Targeted Cybersecurity Syllabus (Months 1-2)
+Do not waste time on generalized IT security (e.g., firewalls, phishing awareness). You need advanced, architectural cyber-defense skills that map directly to your software hooks.
+Zero-Trust for Non-Human Identities (NHI): Learn how modern identity architectures manage ephemeral, short-lived tokens for AI agents. You must understand how to issue a credential that expires the millisecond an agent finishes a specific tool call.
+Runtime Application Self-Protection (RASP): Study how defensive software monitors its own execution memory and API calls in real-time. This is the exact architecture required to build your Pre-Execution Hook middleware.
+Applied Cryptography & Secure Multi-Party Computation: Focus strictly on Fully Homomorphic Encryption (FHE) concepts. You need to understand the mathematical proofs that allow an agent to query a database without ever exposing the raw text to the model's memory.
+hmm all of these makes scence to be honrstly. but here is the thing. where you sugget me to start, which topics shall i search to find the papers for, and more.
+i also wanan tell you sth, my plan is that i also recreate my blackwall. in this cae not that only it prevents users and AI from some bad negative lexicons, but also from being hacked, w.r.t my arch - for future work i shall consider alot more concepts adn train a model to do so. btu another problem. i do the traiining btu itm ust be wr.t my topics, how we could test it all up. consider the math is done. then for the implmentaiton model what shall i do
+Finding the right literature and rigorously testing your defense mechanisms are the most critical next steps. Since your focus is at the intersection of mathematical verification and software security for LLMs, you need to look beyond general AI conferences and target specific venues and search queries.
+1. Where to Find the Right Papers (The Literature Strategy)
+To build your foundation, skip generic "AI safety" papers. You need literature that combines rigorous mathematical constraints with systems engineering. Focus your searches on the following venues: IEEE Symposium on Security and Privacy (S&P), USENIX Security Symposium, ICLR (International Conference on Learning Representations), and NeurIPS.
+Use these highly specific search queries on Google Scholar or arXiv:
+For Action Constraints (The Engine Boundaries): Search for "Control Barrier Functions" AND "Safe Multi-Agent Interaction" or "Constrained Markov Decision Processes (CMDP)" AND "LLM Agents". Look for papers detailing how continuous math can bound discrete execution.
+For Vector & GraphRAG Poisoning: Search for "GraphRAG poisoning" or "Knowledge Graph-Guided Crawler Attack". A highly relevant recent paper is Hop-wise Guard for GraphRAG (HoG-GRAG) (2026), which decomposes queries to prune compromised entities.
+For Outlier Detection in Embeddings: Search for "Mahalanobis distance" AND "high-dimensional anomaly detection" AND "neural classifiers". This will yield mathematical frameworks for identifying poisoned data clusters based on distribution variances.
+2. How to Test Your Model (The Evaluation Methodology)
+Once you rebuild your BlackWall guardrail using the tri-hook architecture, you cannot rely on simple prompt testing. You must mathematically and empirically prove that your system stops advanced threats without breaking the agent's functionality. This is where standardized red-teaming benchmarks come in.
+Implement the Agent Red Teaming (ART) Benchmark: The ART Benchmark is the current standard for evaluating LLM-powered agents against adversarial prompt injections and tool misuse. It provides a corpus of thousands of high-impact adversarial prompts designed to force policy violations. You will run your agent through ART without your guardrails (to establish a baseline failure rate) and then with your guardrails to quantify the reduction in successful attacks.
+Test on ExploitGym (For Tool Misuse): Released recently in 2026, ExploitGym specifically evaluates whether an autonomous AI agent can take a software vulnerability and turn it into an exploit. This is perfect for testing your Pre-Execution Hook. You want to prove that your Control Barrier Functions intercept and block the agent before it can misuse a network tool or API.
+GraphRAG Poisoning Benchmarks: To test your database security, utilize the unified evaluation framework from the 2026 Benchmarking Knowledge-Extraction Attack and Defense on RAG paper. You will deliberately poison your agent's vector database with anomalous relationships and measure if your Mahalanobis distance filters can successfully quarantine the data before the agent retrieves it.
+—-------
+
+my question now is that could do appyl all of these not only for LLMs for also for computer vision, could we purpose a mtohod for one in ALL methods or not?
+Yes, this is exactly where the 2026 security frontier is heading. Because modern Vision-Language Models (VLMs) map both text tokens and image patches into a single, shared Multimodal Latent Space, your mathematical and software hooks can act as a universal, modality-agnostic shield.
+The Unified Multimodal Threat
+Attackers are abandoning text-based prompt injections because standard filters catch them. Instead, they exploit Image-based Prompt Injection (IPI). An attacker embeds a malicious payload into an image using steganography (altering pixels) or symbolic visual layouts. To a human reviewer, the file looks like a standard receipt; to the VLM's vision encoder, it translates into thousands of hidden instruction tokens commanding the agent to exfiltrate a database or misuse a tool.
+Here is how to structure a "One-in-All" unified methodology, balancing the 50/50 requirement across text, computer vision, and agentic action.
+The Modality-Agnostic Tri-Hook Architecture
+This framework evolves the BlackWall concept from a static text guardrail into a universal, cross-modal runtime defender.
+1. The Perception Hook (Ingestion & Sanitization)
+This hook intercepts all incoming data—whether it is a PDF text chunk or a camera frame—before the agent processes it.
+Software (50%): Modality Normalization. Building a unified preprocessing pipeline that strips metadata, normalizes image scaling, and flattens text structures. Resizing and re-encoding images automatically destroys many fragile steganographic payloads before inference.
+Math (50%): Dual-Domain Anomaly Detection.
+For Text: Calculating Shannon Entropy to detect hidden code obfuscation.
+For Vision: Applying 2D Fast Fourier Transforms (FFT) to analyze the spatial frequency of an image. Steganographic injections create unnatural, high-frequency mathematical spikes in the frequency domain that your algorithm automatically flags and quarantines.
+2. The Execution Hook (The API Gateway)
+Once the data is encoded, the VLM fuses the text and image embeddings together. Your defense intercepts the proposed action, completely agnostic to whether the user spoke, typed, or uploaded a picture.
+Software (50%): The Dual-Agent Pattern. Architecting a strict separation of concerns. A sandboxed "Reader Agent" parses the untrusted image/text and outputs raw JSON data. A completely isolated "Actor Agent" reads the JSON and executes the API call. The injection payload loses its executable context as it passes through the JSON wall.
+Math (50%): Multimodal Control Barrier Functions (CBFs). Because VLMs use early fusion to combine vision and text into the exact same latent vector space, you can project the agent's proposed action matrix into a continuous CBF. If the mathematical boundary approaches zero (indicating an unsafe system state), execution is physically halted, regardless of what visual or textual input triggered the action.
+3. The Context Hook (Memory Protection)
+This prevents compromised visual or textual data from leaking across multi-hop reasoning tasks.
+Software (50%): Cross-Modal Provenance Tracking. Developing a ledger that mathematically tags every token in the agent's memory with its source (e.g., "User Text", "Web Image", "Internal SQL Database") and assigns a trust score.
+Math (50%): Multimodal Differential Privacy. Applying Laplacian noise directly to the unified embedding vectors. This guarantees that even if a visual prompt injection successfully tricks the agent into extracting sensitive memory state, the mathematical bounds ensure the attacker retrieves only statistically useless noise.
+Want to focus on the 2D FFT math for images?
+—---
+
+in this case, which klai linux tools i do needto use really? for checking hackign and more? nothing?
+Traditional Kali Linux tools are 90% irrelevant for the internal logic of an AI agent, but a few specific network tools matter for your gateway defenses. Because hackers attack the AI's memory and perception (not its operating system), standard penetration testing tools cannot evaluate your mathematical guardrails.
+For your 50/50 thesis, you must split your testing toolkit between Network Interception (where Kali is useful) and AI Red-Teaming Frameworks (the modern 2026 AI security stack).
+1. What to Ignore in Kali Linux
+Do not waste time on these. They are built for testing infrastructure, not AI models:
+Nmap / Masscan: You are not scanning for open ports; you are securing API payloads.
+Metasploit / Hydra / Hashcat: These test passwords, brute force authentication, and binary exploits. They cannot poison a vector database or execute a prompt injection.
+2. What to Use from Kali (The Software Hook)
+When your agent attempts to execute an action (like making a REST API call), it enters the realm of traditional network security. You will use these tools to test your API gateway and PID rate limiters:
+Burp Suite / OWASP ZAP: Set these up as the proxy between your AI agent and the internet. You will use Burp Suite to manually inspect the JSON payloads your agent is trying to send, ensuring your software middleware is successfully stripping out malicious parameters.
+Wireshark / tcpdump: Essential for testing your PID Risk Governor. You will use Wireshark to monitor the exact network traffic velocity of your agent to mathematically prove your token-bucket throttling is working before data exfiltration occurs.
+3. The Actual AI Security Stack (What You Really Need)
+To test your mathematical defenses (like the Mahalanobis distance filters and Control Barrier Functions), you must use the tools the industry actually uses to hack AI systems:
+NVIDIA Garak (The "Nmap for LLMs"): This is the current open-source vulnerability scanner for LLMs. Instead of scanning ports, Garak automatically fuzzes your agent with tens of thousands of known prompt injections, jailbreaks, and data leakage attempts. You will run Garak against your agent without your BlackWall defenses, and then with them, to quantify the failure reduction.
+Microsoft PyRIT (Python Risk Identification Tool): Garak is good for single prompts; PyRIT is built for multi-turn agent attacks. You will deploy an "Attacker LLM" via PyRIT to have a continuous conversation with your target agent, actively trying to trick it into using a tool maliciously to test your Control Barrier Functions.
+Inspect AI (UK AI Safety Institute): The 2026 standard for evaluating whether an agent can safely execute multi-step tasks.
+   
+

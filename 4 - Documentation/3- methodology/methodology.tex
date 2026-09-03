@@ -1,0 +1,37 @@
+\chapter{Methodology}
+\label{ch:methodology}
+
+\section{System Architecture Overview}
+The NetWatch architecture operates as an inline, deterministic gateway between the model's latent representation space and external software execution environments.
+
+\section{The Tri-Hook Defense Framework}
+
+\subsection{1. Pre-Retrieval Hook (Perception \& Memory)}
+\begin{itemize}
+    \item \textbf{Software Engineering:} Vector DB sandboxing and proxy ingestion pipelines.
+    \item \textbf{Applied Mathematics:} High-dimensional Mahalanobis distance outlier detection:
+    \begin{equation}
+        D_M(x) = \sqrt{(x - \mu)^T \Sigma^{-1} (x - \mu)}
+    \end{equation}
+    and 2D Fast Fourier Transform (FFT) spatial frequency analysis for visual inputs to detect steganographic spikes.
+\end{itemize}
+
+\subsection{2. Pre-Execution Hook (Action \& API Gateway)}
+\begin{itemize}
+    \item \textbf{Software Engineering:} Dual-agent isolation pattern and RASP middleware parameter freezing.
+    \item \textbf{Applied Mathematics:} Continuous Control Barrier Functions (CBF):
+    \begin{equation}
+        h(x) \ge 0, \quad \dot{h}(x) + \alpha(h(x)) \ge 0
+    \end{equation}
+    guaranteeing forward invariance within safe execution boundaries.
+\end{itemize}
+
+\subsection{3. Post-Execution Hook (Context \& Exfiltration Prevention)}
+\begin{itemize}
+    \item \textbf{Software Engineering:} Role-Based Access Control (RBAC) scoping and provenance tagging ledger.
+    \item \textbf{Applied Mathematics:} Differential privacy via Laplacian noise injection:
+    \begin{equation}
+        \tilde{y} = y + \text{Lap}\left(0, \frac{\Delta f}{\epsilon}\right)
+    \end{equation}
+    and Proportional-Integral-Derivative (PID) cybernetic rate limiting for risk token-bucket bandwidth governors.
+\end{itemize}

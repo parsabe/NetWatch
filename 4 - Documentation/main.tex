@@ -1,0 +1,69 @@
+\documentclass[12pt,a4paper]{report}
+
+% Essential Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue,
+    pdftitle={NetWatch Documentation},
+    pdfpagemode=FullScreen,
+}
+
+\title{\textbf{NetWatch: A Cybernetic Guardrail Architecture for Multimodal Autonomous Systems}}
+\author{NetWatch Project}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+% 0 - Abstract
+\input{0 - abstract/abstract.tex}
+
+\tableofcontents
+
+% 1 - Introduction
+\input{1- introduction/introduction.tex}
+
+% 2 - Related Work
+\input{2- related work/related_work.tex}
+
+% 3 - Methodology
+\input{3- methodology/methodology.tex}
+
+% 4 - Experiments
+\input{4 - Experiments/experiments.tex}
+
+% 5 - Evaluation
+\input{5 - evaluation/evaluation.tex}
+
+% 6 - Discussion
+\input{6 - discussion/discussion.tex}
+
+% 7 - Future Work
+\input{7 - future work/future_work.tex}
+
+% 8 - AI Disclosure
+\input{8 - AI Disclousure/ai_disclosure.tex}
+
+% 9 - References
+\input{9 - Referneces/references.tex}
+
+% 10 - Appendixes
+\input{10 - Appendixes/appendixes.tex}
+
+\end{document}
