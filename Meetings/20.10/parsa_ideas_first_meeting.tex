@@ -6,7 +6,7 @@
 \usetheme[progressbar=frametitle, numbering=fraction, block=fill]{metropolis}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[sfdefault,light]{FiraSans}
+\IfFileExists{FiraSans.sty}{\usepackage[sfdefault,light]{FiraSans}}{}
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}

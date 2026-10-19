@@ -5,6 +5,6 @@
 \beamer@sectionintoc {5}{Forging probability}{12}{0}{5}
 \beamer@sectionintoc {6}{ASR and its bounds}{14}{0}{6}
 \beamer@sectionintoc {7}{Worst case via DRO}{16}{0}{7}
-\beamer@sectionintoc {8}{Adaptive attacks}{20}{0}{8}
-\beamer@sectionintoc {9}{Combined risk and design choice}{22}{0}{9}
-\beamer@sectionintoc {10}{Summary}{25}{0}{10}
+\beamer@sectionintoc {8}{Adaptive attacks}{19}{0}{8}
+\beamer@sectionintoc {9}{Combined risk and design choice}{20}{0}{9}
+\beamer@sectionintoc {10}{Summary}{24}{0}{10}
