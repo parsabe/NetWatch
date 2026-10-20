@@ -7,36 +7,64 @@
 \contentsline {section}{\numberline {1.5}Thesis Organization}{5}{section.1.5}%
 \contentsline {chapter}{\numberline {2}Related Work}{6}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Vulnerabilities in Autonomous Agent Runtimes}{6}{section.2.1}%
-\contentsline {section}{\numberline {2.2}GraphRAG and Vector Knowledge Base Security}{6}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Mathematical Verification and Safe Execution Boundaries}{6}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Runtime Application Self-Protection (RASP) for AI}{6}{section.2.4}%
-\contentsline {chapter}{\numberline {3}Methodology}{7}{chapter.3}%
-\contentsline {section}{\numberline {3.1}System Architecture Overview}{7}{section.3.1}%
-\contentsline {section}{\numberline {3.2}The Tri-Hook Defense Framework}{7}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}1. Pre-Retrieval Hook (Perception \& Memory)}{7}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}2. Pre-Execution Hook (Action \& API Gateway)}{7}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}3. Post-Execution Hook (Context \& Exfiltration Prevention)}{7}{subsection.3.2.3}%
-\contentsline {chapter}{\numberline {4}Experiments}{9}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Experimental Setup and Testbed}{9}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Threat Models and Attack Scenarios}{9}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Evaluation Datasets and Red-Teaming Benchmarks}{9}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Baseline Configurations}{9}{section.4.4}%
-\contentsline {chapter}{\numberline {5}Evaluation}{10}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Detection Efficacy (RQ1 \& RQ2)}{10}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Safety Barrier Enforcement (RQ3)}{10}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Cybernetic Rate Limiting Performance (RQ4)}{10}{section.5.3}%
-\contentsline {section}{\numberline {5.4}System Overhead and Latency Analysis}{10}{section.5.4}%
-\contentsline {chapter}{\numberline {6}Discussion}{11}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Balancing Mathematical Rigor and Software Practicality}{11}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Security Depth vs. Latency Overhead}{11}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Assumptions and Limitations}{11}{section.6.3}%
-\contentsline {chapter}{\numberline {7}Future Work}{12}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Adaptive Latent Space Barrier Learning}{12}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Hardware-Accelerated Cryptographic Hooks}{12}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Multi-Agent Swarm Defense Protocols}{12}{section.7.3}%
-\contentsline {chapter}{AI Disclosure}{13}{chapter*.3}%
-\contentsline {chapter}{References}{14}{chapter*.4}%
-\contentsline {chapter}{\numberline {A}Mathematical Proofs}{15}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Forward Invariance of Control Barrier Functions}{15}{appendix.A.1}%
-\contentsline {chapter}{\numberline {B}Architecture Configuration and Schemas}{16}{appendix.B}%
-\contentsline {section}{\numberline {B.1}Middleware Configuration Schema}{16}{appendix.B.1}%
+\contentsline {section}{\numberline {2.2}Instruction-Data Separation: The Theoretical Barrier}{7}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Spotlighting and Cryptographic Randomization}{7}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Statistical Bounds, DRO, and Game-Theoretic Verification}{8}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Deterministic Guardrails, CaMeL, and IFC}{8}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Formal Verification and Conformal Human-in-the-Loop Safety}{9}{section.2.6}%
+\contentsline {chapter}{\numberline {3}Methodology}{11}{chapter.3}%
+\contentsline {section}{\numberline {3.1}System Architecture Overview}{11}{section.3.1}%
+\contentsline {section}{\numberline {3.2}The Tri-Hook Defense Framework}{11}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}1. Pre-Retrieval Hook (Perception \& Memory Ingestion)}{11}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}2. Pre-Execution Hook (Action \& API Interception)}{12}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}3. Post-Execution Hook (Context Sanitization \& Exfiltration Control)}{12}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}RQ1: Prompt Injection Defense --- The Horizon Architecture}{12}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Intuitive Motivation: The Entanglement Problem}{13}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Stage 1: Keyed Spotlighting with Robust Risk Bounds}{13}{subsection.3.3.2}%
+\contentsline {subsubsection}{1. Spotlighting Primitives and Failure Modes}{13}{section*.3}%
+\contentsline {subsubsection}{2. Cryptographic Randomization: Kerckhoffs's Principle}{14}{section*.4}%
+\contentsline {paragraph}{Intuition (The Hotel Keycard Analogy):}{14}{section*.5}%
+\contentsline {subsubsection}{3. Mathematical Formulation of the Prompt}{14}{section*.6}%
+\contentsline {subsubsection}{4. Attack Indicator and Clean Utility}{15}{section*.7}%
+\contentsline {subsubsection}{5. The Four Risk Bounds}{15}{section*.8}%
+\contentsline {paragraph}{Bound 1: Forging Resistance ($P_{\mathrm {forge}}$).}{15}{section*.9}%
+\contentsline {paragraph}{Bound 2: Finite-Sample Confidence Limit ($\bar {p}_\tau $).}{15}{section*.10}%
+\contentsline {paragraph}{Bound 3: Distributionally Robust Optimization ($g_\rho $).}{16}{section*.11}%
+\contentsline {paragraph}{Bound 4: Adaptive Optimization Bound ($\bar {p}^{\,\mathrm {adp}}_\tau $).}{16}{section*.12}%
+\contentsline {subsubsection}{6. Combined Risk and Rule-Based Defense Selection}{16}{section*.13}%
+\contentsline {subsubsection}{7. The Stage 1 Sion Minimax Equilibrium}{16}{section*.14}%
+\contentsline {subsection}{\numberline {3.3.3}Stage 2: Deterministic Guardrail (Math-Hardened CaMeL)}{17}{subsection.3.3.3}%
+\contentsline {subsubsection}{1. Architectural Separation of Concerns}{17}{section*.15}%
+\contentsline {subsubsection}{2. Quarantined Execution Pool with Independent Keys}{17}{section*.16}%
+\contentsline {subsubsection}{3. Majority Voting and the Hoeffding Bound}{17}{section*.17}%
+\contentsline {paragraph}{Theorem 1 (Exponential Failure Decay via Hoeffding Concentration):}{18}{section*.18}%
+\contentsline {paragraph}{Numerical Walkthrough:}{18}{section*.19}%
+\contentsline {subsubsection}{4. Typed Values and Capability Tokens}{18}{section*.20}%
+\contentsline {subsubsection}{5. SMT-Verified Policy Engine and Noninterference}{18}{section*.21}%
+\contentsline {subsubsection}{6. Conformal Risk Control on Confirmation Thresholds}{19}{section*.22}%
+\contentsline {subsubsection}{7. The Final Horizon Formula}{19}{section*.23}%
+\contentsline {subsubsection}{8. Architectural Outputs}{20}{section*.24}%
+\contentsline {chapter}{\numberline {4}Experiments}{21}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Experimental Setup and Testbed}{21}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Threat Models and Attack Scenarios}{21}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Evaluation Datasets and Red-Teaming Benchmarks}{21}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Baseline Configurations}{21}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Evaluation}{22}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Detection Efficacy (RQ1 \& RQ2)}{22}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Safety Barrier Enforcement (RQ3)}{22}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Cybernetic Rate Limiting Performance (RQ4)}{22}{section.5.3}%
+\contentsline {section}{\numberline {5.4}System Overhead and Latency Analysis}{22}{section.5.4}%
+\contentsline {chapter}{\numberline {6}Discussion}{23}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Balancing Mathematical Rigor and Software Practicality}{23}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Security Depth vs. Latency Overhead}{23}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Assumptions and Limitations}{23}{section.6.3}%
+\contentsline {chapter}{\numberline {7}Future Work}{24}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Adaptive Latent Space Barrier Learning}{24}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Hardware-Accelerated Cryptographic Hooks}{24}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Multi-Agent Swarm Defense Protocols}{24}{section.7.3}%
+\contentsline {chapter}{AI Disclosure}{25}{chapter*.25}%
+\contentsline {chapter}{References}{26}{chapter*.26}%
+\contentsline {chapter}{\numberline {A}Mathematical Proofs}{29}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Forward Invariance of Control Barrier Functions}{29}{appendix.A.1}%
+\contentsline {chapter}{\numberline {B}Architecture Configuration and Schemas}{30}{appendix.B}%
+\contentsline {section}{\numberline {B.1}Middleware Configuration Schema}{30}{appendix.B.1}%

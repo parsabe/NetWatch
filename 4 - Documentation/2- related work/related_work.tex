@@ -1,14 +1,116 @@
 \chapter{Related Work}
 \label{ch:related_work}
 
+The shift from passive, conversational Large Language Models (LLMs) to autonomous agentic architectures has reshaped the cybersecurity attack surface. This chapter surveys the foundational literature, formal vulnerabilities, and emerging defensive paradigms spanning prompt injection mitigation, mathematical verification, cryptographic isolation, and runtime guardrails.
+
+% ============================================================
 \section{Vulnerabilities in Autonomous Agent Runtimes}
-Recent advances in autonomous agents have revealed attack vectors such as Indirect Prompt Injection (IPI), Cache-Augmented Generation (CAG) poisoning, and Confused Deputy attacks where agents are tricked into misusing internal credentials.
+\label{sec:rel_vulnerabilities}
+% ============================================================
 
-\section{GraphRAG and Vector Knowledge Base Security}
-Attacks exploiting vector databases and graph-based retrieval augmented generation systems via topological perturbation, competing relation injection, and embedding space poisoning.
+Unlike traditional web applications where code and data occupy segregated memory spaces, transformer-based neural architectures process instructions, contextual inputs, retrieved documents, and external tool outputs as a single, concatenated stream of textual tokens \cite{greshake2023indirect,owasp2026}. This structural limitation precipitates the \emph{Agent Runtime Authority Gap}---the discordance between the user's intended execution boundaries and the actual capabilities granted to the model \cite{jiang2026agentic}.
 
-\section{Mathematical Verification and Safe Execution Boundaries}
-Constrained Markov Decision Processes (CMDP) and Control Barrier Functions (CBFs) used in robotic systems, and their emerging application to discrete LLM agent action spaces.
+Greshake et al.~\cite{greshake2023indirect} first formalized \emph{Indirect Prompt Injection (IPI)}, demonstrating that untrusted content retrieved from external environments (e.g., email bodies, scraped HTML documents, tool outputs, or multi-hop retrieval passages) can hijack the model's control flow. By concealing natural language instructions within third-party data, adversaries can induce the agent to exfiltrate private conversation history, invoke unauthorized APIs, or modify external persistent states while appearing to execute benign user requests \cite{yi2024benchmarking}.
 
-\section{Runtime Application Self-Protection (RASP) for AI}
-Zero-Trust architectures for Non-Human Identities (NHI), ephemeral credential issuance, and dynamic API gateway middleware.
+As agentic frameworks incorporate multi-turn task decomposition and tool usage, automated adversarial optimization techniques have advanced significantly. Zou et al.~\cite{zou2023gcg} developed Greedy Coordinate Gradient (GCG) attacks, producing universal adversarial suffixes that bypass alignment training. Simultaneously, Chao et al.~\cite{chao2023pair} introduced Prompt Automatic Iterative Refinement (PAIR), utilizing an attacker LLM in a feedback loop to autonomously discover jailbreak prompts within minimal query budgets. Furthermore, Yuan et al.~\cite{yuan2024cipherchat} established that semantic encryption (e.g., Caesar ciphers, Morse code, or Base64 encoding) fundamentally breaks internal safety guardrails because LLMs fail to evaluate safety policies over obfuscated tokens while still retaining reasoning capabilities over decoded instructions. Recent empirical studies by Wong et al.~\cite{wong2025defending} emphasize that standard heuristic safety alignment is structurally incapable of anticipating dynamic multi-turn exploits.
+
+% ============================================================
+\section{Instruction-Data Separation: The Theoretical Barrier}
+\label{sec:rel_instruction_data_sep}
+% ============================================================
+
+A central question in LLM security is whether models can inherently distinguish between developer instructions and third-party data. Zverev and Abdelnabi~\cite{zverev2025can} investigated this problem formally, demonstrating that standard transformer self-attention mechanisms lack inductive biases for instruction-data disentanglement; an instruction remains syntactically indistinguishable from data within the attention matrix. To overcome this limitation at the architectural level, Zverev et al.~\cite{zverev2026aside} proposed ASIDE, introducing separate transformer pathways for instructions and untrusted inputs. While promising, architectural modifications require complete model retraining and cannot protect pre-trained commercial foundation models.
+
+Consequently, systems-level containment approaches have emerged. Sharma~\cite{sharma2026containment} advocated for ``Containment over Detection,'' arguing that statistical classifiers attempting to detect prompt injections always succumb to adaptive adversaries. Instead, cryptographic boundary enforcement establishes strict syntactic isolation wrappers around untrusted data. Relatedly, Bhatnagar and Pokhariyal~\cite{bhatnagar2025semantically} developed compiler-stage semantic watermarks to track token provenance. Despite these innovations, static wrappers remain vulnerable when attackers simulate delimiter boundaries or exploit parser ambiguities.
+
+% ============================================================
+\section{Spotlighting and Cryptographic Randomization}
+\label{sec:rel_spotlighting}
+% ============================================================
+
+To provide an empirical signal that alerts the model to untrusted provenance without retraining, Hines et al.~\cite{hines2024spotlighting} introduced \emph{Spotlighting}. Spotlighting transforms untrusted inputs prior to model ingestion using three primary mechanisms:
+\begin{enumerate}
+    \item \textbf{Delimiting:} Enclosing the external document within rigid syntactic brackets (e.g., \texttt{<<data>>}).
+    \item \textbf{Datamarking:} Interleaving an invariant symbol or token between words (e.g., \texttt{word\^{}word}).
+    \item \textbf{Encoding:} Transforming the entire external payload via reversible algorithms such as Base64.
+\end{enumerate}
+
+While Hines et al. proved that spotlighting drastically reduces attack success rates (ASRs) on static benchmarks, static spotlighting exhibits critical cryptographic weaknesses:
+\begin{itemize}
+    \item \emph{Delimiter Spoofing:} An adversary who observes the static delimiter string \texttt{>>} can inject early-closing delimiters to escape the data fence.
+    \item \emph{Known-Marker Copying:} Invariant datamarking symbols known to the attacker allow crafted injections that seamlessly embed the expected marker.
+    \item \emph{Cipher Reversal:} Invariant symmetric ciphers (e.g., ROT13) allow the attacker to pre-scramble malicious commands, causing the defensive ingestion layer to decode the attack into trusted plain text.
+\end{itemize}
+
+To establish provable defensive guarantees, the security of the transformation must satisfy \emph{Kerckhoffs's Principle} \cite{kerckhoffs1883}: a security system must remain secure even if all implementation details are public knowledge, provided the key remains secret. NetWatch operationalizes this principle by drawing an ephemeral secret key $\kappa \sim \mathrm{Unif}(\mathcal{K}_\tau)$ independently for every request, generating dynamic markers and random permutation ciphers that prevent adversarial anticipation.
+
+% ============================================================
+\section{Statistical Bounds, DRO, and Game-Theoretic Verification}
+\label{sec:rel_statistical_verification}
+% ============================================================
+
+A prevailing flaw in published LLM evaluations is reporting empirical Attack Success Rate (ASR) $\hat{p} = \frac{1}{n}\sum_{i=1}^n A_i$ as a measure of real-world risk. As demonstrated by Nasr et al.~\cite{nasr2025attacker} in their doctrine ``The Attacker Moves Second,'' empirical evaluations conducted against fixed test distributions severely underestimate adaptive adversarial capabilities. Once a defense is published or deployed, determined adversaries actively optimize against its specific parameters.
+
+To replace naive ASR metrics with mathematically rigorous risk bounds, modern methodologies integrate statistical confidence estimation, distributionally robust optimization, and game theory:
+\begin{enumerate}
+    \item \textbf{Finite-Sample Exact Confidence:} Clopper and Pearson~\cite{clopper1934} formulated exact binomial confidence bounds based on the Beta distribution. In safety-critical regimes where zero attacks are observed ($s = 0$), the asymptotic ``rule of three'' \cite{hanley1983} guarantees that the upper bound $\bar{p} \approx \frac{3}{n}$ at the 95\% confidence level, providing an honest baseline ceiling.
+    \item \textbf{Distributionally Robust Optimization (DRO):} In real-world deployments, the adversarial distribution $Q$ shifts away from the empirical test set $P$. Duchi and Namkoong~\cite{duchi2021dro} and Ben-Tal et al.~\cite{bental2013robust} developed DRO frameworks that maximize expected loss over an ambiguity set bounded by a statistical divergence. For binary classification under a $\chi^2$-divergence budget $\rho$, the worst-case shifted risk admits the closed-form upper bound $g_\rho(p) = p + \sqrt{2\rho p(1 - p)}$.
+    \item \textbf{Minimax Game Equilibria:} Rather than relying on a single static defense $\tau$, the defender can randomize over a family of spotlighting variants $\Pi_\eta$ constrained by an acceptable utility degradation $\eta$. By Sion's Minimax Theorem~\cite{sion1958minimax}, the minimax equality holds between the defender's mixed strategy and the adversary's worst-case shifted distribution:
+    \begin{equation}
+        \min_{\pi \in \Pi_\eta} \max_{w \in \mathcal{W}} \sum_\tau \pi_\tau \sum_k w_k \bar{\ell}_{k,\tau} = \max_{w \in \mathcal{W}} \min_{\pi \in \Pi_\eta} \sum_\tau \pi_\tau \sum_k w_k \bar{\ell}_{k,\tau}
+    \end{equation}
+    Paulus et al.~\cite{paulus2025safety} recently validated this non-cooperative game formulation for model alignment, confirming that mixed strategies prevent gradient-based adversarial convergence.
+\end{enumerate}
+
+\section[Deterministic Guardrails, CaMeL, and IFC]{Deterministic Guardrails, CaMeL, and Information-Flow Control}
+\label{sec:rel_deterministic_guardrails}
+% ============================================================
+
+While randomized spotlighting reduces the probability that an individual LLM execution obeys an injection, it does not guarantee total system containment. In autonomous systems, defense-in-depth requires isolating reasoning from execution.
+
+Early industry efforts, such as NVIDIA NeMo Guardrails~\cite{rebedea2023nemo}, introduced programmable rails using Colang to restrict conversational dialogue flows. However, software-level rule checking frequently relies on auxiliary LLM evaluators, which are themselves vulnerable to prompt injection. Schwarz~\cite{schwarz2025countermind} proposed Countermind, employing multi-layered heuristic filtering across prompt processing stages.
+
+The decisive breakthrough in structural containment was achieved by Debenedetti et al.~\cite{debenedetti2025camel} with the introduction of \textbf{CaMeL (Causal Mediation for Language Agents)}. CaMeL enforces strict architectural separation:
+\begin{itemize}
+    \item A \emph{Privileged LLM} interacts exclusively with trusted user prompts, synthesizing an execution script in a safe domain-specific language.
+    \item A \emph{Quarantined LLM} processes untrusted data strictly within read-only extraction queries.
+    \item A \emph{Deterministic Interpreter} verifies that untrusted data can only instantiate function arguments but can never influence program control flow or select target tools.
+\end{itemize}
+
+Parallel work by Costa et al.~\cite{costa2025securing} formalized Information-Flow Control (IFC) for AI agents, proving that dynamic labels and capability tokens prevent unauthorized data flows. In multi-agent environments, Louck and Stulman~\cite{louck2026security}, Kothari~\cite{kothari2025hash}, and Panchumarthi and Sakamuri~\cite{panchumarthi2025securing} developed cryptographic verification and Model Context Protocol (MCP) formal frameworks \cite{mcp2026formal} to authenticate inter-agent messages and prevent tool-chain escalation.
+
+% ============================================================
+\section{Formal Verification and Conformal Human-in-the-Loop Safety}
+\label{sec:rel_formal_verification}
+% ============================================================
+
+To mathematically certify agent safety before tool invocation, NetWatch integrates formal noninterference and conformal risk control:
+\begin{enumerate}
+    \item \textbf{Noninterference Policies:} Goguen and Meseguer~\cite{goguen1982} established the foundational theory of noninterference, dictating that actions in high-security domains must have no observable causal dependence on untrusted inputs. By encoding policy rules into first-order logic and evaluating them via SMT solvers such as Z3 \cite{demoura2008z3}, NetWatch deterministically verifies that proposed tool parameters do not violate privilege boundaries.
+    \item \textbf{Quantitative Information Flow (QIF):} Smith~\cite{smith2009qif} formalized operational bounds on leakage in systems handling confidential data. Enforcing an information-theoretic leakage budget $B$ ensures that malicious inputs cannot exfiltrate internal system state across repeated queries.
+    \item \textbf{Conformal Risk Control (CRC):} When policies encounter ambiguous execution states requiring human confirmation, Angelopoulos et al.~\cite{angelopoulos2024crc} proved that the threshold $\lambda$ can be calibrated finite-sample to bound the expected probability of false approvals:
+    \begin{equation}
+        \mathbb{E}\left[\mathcal{L}_{\mathrm{user}}(\lambda)\right] \le \alpha_{\mathrm{user}}
+    \end{equation}
+    guaranteeing that user-in-the-loop escalations remain bounded by a pre-selected risk tolerance $\alpha_{\mathrm{user}}$.
+\end{enumerate}
+
+Table~\ref{tab:related_work_comparison} summarizes how NetWatch synthesizes and extends these complementary paradigms into a single unified architecture.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Comparative analysis of prompt injection defense paradigms.}
+\label{tab:related_work_comparison}
+\begin{tabular}{@{}p{3.5cm} p{3.2cm} p{3.5cm} p{3.8cm}@{}}
+\toprule
+\textbf{Defense Paradigm} & \textbf{Key Representatives} & \textbf{Primary Strengths} & \textbf{Inherent Vulnerabilities} \\
+\midrule
+Prompt-Level Heuristics & Garak~\cite{garak2024}, NeMo~\cite{rebedea2023nemo} & Easy integration, zero retraining & Brittle; bypassed by PAIR~\cite{chao2023pair} and GCG~\cite{zou2023gcg} \\
+Architectural Model Splits & ASIDE~\cite{zverev2026aside} & Native attention separation & Requires retraining; incompatible with commercial APIs \\
+Static Spotlighting & Hines et al.~\cite{hines2024spotlighting} & Preserves model utility & Deterministic markers can be copied; cipher reversal \\
+Causal Mediation (CaMeL) & Debenedetti et al.~\cite{debenedetti2025camel} & Provable structural isolation & Quarantined extractor still vulnerable to single-call failure \\
+\textbf{NetWatch (Horizon)} & \textbf{This Work} & \textbf{Randomized spotlighting + Hoeffding voting + SMT verification} & \textbf{Guaranteed end-to-end minimax risk ceiling $V_{\mathrm{Horizon}}$} \\
+\bottomrule
+\end{tabular}
+\end{table}

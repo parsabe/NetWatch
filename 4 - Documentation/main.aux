@@ -12,68 +12,204 @@
 \@writefile{toc}{\contentsline {section}{\numberline {1.3}Research Questions}{4}{section.1.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1.4}Thesis Contributions}{5}{section.1.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1.5}Thesis Organization}{5}{section.1.5}\protected@file@percent }
+\citation{greshake2023indirect}
+\citation{owasp2026}
+\citation{jiang2026agentic}
+\citation{greshake2023indirect}
+\citation{yi2024benchmarking}
+\citation{zou2023gcg}
+\citation{chao2023pair}
+\citation{yuan2024cipherchat}
+\citation{wong2025defending}
+\citation{zverev2025can}
+\citation{zverev2026aside}
 \@writefile{toc}{\contentsline {chapter}{\numberline {2}Related Work}{6}{chapter.2}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \newlabel{ch:related_work}{{2}{6}{Related Work}{chapter.2}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {2.1}Vulnerabilities in Autonomous Agent Runtimes}{6}{section.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.2}GraphRAG and Vector Knowledge Base Security}{6}{section.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.3}Mathematical Verification and Safe Execution Boundaries}{6}{section.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.4}Runtime Application Self-Protection (RASP) for AI}{6}{section.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {3}Methodology}{7}{chapter.3}\protected@file@percent }
+\newlabel{sec:rel_vulnerabilities}{{2.1}{6}{Vulnerabilities in Autonomous Agent Runtimes}{section.2.1}{}}
+\citation{sharma2026containment}
+\citation{bhatnagar2025semantically}
+\citation{hines2024spotlighting}
+\citation{kerckhoffs1883}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Instruction-Data Separation: The Theoretical Barrier}{7}{section.2.2}\protected@file@percent }
+\newlabel{sec:rel_instruction_data_sep}{{2.2}{7}{Instruction-Data Separation: The Theoretical Barrier}{section.2.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Spotlighting and Cryptographic Randomization}{7}{section.2.3}\protected@file@percent }
+\newlabel{sec:rel_spotlighting}{{2.3}{7}{Spotlighting and Cryptographic Randomization}{section.2.3}{}}
+\citation{nasr2025attacker}
+\citation{clopper1934}
+\citation{hanley1983}
+\citation{duchi2021dro}
+\citation{bental2013robust}
+\citation{sion1958minimax}
+\citation{paulus2025safety}
+\citation{rebedea2023nemo}
+\citation{schwarz2025countermind}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Statistical Bounds, DRO, and Game-Theoretic Verification}{8}{section.2.4}\protected@file@percent }
+\newlabel{sec:rel_statistical_verification}{{2.4}{8}{Statistical Bounds, DRO, and Game-Theoretic Verification}{section.2.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}Deterministic Guardrails, CaMeL, and IFC}{8}{section.2.5}\protected@file@percent }
+\newlabel{sec:rel_deterministic_guardrails}{{2.5}{8}{Deterministic Guardrails, CaMeL, and IFC}{section.2.5}{}}
+\citation{debenedetti2025camel}
+\citation{costa2025securing}
+\citation{louck2026security}
+\citation{kothari2025hash}
+\citation{panchumarthi2025securing}
+\citation{mcp2026formal}
+\citation{goguen1982}
+\citation{demoura2008z3}
+\citation{smith2009qif}
+\citation{angelopoulos2024crc}
+\@writefile{toc}{\contentsline {section}{\numberline {2.6}Formal Verification and Conformal Human-in-the-Loop Safety}{9}{section.2.6}\protected@file@percent }
+\newlabel{sec:rel_formal_verification}{{2.6}{9}{Formal Verification and Conformal Human-in-the-Loop Safety}{section.2.6}{}}
+\citation{garak2024}
+\citation{rebedea2023nemo}
+\citation{chao2023pair}
+\citation{zou2023gcg}
+\citation{zverev2026aside}
+\citation{hines2024spotlighting}
+\citation{debenedetti2025camel}
+\@writefile{lot}{\contentsline {table}{\numberline {2.1}{\ignorespaces Comparative analysis of prompt injection defense paradigms.}}{10}{table.2.1}\protected@file@percent }
+\newlabel{tab:related_work_comparison}{{2.1}{10}{Comparative analysis of prompt injection defense paradigms}{table.2.1}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Methodology}{11}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:methodology}{{3}{7}{Methodology}{chapter.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.1}System Architecture Overview}{7}{section.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.2}The Tri-Hook Defense Framework}{7}{section.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}1. Pre-Retrieval Hook (Perception \& Memory)}{7}{subsection.3.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}2. Pre-Execution Hook (Action \& API Gateway)}{7}{subsection.3.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}3. Post-Execution Hook (Context \& Exfiltration Prevention)}{7}{subsection.3.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {4}Experiments}{9}{chapter.4}\protected@file@percent }
+\newlabel{ch:methodology}{{3}{11}{Methodology}{chapter.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}System Architecture Overview}{11}{section.3.1}\protected@file@percent }
+\newlabel{sec:meth_overview}{{3.1}{11}{System Architecture Overview}{section.3.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}The Tri-Hook Defense Framework}{11}{section.3.2}\protected@file@percent }
+\newlabel{sec:meth_trihook}{{3.2}{11}{The Tri-Hook Defense Framework}{section.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}1. Pre-Retrieval Hook (Perception \& Memory Ingestion)}{11}{subsection.3.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}2. Pre-Execution Hook (Action \& API Interception)}{12}{subsection.3.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}3. Post-Execution Hook (Context Sanitization \& Exfiltration Control)}{12}{subsection.3.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}RQ1: Prompt Injection Defense --- The Horizon Architecture}{12}{section.3.3}\protected@file@percent }
+\newlabel{sec:meth_rq1_horizon}{{3.3}{12}{RQ1: Prompt Injection Defense --- The Horizon Architecture}{section.3.3}{}}
+\citation{greshake2023indirect}
+\citation{zverev2025can}
+\citation{hines2024spotlighting}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces Conceptual block diagram of the Horizon defense pipeline.}}{13}{figure.3.1}\protected@file@percent }
+\newlabel{fig:horizon_pipeline_conceptual}{{3.1}{13}{Conceptual block diagram of the Horizon defense pipeline}{figure.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}Intuitive Motivation: The Entanglement Problem}{13}{subsection.3.3.1}\protected@file@percent }
+\newlabel{subsec:horizon_motivation}{{3.3.1}{13}{Intuitive Motivation: The Entanglement Problem}{subsection.3.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.2}Stage 1: Keyed Spotlighting with Robust Risk Bounds}{13}{subsection.3.3.2}\protected@file@percent }
+\newlabel{subsec:horizon_stage1}{{3.3.2}{13}{Stage 1: Keyed Spotlighting with Robust Risk Bounds}{subsection.3.3.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{1. Spotlighting Primitives and Failure Modes}{13}{section*.3}\protected@file@percent }
+\citation{kerckhoffs1883}
+\@writefile{toc}{\contentsline {subsubsection}{2. Cryptographic Randomization: Kerckhoffs's Principle}{14}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Intuition (The Hotel Keycard Analogy):}{14}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{3. Mathematical Formulation of the Prompt}{14}{section*.6}\protected@file@percent }
+\citation{clopper1934}
+\citation{hanley1983}
+\citation{duchi2021dro}
+\@writefile{toc}{\contentsline {subsubsection}{4. Attack Indicator and Clean Utility}{15}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{5. The Four Risk Bounds}{15}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Bound 1: Forging Resistance ($P_{\mathrm  {forge}}$).}{15}{section*.9}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Key-space capacity across spotlighting transformations.}}{15}{table.3.1}\protected@file@percent }
+\newlabel{tab:keyspaces}{{3.1}{15}{Key-space capacity across spotlighting transformations}{table.3.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Bound 2: Finite-Sample Confidence Limit ($\bar  {p}_\tau $).}{15}{section*.10}\protected@file@percent }
+\citation{chao2023pair}
+\citation{zou2023gcg}
+\citation{sion1958minimax}
+\@writefile{toc}{\contentsline {paragraph}{Bound 3: Distributionally Robust Optimization ($g_\rho $).}{16}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Bound 4: Adaptive Optimization Bound ($\bar  {p}^{\,\mathrm  {adp}}_\tau $).}{16}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{6. Combined Risk and Rule-Based Defense Selection}{16}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{7. The Stage 1 Sion Minimax Equilibrium}{16}{section*.14}\protected@file@percent }
+\citation{debenedetti2025camel}
+\citation{hoeffding1963}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.3}Stage 2: Deterministic Guardrail (Math-Hardened CaMeL)}{17}{subsection.3.3.3}\protected@file@percent }
+\newlabel{subsec:horizon_stage2}{{3.3.3}{17}{Stage 2: Deterministic Guardrail (Math-Hardened CaMeL)}{subsection.3.3.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{1. Architectural Separation of Concerns}{17}{section*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{2. Quarantined Execution Pool with Independent Keys}{17}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{3. Majority Voting and the Hoeffding Bound}{17}{section*.17}\protected@file@percent }
+\citation{goguen1982}
+\citation{demoura2008z3}
+\@writefile{toc}{\contentsline {paragraph}{Theorem 1 (Exponential Failure Decay via Hoeffding Concentration):}{18}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Numerical Walkthrough:}{18}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{4. Typed Values and Capability Tokens}{18}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{5. SMT-Verified Policy Engine and Noninterference}{18}{section*.21}\protected@file@percent }
+\citation{angelopoulos2024crc}
+\citation{smith2009qif}
+\@writefile{toc}{\contentsline {subsubsection}{6. Conformal Risk Control on Confirmation Thresholds}{19}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{7. The Final Horizon Formula}{19}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{8. Architectural Outputs}{20}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Experiments}{21}{chapter.4}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:experiments}{{4}{9}{Experiments}{chapter.4}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.1}Experimental Setup and Testbed}{9}{section.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4.2}Threat Models and Attack Scenarios}{9}{section.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4.3}Evaluation Datasets and Red-Teaming Benchmarks}{9}{section.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4.4}Baseline Configurations}{9}{section.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}Evaluation}{10}{chapter.5}\protected@file@percent }
+\newlabel{ch:experiments}{{4}{21}{Experiments}{chapter.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Experimental Setup and Testbed}{21}{section.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Threat Models and Attack Scenarios}{21}{section.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Evaluation Datasets and Red-Teaming Benchmarks}{21}{section.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Baseline Configurations}{21}{section.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Evaluation}{22}{chapter.5}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:evaluation}{{5}{10}{Evaluation}{chapter.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.1}Detection Efficacy (RQ1 \& RQ2)}{10}{section.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.2}Safety Barrier Enforcement (RQ3)}{10}{section.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.3}Cybernetic Rate Limiting Performance (RQ4)}{10}{section.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.4}System Overhead and Latency Analysis}{10}{section.5.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Discussion}{11}{chapter.6}\protected@file@percent }
+\newlabel{ch:evaluation}{{5}{22}{Evaluation}{chapter.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Detection Efficacy (RQ1 \& RQ2)}{22}{section.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Safety Barrier Enforcement (RQ3)}{22}{section.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Cybernetic Rate Limiting Performance (RQ4)}{22}{section.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}System Overhead and Latency Analysis}{22}{section.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Discussion}{23}{chapter.6}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:discussion}{{6}{11}{Discussion}{chapter.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6.1}Balancing Mathematical Rigor and Software Practicality}{11}{section.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6.2}Security Depth vs. Latency Overhead}{11}{section.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6.3}Assumptions and Limitations}{11}{section.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {7}Future Work}{12}{chapter.7}\protected@file@percent }
+\newlabel{ch:discussion}{{6}{23}{Discussion}{chapter.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Balancing Mathematical Rigor and Software Practicality}{23}{section.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Security Depth vs. Latency Overhead}{23}{section.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.3}Assumptions and Limitations}{23}{section.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Future Work}{24}{chapter.7}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:future_work}{{7}{12}{Future Work}{chapter.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7.1}Adaptive Latent Space Barrier Learning}{12}{section.7.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7.2}Hardware-Accelerated Cryptographic Hooks}{12}{section.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7.3}Multi-Agent Swarm Defense Protocols}{12}{section.7.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{AI Disclosure}{13}{chapter*.3}\protected@file@percent }
-\bibcite{owasp2026}{1}
-\bibcite{ames2019control}{2}
-\bibcite{mahalanobis1936generalized}{3}
-\bibcite{garak2024}{4}
-\bibcite{pyrit2024}{5}
-\@writefile{toc}{\contentsline {chapter}{References}{14}{chapter*.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {A}Mathematical Proofs}{15}{appendix.A}\protected@file@percent }
+\newlabel{ch:future_work}{{7}{24}{Future Work}{chapter.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}Adaptive Latent Space Barrier Learning}{24}{section.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.2}Hardware-Accelerated Cryptographic Hooks}{24}{section.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.3}Multi-Agent Swarm Defense Protocols}{24}{section.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{AI Disclosure}{25}{chapter*.25}\protected@file@percent }
+\bibcite{greshake2023indirect}{1}
+\bibcite{yi2024benchmarking}{2}
+\bibcite{jiang2026agentic}{3}
+\bibcite{owasp2026}{4}
+\bibcite{zverev2025can}{5}
+\bibcite{zverev2026aside}{6}
+\bibcite{hines2024spotlighting}{7}
+\bibcite{sharma2026containment}{8}
+\bibcite{bhatnagar2025semantically}{9}
+\bibcite{kerckhoffs1883}{10}
+\bibcite{nasr2025attacker}{11}
+\bibcite{zou2023gcg}{12}
+\@writefile{toc}{\contentsline {chapter}{References}{26}{chapter*.26}\protected@file@percent }
+\bibcite{chao2023pair}{13}
+\bibcite{yuan2024cipherchat}{14}
+\bibcite{wong2025defending}{15}
+\bibcite{clopper1934}{16}
+\bibcite{hanley1983}{17}
+\bibcite{duchi2021dro}{18}
+\bibcite{bental2013robust}{19}
+\bibcite{hoeffding1963}{20}
+\bibcite{angelopoulos2024crc}{21}
+\bibcite{sion1958minimax}{22}
+\bibcite{paulus2025safety}{23}
+\bibcite{debenedetti2025camel}{24}
+\bibcite{costa2025securing}{25}
+\bibcite{rebedea2023nemo}{26}
+\bibcite{schwarz2025countermind}{27}
+\bibcite{louck2026security}{28}
+\bibcite{kothari2025hash}{29}
+\bibcite{panchumarthi2025securing}{30}
+\bibcite{mcp2026formal}{31}
+\bibcite{goguen1982}{32}
+\bibcite{demoura2008z3}{33}
+\bibcite{smith2009qif}{34}
+\bibcite{ames2019control}{35}
+\bibcite{mahalanobis1936generalized}{36}
+\bibcite{garak2024}{37}
+\bibcite{pyrit2024}{38}
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}Mathematical Proofs}{29}{appendix.A}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:proofs}{{A}{15}{Mathematical Proofs}{appendix.A}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {A.1}Forward Invariance of Control Barrier Functions}{15}{appendix.A.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {B}Architecture Configuration and Schemas}{16}{appendix.B}\protected@file@percent }
+\newlabel{app:proofs}{{A}{29}{Mathematical Proofs}{appendix.A}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Forward Invariance of Control Barrier Functions}{29}{appendix.A.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {B}Architecture Configuration and Schemas}{30}{appendix.B}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:config}{{B}{16}{Architecture Configuration and Schemas}{appendix.B}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {B.1}Middleware Configuration Schema}{16}{appendix.B.1}\protected@file@percent }
-\gdef \@abspage@last{17}
+\newlabel{app:config}{{B}{30}{Architecture Configuration and Schemas}{appendix.B}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B.1}Middleware Configuration Schema}{30}{appendix.B.1}\protected@file@percent }
+\gdef \@abspage@last{31}

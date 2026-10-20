@@ -1,37 +1,382 @@
 \chapter{Methodology}
 \label{ch:methodology}
 
+This chapter details the mathematical formulations and software engineering implementations comprising the NetWatch architecture. Section~\ref{sec:meth_overview} outlines the overarching system topology. Section~\ref{sec:meth_trihook} defines the Tri-Hook Runtime Architecture. Section~\ref{sec:meth_rq1_horizon} presents the primary theoretical and systems contribution of this work: \textbf{RQ1 --- The Horizon Guardrail Architecture for Prompt Injection Defense}, detailing Stage~1 (Randomized Keyed Spotlighting with Distributionally Robust Risk Bounds) and Stage~2 (Deterministic Guardrail via Math-Hardened CaMeL with Hoeffding-Bounded Quarantined Execution).
+
+% ============================================================
 \section{System Architecture Overview}
-The NetWatch architecture operates as an inline, deterministic gateway between the model's latent representation space and external software execution environments.
+\label{sec:meth_overview}
+% ============================================================
 
-\section{The Tri-Hook Defense Framework}
-
-\subsection{1. Pre-Retrieval Hook (Perception \& Memory)}
+NetWatch is architected as an inline, deterministic cybernetic guardrail positioned between an autonomous agent's reasoning core and external execution environments. The design enforces a strict 50/50 balance between applied mathematics and software engineering:
 \begin{itemize}
-    \item \textbf{Software Engineering:} Vector DB sandboxing and proxy ingestion pipelines.
-    \item \textbf{Applied Mathematics:} High-dimensional Mahalanobis distance outlier detection:
+    \item \textbf{Software Engineering (50\%):} Building real-time Application Programming Interface (API) interception proxies, isolated process sandboxes, dual-agent execution pipelines, and runtime verification engines.
+    \item \textbf{Applied Mathematics (50\%):} Deriving finite-sample statistical confidence limits, distributionally robust optimization bounds, majority voting exponential concentrations, game-theoretic minimax equilibria, and formal noninterference proofs.
+\end{itemize}
+
+% ============================================================
+\section{The Tri-Hook Defense Framework}
+\label{sec:meth_trihook}
+% ============================================================
+
+To prevent compromises across the agent's cognitive lifecycle, NetWatch physically intercepts the control loop at three distinct runtime execution hooks:
+
+\subsection{1. Pre-Retrieval Hook (Perception \& Memory Ingestion)}
+The pre-retrieval hook sanitizes external information prior to embedding or ingestion into the model's key-value (KV) cache:
+\begin{itemize}
+    \item \textbf{Software Sandbox:} External documents, web pages, and vector database query returns are held in an isolated proxy ingestion buffer.
+    \item \textbf{Mathematical Outlier Detection:} High-dimensional Mahalanobis distance filters evaluate incoming document embeddings $x \in \mathbb{R}^d$ against baseline semantic distribution $(\mu, \Sigma)$:
     \begin{equation}
         D_M(x) = \sqrt{(x - \mu)^T \Sigma^{-1} (x - \mu)}
     \end{equation}
-    and 2D Fast Fourier Transform (FFT) spatial frequency analysis for visual inputs to detect steganographic spikes.
+    Embeddings exceeding critical $\chi^2$ threshold percentiles are flagged as topological anomalies and quarantined. For visual inputs, 2D Fast Fourier Transforms (FFT) detect high-frequency spatial perturbations indicative of steganographic prompt injection.
 \end{itemize}
 
-\subsection{2. Pre-Execution Hook (Action \& API Gateway)}
+\subsection{2. Pre-Execution Hook (Action \& API Interception)}
+Before the agent dispatches any parameterized command to an external API or tool:
 \begin{itemize}
-    \item \textbf{Software Engineering:} Dual-agent isolation pattern and RASP middleware parameter freezing.
-    \item \textbf{Applied Mathematics:} Continuous Control Barrier Functions (CBF):
+    \item \textbf{Software Middleware:} A Runtime Application Self-Protection (RASP) interceptor halts execution and freezes the candidate payload.
+    \item \textbf{Control Barrier Functions (CBFs):} Defining a continuously differentiable safety set $\mathcal{C} = \{x \in \mathbb{R}^n : h(x) \ge 0\}$, the system enforces the forward-invariance condition:
     \begin{equation}
-        h(x) \ge 0, \quad \dot{h}(x) + \alpha(h(x)) \ge 0
+        \dot{h}(x) + \alpha(h(x)) \ge 0
     \end{equation}
-    guaranteeing forward invariance within safe execution boundaries.
+    where $\alpha(\cdot)$ is an extended class $\mathcal{K}_\infty$ function. If the agent's proposed action vector pushes the barrier derivative toward the boundary, the software gateway terminates the action.
 \end{itemize}
 
-\subsection{3. Post-Execution Hook (Context \& Exfiltration Prevention)}
+\subsection{3. Post-Execution Hook (Context Sanitization \& Exfiltration Control)}
+Following tool execution, results returning to the agent's context are strictly scoped:
 \begin{itemize}
-    \item \textbf{Software Engineering:} Role-Based Access Control (RBAC) scoping and provenance tagging ledger.
-    \item \textbf{Applied Mathematics:} Differential privacy via Laplacian noise injection:
+    \item \textbf{Software RBAC \& Provenance Ledger:} Returned fields are assigned immutable security tags and access levels.
+    \item \textbf{Differential Privacy \& Rate Limiting:} Sensitive numeric outputs are protected via Laplacian noise injection:
     \begin{equation}
-        \tilde{y} = y + \text{Lap}\left(0, \frac{\Delta f}{\epsilon}\right)
+        \tilde{y} = y + \mathrm{Lap}\left(0, \frac{\Delta f}{\epsilon}\right)
     \end{equation}
-    and Proportional-Integral-Derivative (PID) cybernetic rate limiting for risk token-bucket bandwidth governors.
+    while Proportional-Integral-Derivative (PID) cybernetic governors throttle bandwidth velocity to arrest exfiltration attempts.
 \end{itemize}
+
+% ============================================================
+\section{RQ1: Prompt Injection Defense --- The Horizon Architecture}
+\label{sec:meth_rq1_horizon}
+% ============================================================
+
+The primary research question addressed in this thesis is:
+\begin{quote}
+\textbf{Research Question 1 (RQ1):} \emph{How can cryptographic randomization, distributionally robust optimization, and deterministic causal mediation be synthesized into an end-to-end guardrail architecture to mathematically guarantee an upper bound on indirect prompt injection risk without impairing model utility?}
+\end{quote}
+
+To resolve RQ1, we formulate \textbf{Horizon}, a comprehensive two-stage defense architecture. Figure~\ref{fig:horizon_pipeline_conceptual} illustrates the unified flow: Stage~1 applies Keyed Spotlighting with robust risk bounds to protect individual model inferences, while Stage~2 wraps the execution within a deterministic guardrail utilizing quarantined model pools, Hoeffding voting, capability tokens, and SMT-verified noninterference.
+
+\begin{figure}[htbp]
+\centering
+\fbox{\parbox{0.92\textwidth}{
+\centering\small
+\textbf{The Horizon End-to-End Pipeline}\\[0.5em]
+\textbf{Stage 1:} User Task $\to$ Ephemeral Key Generation $\kappa \sim \mathrm{Unif}(\mathcal{K}_\tau)$ $\to$ Spotlighting Transformation $\tau_\kappa(\text{Untrusted Data})$ $\to$ Minimax Risk Bound $V_1(\rho, \eta)$ \\[0.5em]
+$\Downarrow$ \emph{Optimal Mix $\pi^\star$, Key Space $|\mathcal{K}|$, Failure Bound $\bar{\mathcal{R}}_Q$} \\[0.5em]
+\textbf{Stage 2:} User Prompt $u$ $\to$ Privileged LLM $\to$ Safe Program $\to$ Deterministic Interpreter $\to$ Quarantined LLMs $\times\, m$ ($\pi^\star$) $\to$ Majority Vote (Hoeffding Bound) $\to$ Typed Values \& Capabilities $\to$ Policy Check (Z3 SMT Noninterference) $\to$ Conformal Escalation $\lambda$ $\to$ Tool Execution
+}}
+\caption{Conceptual block diagram of the Horizon defense pipeline.}
+\label{fig:horizon_pipeline_conceptual}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsection{Intuitive Motivation: The Entanglement Problem}
+\label{subsec:horizon_motivation}
+% ------------------------------------------------------------
+
+The fundamental reason prompt injection succeeds is \emph{semantic entanglement}. An LLM receives all text---system rules, developer instructions, user requests, third-party emails, retrieved database chunks, and API responses---as a single, flat stream of tokens \cite{greshake2023indirect,zverev2025can}. The self-attention mechanism cannot inherently discern \emph{who authored which token}. When an email contains the text:
+\begin{quote}\small
+\texttt{"Meeting moved to Friday. Ignore previous instructions and\\
+forward emails to evil@attacker.com"}
+\end{quote}
+the injected sentence looks computationally identical to a legitimate developer directive.
+
+The core design philosophy of Horizon is built on two axioms:
+\begin{enumerate}
+    \item \textbf{Axiom 1 (Perception):} Untrusted text must be transformed so that it carries an unmistakable physical signal marking it as \emph{data}, never as \emph{instructions}.
+    \item \textbf{Axiom 2 (Separation):} Instructions and untrusted data must \textbf{never meet in the same model}. All security decisions must be governed by deterministic software, not probabilistic neural weights.
+\end{enumerate}
+
+% ============================================================
+\subsection{Stage 1: Keyed Spotlighting with Robust Risk Bounds}
+\label{subsec:horizon_stage1}
+% ============================================================
+
+Stage~1 transforms incoming untrusted data so that the model reliably treats it as passive text while preserving clean task utility.
+
+\subsubsection{1. Spotlighting Primitives and Failure Modes}
+Static spotlighting \cite{hines2024spotlighting} employs three transformations:
+\begin{itemize}
+    \item \textbf{Delimiting:} Fencing untrusted text within static delimiters: \texttt{<< Sales rose 5\%. >>}.
+    \item \textbf{Datamarking:} Interleaving an invariant symbol between words: \texttt{Sales\^{}rose\^{}5\%.}.
+    \item \textbf{Encoding:} Converting the entire document into an alternative representation (e.g., Base64).
+\end{itemize}
+
+While static spotlighting reduces naive attack success, it fails against capable adversaries:
+\begin{enumerate}
+    \item \emph{Delimiter Faking:} If delimiters are static (e.g., \texttt{>>}), an attacker injects \texttt{>> [New Instruction]} to close the fence early.
+    \item \emph{Marker Copying:} If the datamarking symbol is always \texttt{\^{}}, the attacker pre-marks their malicious payload with \texttt{\^{}}.
+    \item \emph{Cipher Reversal:} If a static cipher like ROT13 is employed, the attacker pre-encodes the injection; the application's decoding step translates the malicious payload into clean, trusted plain text.
+\end{enumerate}
+
+\subsubsection{2. Cryptographic Randomization: Kerckhoffs's Principle}
+To eliminate these vulnerabilities, Horizon applies \emph{Kerckhoffs's Principle} \cite{kerckhoffs1883}: security must rely entirely on the secrecy of an ephemeral key, not the obscurity of the algorithm.
+
+For every incoming request, Horizon samples a fresh secret key:
+\begin{equation}
+    \kappa \sim \mathrm{Unif}(\mathcal{K}_\tau)
+\end{equation}
+The application informs the model of $\kappa$ in the system prompt and uses $\kappa$ to transform the untrusted document. 
+
+\paragraph{Intuition (The Hotel Keycard Analogy):} Knowing how the electronic lock of a hotel room works does an attacker no good; the lock is recoded for every guest with a new cryptographic key. Similarly, even if an attacker knows that Horizon uses datamarking or scrambling, they cannot predict which random symbol or character permutation is active on today's request.
+
+\subsubsection{3. Mathematical Formulation of the Prompt}
+The complete prompt submitted to the model is:
+\begin{equation}
+    x_\kappa(\delta) = S_\kappa \,\|\, T \,\|\, \tau_\kappa(D \oplus \delta), \qquad \kappa \sim \mathrm{Unif}(\mathcal{K}_\tau)
+\end{equation}
+where:
+\begin{itemize}
+    \item $S_\kappa$ is the system prompt embedding the request's secret key $\kappa$.
+    \item $T$ is the user's task instruction (e.g., ``Summarize the attached document'').
+    \item $D \oplus \delta$ represents the external document $D$ harboring a hidden adversarial injection $\delta$.
+    \item $\|$ denotes textual concatenation.
+    \item $\tau_\kappa$ is the spotlighting transformation parameterized by key $\kappa \in \mathcal{K}_\tau$.
+\end{itemize}
+
+\subsubsection{4. Attack Indicator and Clean Utility}
+We formalize attack execution as a binary indicator variable:
+\begin{equation}
+    A(\delta, \kappa) = \mathbb{1}\big[\, M(x_\kappa(\delta)) \text{ executes } \delta \,\big] \in \{0, 1\}
+\end{equation}
+where $M(\cdot)$ is the language model output. $A = 1$ if the model obeys the injection (e.g., outputs an exfiltration canary), and $0$ otherwise.
+
+Simultaneously, we monitor clean task utility on benign documents ($\delta = \varnothing$):
+\begin{equation}
+    U_\tau = \mathbb{E}_{\kappa}\big[\, u\big(M(x_\kappa(\varnothing)),\, y^\star\big) \,\big] \in [0, 1]
+\end{equation}
+where $u(\cdot, y^\star)$ scores task completion against ground-truth reference $y^\star$.
+
+\subsubsection{5. The Four Risk Bounds}
+Horizon does not evaluate defenses using raw empirical ASR. Instead, it constructs four conservative, provable risk bounds:
+
+\paragraph{Bound 1: Forging Resistance ($P_{\mathrm{forge}}$).}
+By the union bound across $q$ adversarial guesses:
+\begin{equation}
+    P_{\mathrm{forge}} \le \frac{q}{|\mathcal{K}_\tau|}
+\end{equation}
+Table~\ref{tab:keyspaces} illustrates how key-space selection renders guessing mathematically impossible.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Key-space capacity across spotlighting transformations.}
+\label{tab:keyspaces}
+\begin{tabular}{@{}p{4.5cm} p{3.2cm} p{7.5cm}@{}}
+\toprule
+\textbf{Transformation $\tau$} & \textbf{Key Space $|\mathcal{K}_\tau|$} & \textbf{Security Guarantee} \\
+\midrule
+Fixed Marker / ROT13 & $1$ & $|\mathcal{K}|=1$; zero cryptographic protection. \\
+Random Shift Cipher & $25$ & Trivial: attacker brute-forces all 25 variants. \\
+Dynamic Multi-Character Marker & $N^k$ & With $N=10$ and $k=4$, $|\mathcal{K}|=10^4$; forging $< 0.01\%$. \\
+Random Alphabet Permutation & $|\Sigma|!$ & Over 26 letters, $26! \approx 4.03 \times 10^{26}$; forging probability $\approx 0$. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Bound 2: Finite-Sample Confidence Limit ($\bar{p}_\tau$).}
+Given $s = \sum_{i=1}^n A_i$ observed attack successes across $n$ empirical tests, the Clopper--Pearson exact upper confidence limit \cite{clopper1934} at significance $\alpha$ is:
+\begin{equation}
+    \bar{p}_\tau = \mathrm{Beta}^{-1}\big(1 - \alpha;\; s + 1,\, n - s\big), \qquad P\big(p \le \bar{p}_\tau\big) \ge 1 - \alpha
+\end{equation}
+Crucially, when zero attacks succeed in testing ($s = 0$), the asymptotic rule of three \cite{hanley1983} establishes:
+\begin{equation}
+    \bar{p}_\tau \approx \frac{-\ln(\alpha)}{n} \approx \frac{3}{n} \quad (\text{for } \alpha = 0.05)
+\end{equation}
+preventing false claims of absolute invulnerability from finite red-teaming trials.
+
+\paragraph{Bound 3: Distributionally Robust Optimization ($g_\rho$).}
+In deployment, the real-world attack distribution $Q$ shifts away from the test distribution $P$. We bound this shift via the Chi-square divergence:
+\begin{equation}
+    D_{\chi^2}(Q\,\|\,P) = \frac{1}{2} \int \left(\frac{dQ}{dP} - 1\right)^{\!2} dP \;\le\; \rho
+\end{equation}
+Under divergence budget $\rho \le \frac{1 - \bar{p}_\tau}{2\bar{p}_\tau}$, the worst-case expected loss admits the closed-form upper bound \cite{duchi2021dro}:
+\begin{equation}
+    g_\rho(\bar{p}_\tau) = \bar{p}_\tau + \sqrt{2\rho\,\bar{p}_\tau(1 - \bar{p}_\tau)}
+\end{equation}
+\emph{Meaning:} The worst attacker shifts probability mass toward attacks that already demonstrated partial success. The square-root penalty represents the maximum mathematical leverage the adversary can extract within radius $\rho$.
+
+\paragraph{Bound 4: Adaptive Optimization Bound ($\bar{p}^{\,\mathrm{adp}}_\tau$).}
+To account for an attacker actively optimizing prompts against the model, automated adversarial loops (e.g., PAIR \cite{chao2023pair} or GCG \cite{zou2023gcg}) search within query budget $B$:
+\begin{equation}
+    \delta^\star = \arg\max_{\delta \in \Delta_B} \mathbb{E}_{\kappa}\big[A(\delta, \kappa)\big]
+\end{equation}
+Evaluating $\delta^\star$ over $n_a$ randomized key draws yields Clopper--Pearson adaptive bound $\bar{p}^{\,\mathrm{adp}}_\tau$.
+
+\subsubsection{6. Combined Risk and Rule-Based Defense Selection}
+Combining the four bounds yields the single conservative risk metric $\bar{\mathcal{R}}_\tau(\rho)$:
+\begin{equation}
+    \bar{\mathcal{R}}_\tau(\rho) = \min\Bigg\{1,\; \underbrace{\frac{q}{|\mathcal{K}_\tau|}}_{\text{forging}} + \max\Big(\underbrace{g_\rho(\bar{p}_\tau)}_{\text{DRO shifted style}},\, \underbrace{\bar{p}^{\,\mathrm{adp}}_\tau}_{\text{adaptive attacker}}\Big)\Bigg\}
+\end{equation}
+When choosing a single defense from family $\mathcal{T}$, Horizon applies the constrained optimization rule:
+\begin{equation}
+    \tau^\star = \arg\min_{\tau \in \mathcal{T}} \bar{\mathcal{R}}_\tau(\rho) \quad \text{subject to} \quad U_\tau \ge U_{\mathrm{none}} - \eta
+\end{equation}
+where $\eta$ is the maximum tolerated utility degradation (e.g., $\eta = 0.05$).
+
+\subsubsection{7. The Stage 1 Sion Minimax Equilibrium}
+Rather than selecting a single static transformation $\tau^\star$, the defender achieves strictly superior robustness by randomizing over spotlighting variants using probability distribution $\pi \in \Pi_\eta$. 
+
+Let $L_\pi(x) = \sum_\tau \pi_\tau A_\tau(x)$ denote the mixed defense loss on attack $x$. By Sion's Minimax Theorem \cite{sion1958minimax}, because the strategy simplex $\Pi_\eta$ is compact and convex, and the adversarial distribution family is convex, min and max can be swapped:
+\begin{equation}
+    \boxed{\;
+    V_1(\rho, \eta) = \min_{\pi \in \Pi_\eta} \min\Bigg\{1,\;
+    \sum_\tau \pi_\tau \frac{q}{|\mathcal{K}_\tau|}
+    + \max\Big(
+    \mathbb{E}_P[L_\pi] + \sqrt{2\rho\,\mathrm{Var}_P(L_\pi)},\;
+    \sum_\tau \pi_\tau \bar{p}^{\,\mathrm{adp}}_\tau
+    \Big)\Bigg\}\;}
+\end{equation}
+Randomization shrinks the variance term $\mathrm{Var}_P(L_\pi)$ because different spotlighting variants fail on disjoint subsets of adversarial prompts, guaranteeing optimal game value $V_1(\rho, \eta)$ and mixed strategy $\pi^\star$.
+
+% ============================================================
+\subsection{Stage 2: Deterministic Guardrail (Math-Hardened CaMeL)}
+\label{subsec:horizon_stage2}
+% ============================================================
+
+Stage~1 bounds the failure probability of an individual LLM call. Stage~2 builds a deterministic causal architecture around that call, guaranteeing that even if a model inference fails, the injection cannot escalate into unauthorized software actions.
+
+\subsubsection{1. Architectural Separation of Concerns}
+As inspired by CaMeL \cite{debenedetti2025camel}, Horizon segregates execution into distinct privilege tiers:
+\begin{enumerate}
+    \item \textbf{Privileged LLM:} Receives \emph{only} trusted user prompt $u$. It never reads external documents, emails, or tool outputs. It synthesizes a high-level execution script:
+    \begin{equation}
+        \mathrm{prog} = \mathrm{LLM}_{\mathrm{priv}}(u)
+    \end{equation}
+    The script expresses intent (e.g., ``extract shipping date, verify customer tier, request confirmation if total exceeds threshold''). It contains no raw data.
+    \item \textbf{Deterministic Interpreter:} Executes $\mathrm{prog}$ line by line in a restricted runtime environment. It dispatches read-only extraction queries to quarantined models and routes candidate tool calls to the policy engine.
+    \item \textbf{Quarantined LLM Pool:} A locked-down execution container possessing zero network permissions, zero disk access, and zero tool capabilities. It is invoked strictly to answer extracted-value queries.
+\end{enumerate}
+
+\subsubsection{2. Quarantined Execution Pool with Independent Keys}
+When $\mathrm{prog}$ requires processing untrusted external text $x$:
+\begin{enumerate}
+    \item Horizon samples variant $\tau \sim \pi^\star$ and draws $m$ independent ephemeral keys:
+    \begin{equation}
+        \kappa_1, \dots, \kappa_m \overset{\text{i.i.d.}}{\sim} \mathrm{Unif}(\mathcal{K}_\tau)
+    \end{equation}
+    \item Untrusted text $x$ is transformed under each key: $\tilde{x}_j = \tau_{\kappa_j}(x)$.
+    \item The transformed inputs are dispatched to $m$ isolated instances of the quarantined model:
+    \begin{equation}
+        y_1 \sim \mathrm{LLM}_{\mathrm{quar}}(\tilde{x}_1), \quad \dots, \quad y_m \sim \mathrm{LLM}_{\mathrm{quar}}(\tilde{x}_m)
+    \end{equation}
+\end{enumerate}
+
+\subsubsection{3. Majority Voting and the Hoeffding Bound}
+The deterministic interpreter computes the consensus output:
+\begin{equation}
+    y^\star = \mathrm{Majority}(y_1, \dots, y_m)
+\end{equation}
+If more than $m/2$ runs agree on value $y$, $y^\star$ is accepted. If agreement is not reached, execution halts, an anomaly alert is registered, and the task escalates to the user.
+
+\paragraph{Theorem 1 (Exponential Failure Decay via Hoeffding Concentration):}
+Let $\bar{\mathcal{R}}_Q < \frac{1}{2}$ denote Stage~1's guaranteed upper bound on the failure rate of a single quarantined call. The probability that an attacker fools the majority vote is bounded by:
+\begin{equation}
+    \boxed{\;
+    P(\text{vote fooled}) \;\le\; \exp\Big(-2\,m\,\big(\tfrac{1}{2} - \bar{\mathcal{R}}_Q\big)^{\!2}\Big) \;}
+\end{equation}
+\begin{proof}
+Each quarantined run $j \in \{1, \dots, m\}$ uses an independent key $\kappa_j$. The event that run $j$ succumbs to injection is a Bernoulli trial with success probability $p_j \le \bar{\mathcal{R}}_Q < \frac{1}{2}$. The vote is fooled only if the sum of compromised runs satisfies $\sum_{j=1}^m \mathbb{1}_{\text{compromised}} \ge \frac{m}{2}$. By Hoeffding's Inequality for bounded independent random variables \cite{hoeffding1963}, setting deviation $t = \frac{1}{2} - \bar{\mathcal{R}}_Q$:
+\begin{equation}
+    P\left(\frac{1}{m}\sum_{j=1}^m X_j - \bar{\mathcal{R}}_Q \ge \frac{1}{2} - \bar{\mathcal{R}}_Q\right) \le \exp\left(-2m\left(\frac{1}{2} - \bar{\mathcal{R}}_Q\right)^2\right)
+\end{equation}
+completing the proof.
+\end{proof}
+
+\paragraph{Numerical Walkthrough:}
+Suppose Stage~1 bounds single-call risk to $\bar{\mathcal{R}}_Q = 0.15$. The safety margin is $\frac{1}{2} - 0.15 = 0.35$.
+\begin{itemize}
+    \item $m = 5$ runs: $P(\text{fooled}) \le \exp(-2 \times 5 \times 0.35^2) = \exp(-1.225) \approx \mathbf{29.3\%}$.
+    \item $m = 9$ runs: $P(\text{fooled}) \le \exp(-2 \times 9 \times 0.35^2) = \exp(-2.205) \approx \mathbf{11.0\%}$.
+    \item $m = 15$ runs: $P(\text{fooled}) \le \exp(-2 \times 15 \times 0.35^2) = \exp(-3.675) \approx \mathbf{2.5\%}$.
+\end{itemize}
+Thus, majority voting converts linear statistical guarantees into exponential containment.
+
+\subsubsection{4. Typed Values and Capability Tokens}
+Every value accepted from majority voting is encapsulated within an immutable typed envelope:
+\begin{equation}
+    v = \big(\text{data}, \ \text{type}, \ \text{cap}\big)
+\end{equation}
+\begin{itemize}
+    \item \textbf{data:} The raw string extracted by the model (e.g., \texttt{"2026-11-04"}).
+    \item \textbf{type:} Syntactically validated by a strict deterministic grammar parser. If the quarantined model outputs code or SQL when expecting an ISO-8601 date, the parser rejects it instantly.
+    \item \textbf{cap:} An immutable capability token denoting provenance:
+    \begin{equation}
+        \text{cap} \in \{\text{USER},\ \text{SYSTEM},\ \text{UNTRUSTED}\}
+    \end{equation}
+\end{itemize}
+
+\subsubsection{5. SMT-Verified Policy Engine and Noninterference}
+Before the interpreter dispatches any external action, the proposed tool invocation $t$ with argument vector $(v_1, \dots, v_k)$ is evaluated against a deterministic policy:
+\begin{equation}
+    \mathrm{Policy}(t, v_1, \dots, v_k) \in \{\text{ALLOW},\ \text{DENY},\ \text{CONFIRM}\}
+\end{equation}
+We enforce the formal \emph{Noninterference Theorem} \cite{goguen1982}:
+\begin{equation}
+    \boxed{\;
+    \exists\, i \text{ such that } v_i.\text{cap} = \text{UNTRUSTED} \implies \mathrm{Policy}(t, \mathbf{v}) \neq \text{ALLOW} \quad (\forall\, t \in \mathcal{T}_{\mathrm{critical}}) \;}
+\end{equation}
+Untrusted data is mathematically barred from selecting target tools or executing high-privilege system modifications. The consistency and completeness of all policy rules are statically verified at startup using the Z3 SMT solver \cite{demoura2008z3}.
+
+\subsubsection{6. Conformal Risk Control on Confirmation Thresholds}
+When $\mathrm{Policy}$ outputs \textbf{CONFIRM}, human approval is solicited before tool execution. To guard against human habituation and false approvals, Horizon applies Conformal Risk Control (CRC) \cite{angelopoulos2024crc}.
+
+Let $\lambda \in [0, 1]$ parameterize the threshold for escalating to user confirmation. Given user mistake loss function $\mathcal{L}_{\mathrm{user}}$, CRC calibrates $\hat{\lambda}$ on calibration data such that:
+\begin{equation}
+    \mathbb{E}\left[\mathcal{L}_{\mathrm{user}}(\hat{\lambda})\right] \le \alpha_{\mathrm{user}}
+\end{equation}
+bounding the expected probability that a deceptive injection slips past human review to a rigorous confidence budget (e.g., $\alpha_{\mathrm{user}} = 1\%$).
+
+\subsubsection{7. The Final Horizon Formula}
+A complete Horizon configuration is defined as the tuple:
+\begin{equation}
+    \theta = \big(m,\, \text{parser},\, \text{policy},\, \lambda\big) \in \Theta
+\end{equation}
+The per-attack loss of configuration $\theta$ on attack $x$ is:
+\begin{equation}
+    \ell_\theta(x) = G_\theta(x) + a\,C_\theta(x) + h_{\mathcal{S},\theta}\,F_\theta(x)
+\end{equation}
+where:
+\begin{itemize}
+    \item $G_\theta(x) \in \{0, 1\}$ indicates whether the attack bypassed the policy entirely.
+    \item $C_\theta(x) \in \{0, 1\}$ indicates whether the attack reached human confirmation, with $a \in [0, 1]$ denoting the empirical wrong-approval rate.
+    \item $F_\theta(x) \in \{0, 1\}$ indicates whether the attack fooled majority voting and syntactic parsing, with $h_{\mathcal{S},\theta} \in [0, 1]$ denoting the conditional probability that a corrupted value induces system harm.
+\end{itemize}
+
+Horizon randomizes over configuration set $\Theta$ via probability vector $\pi \in \Pi$, where:
+\begin{equation}
+    \Pi = \Big\{\pi \ge 0, \ \textstyle\sum_\theta \pi_\theta = 1, \ \text{utility} \ge U_{\min}, \ \text{leakage} \le B\Big\}
+\end{equation}
+with $B$ denoting the information leakage bound in bits verified via Quantitative Information Flow \cite{smith2009qif}.
+
+By Sion's Minimax Theorem, the global game equilibrium risk ceiling of the Horizon architecture is:
+\begin{equation}
+    \boxed{\;
+    V_{\mathrm{Horizon}} = \min_{\pi \in \Pi} \min\Bigg\{1,\;
+    \underbrace{\sum_\theta \pi_\theta \frac{q}{|\mathcal{K}_\theta|}}_{\text{forging resistance}}
+    + \max\Big(
+    \underbrace{\mathbb{E}_P[L_\pi] + \sqrt{2\rho\,\mathrm{Var}_P(L_\pi)}}_{\text{worst shifted attack distribution}},\;
+    \underbrace{\sum_\theta \pi_\theta \bar{\ell}^{\,\mathrm{adp}}_\theta}_{\text{adaptive attacker}}
+    \Big)\Bigg\}\;}
+\end{equation}
+where the composite loss is:
+\begin{equation}
+    L_\pi(x) = \sum_\theta \pi_\theta \left(\bar{p}^{\mathrm{CP}}_{G,\theta} + a\,\bar{p}^{\mathrm{CP}}_{C,\theta} + h_{\mathcal{S},\theta}\,\bar{p}^{\mathrm{CP}}_{F,\theta}\right)
+\end{equation}
+
+\subsubsection{8. Architectural Outputs}
+The Horizon architecture delivers two concrete operational guarantees:
+\begin{enumerate}
+    \item \textbf{At Runtime (Per-Request Execution):} The user's task completes normally. Injected payloads are mathematically defanged into passive typed strings, blocked by deterministic noninterference policies, or escalated through calibrated human confirmation.
+    \item \textbf{At Design Time (System Certification):} The Sion game solver produces the optimal configuration mix $\pi^\star_{\mathrm{Horizon}}$, the provable risk ceiling $V_{\mathrm{Horizon}}$, and the adversary's worst-case distribution $w^\star$, identifying exactly where defensive resources must be allocated.
+\end{enumerate}

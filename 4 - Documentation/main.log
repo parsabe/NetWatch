@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Debian) (preloaded format=pdflatex 2026.10.1)  20 OCT 2026 21:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Debian) (preloaded format=pdflatex 2026.10.1)  20 OCT 2026 21:55
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**"4 - Documentation/main.tex"
-(./4 - Documentation/main.tex
+**main.tex
+(./main.tex
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
 (/usr/share/texlive/texmf-dist/tex/latex/base/report.cls
@@ -147,12 +147,24 @@ LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
 ))
+(/usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty
+Package: amsthm 2020/05/29 v2.20.6
+\thm@style=\toks24
+\thm@bodyfont=\toks25
+\thm@headfont=\toks26
+\thm@notefont=\toks27
+\thm@headpunct=\toks28
+\thm@preskip=\skip54
+\thm@postskip=\skip55
+\thm@headsep=\skip56
+\dth@everypar=\toks29
+)
 (/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
 Package: graphicx 2026-05-17 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
 
 (/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
 Package: keyval 2026-05-17 v1.15 key=value parser (DPC)
-\KV@toks@=\toks24
+\KV@toks@=\toks30
 )
 (/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
 Package: graphics 2026-05-17 v1.4h Standard LaTeX Graphics (DPC,SPQR)
@@ -191,7 +203,7 @@ Package: iftex 2024/12/12 v1.0g TeX engine tests
 \Gm@layoutheight=\dimen167
 \Gm@layouthoffset=\dimen168
 \Gm@layoutvoffset=\dimen169
-\Gm@dimlist=\toks25
+\Gm@dimlist=\toks31
 )
 (/usr/share/texlive/texmf-dist/tex/latex/booktabs/booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
@@ -336,16 +348,16 @@ Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 84.
 )
-\Hy@SectionHShift=\skip54
+\Hy@SectionHShift=\skip57
 )
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.sty
 Package: microtype 2026/03/01 v3.2d Micro-typographical refinements (RS)
-\MT@toks=\toks26
+\MT@toks=\toks32
 \MT@tempbox=\box55
 \MT@count=\count316
 LaTeX Info: Redefining \noprotrusionifhmode on input line 1084.
 LaTeX Info: Redefining \leftprotrusion on input line 1085.
-\MT@prot@toks=\toks27
+\MT@prot@toks=\toks33
 LaTeX Info: Redefining \rightprotrusion on input line 1104.
 LaTeX Info: Redefining \textls on input line 1449.
 \MT@outer@kern=\dimen187
@@ -358,7 +370,7 @@ File: microtype-pdftex.def 2026/03/01 v3.2d Definitions specific to pdftex (RS)
 
 LaTeX Info: Redefining \lsstyle on input line 944.
 LaTeX Info: Redefining \lslig on input line 944.
-\MT@outer@space=\skip55
+\MT@outer@space=\skip58
 )
 Package microtype Info: Loading configuration file microtype.cfg.
 
@@ -370,7 +382,7 @@ LaTeX Info: Redefining \microtypesetup on input line 3065.
 (/usr/share/texlive/texmf-dist/tex/latex/listings/listings.sty
 \lst@mode=\count318
 \lst@gtempboxa=\box56
-\lst@token=\toks28
+\lst@token=\toks34
 \lst@length=\count319
 \lst@currlwidth=\dimen188
 \lst@column=\count320
@@ -425,7 +437,7 @@ File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 File: l3backend-pdftex.def 2026-08-10 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count326
 )
-(4 - Documentation/main.aux)
+(./main.aux)
 \openout1 = `main.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 31.
@@ -446,20 +458,19 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 31.
 LaTeX Font Info:    ... okay on input line 31.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 31.
 LaTeX Font Info:    ... okay on input line 31.
-
-(/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+ (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count327
 \scratchdimen=\dimen192
 \scratchbox=\box58
 \nofMPsegments=\count328
 \nofMParguments=\count329
-\everyMPshowfont=\toks29
+\everyMPshowfont=\toks35
 \MPscratchCnt=\count330
 \MPscratchDim=\dimen193
 \MPnumerator=\count331
 \makeMPintoPDFobject=\count332
-\everyMPtoPDFconversion=\toks30
+\everyMPtoPDFconversion=\toks36
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
@@ -504,7 +515,7 @@ e
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 Package hyperref Info: Link coloring ON on input line 31.
-(4 - Documentation/main.out) (4 - Documentation/main.out)
+(./main.out) (./main.out)
 \@outlinefile=\write3
 \openout3 = `main.out'.
 
@@ -534,7 +545,7 @@ File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/
-dvips/lm/lm-ec.enc}] (4 - Documentation/0 - abstract/abstract.tex)
+dvips/lm/lm-ec.enc}] (./0 - abstract/abstract.tex)
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
 <to be read again> 
@@ -542,16 +553,14 @@ been already used, duplicate ignored
 l.38 \tableofcontents
                       [1
 
-] (4 - Documentation/main.toc
+] (./main.toc
 LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 3
 .
-
-(/usr/share/texmf/tex/latex/lm/ot1lmr.fd
+ (/usr/share/texmf/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OML+lmm on input line 3
 .
-
 (/usr/share/texmf/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -595,7 +604,7 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 \openout4 = `main.toc'.
 
 
-(4 - Documentation/1- introduction/introduction.tex [3]
+(./1- introduction/introduction.tex [3]
 Chapter 1.
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
 2.
@@ -603,75 +612,169 @@ LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [4
 
-{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}]) (4 - Documentation/2- relate
-d work/related_work.tex [5]
+{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}]) (./2- related work/related_w
+ork.tex [5]
 Chapter 2.
-) (4 - Documentation/3- methodology/methodology.tex [6
+[6
 
 ]
-Chapter 3.
-[7
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 3
+3.
+ (/usr/share/texmf/tex/latex/lm/t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `lmtt' (encoding: T1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+ [7]
+Overfull \hbox (14.35704pt too wide) in paragraph at lines 65--65
+[]\T1/lmr/bx/n/17.28 (-20) Deterministic Guardrails, CaMeL, and Information-
+ []
 
-{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/share/texmf/fonts/enc/
-dvips/lm/lm-rm.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc}{/usr/sha
-re/texmf/fonts/enc/dvips/lm/lm-mathsy.enc}])
-(4 - Documentation/4 - Experiments/experiments.tex [8]
+
+Overfull \hbox (0.98618pt too wide) in paragraph at lines 71--72
+[]\T1/lmr/m/n/12 (-20) Early in-dus-try ef-forts, such as NVIDIA NeMo Guardrail
+s [[]], in-tro-duced pro-grammable
+ []
+
+[8{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/share/texmf/fonts/en
+c/dvips/lm/lm-mathsy.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc}{/usr/s
+hare/texmf/fonts/enc/dvips/lm/lm-mathex.enc}] [9]
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10.95> on input line 105.
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+[]\T1/lmr/m/n/10.95 (+20) Garak [[]],
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+[]\T1/lmr/m/n/10.95 (+20) Easy in-te-gra-tion,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--110
+[]\T1/lmr/m/n/10.95 (+20) Brittle; by-passed
+ []
+
+
+Underfull \hbox (badness 7308) in paragraph at lines 109--110
+\T1/lmr/m/n/10.95 (+20) by PAIR [[]] and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 112--112
+[]\T1/lmr/m/n/10.95 (+20) Causal Me-di-a-tion
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 112--112
+[]\T1/lmr/m/n/10.95 (+20) Debenedetti et
+ []
+
+
+Underfull \hbox (badness 2932) in paragraph at lines 112--112
+[]\T1/lmr/m/n/10.95 (+20) Provable struc-tural
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 112--113
+\T1/lmr/m/n/10.95 (+20) still vul-ner-a-ble to
+ []
+
+
+Underfull \hbox (badness 2318) in paragraph at lines 113--113
+[]\T1/lmr/bx/n/10.95 (+20) NetWatch (Hori-
+ []
+
+
+Underfull \hbox (badness 1558) in paragraph at lines 113--114
+\T1/lmr/bx/n/10.95 (+20) end min-i-max risk
+ []
+
+) (./3- methodology/methodology.tex [10]
+Chapter 3.
+[11
+
+] [12] [13] [14]
+Overfull \hbox (3.51389pt too wide) in paragraph at lines 175--185
+ [][] 
+ []
+
+[15]
+Overfull \hbox (1.0075pt too wide) in paragraph at lines 243--243
+[]\T1/lmr/bx/n/14.4 (-20) Stage 2: De-ter-min-is-tic Guardrail (Math-Hardened C
+aMeL) 
+ []
+
+[16] [17] [18]
+Overfull \hbox (3.6737pt too wide) detected at line 371
+[][][][]
+ []
+
+[19]) (./4 - Experiments/experiments.tex [20]
 Chapter 4.
-) (4 - Documentation/5 - evaluation/evaluation.tex [9
+) (./5 - evaluation/evaluation.tex [21
 
 ]
 Chapter 5.
-) (4 - Documentation/6 - discussion/discussion.tex [10
+) (./6 - discussion/discussion.tex [22
 
 ]
 Chapter 6.
-) (4 - Documentation/7 - future work/future_work.tex [11
+) (./7 - future work/future_work.tex [23
 
 ]
 Chapter 7.
-) (4 - Documentation/8 - AI Disclousure/ai_disclosure.tex [12
+) (./8 - AI Disclousure/ai_disclosure.tex [24
 
 ])
-(4 - Documentation/9 - Referneces/references.tex [13
+(./9 - Referneces/references.tex [25
 
-])
-(4 - Documentation/10 - Appendixes/appendixes.tex [14
+] [26
 
-]
+] [27])
+(./10 - Appendixes/appendixes.tex [28]
 Appendix A.
-[15
+[29
 
 ]
 Appendix B.
-) [16
+) [30
 
-] (4 - Documentation/main.aux)
+] (./main.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 827DCD26DBAE638600132223BADF3393;8767.
+(rerunfilecheck)             Checksum: BAA122BC12981FD61FF7A7388A59FE61;10891.
  ) 
 Here is how much of TeX's memory you used:
- 14767 strings out of 469013
- 229369 string characters out of 5457712
- 686328 words of memory out of 5000000
- 43394 multiletter control sequences out of 15000+600000
- 688542 words of font info for 145 fonts, out of 8000000 for 9000
+ 15232 strings out of 469013
+ 235142 string characters out of 5457712
+ 692943 words of memory out of 5000000
+ 43601 multiletter control sequences out of 15000+600000
+ 718358 words of font info for 219 fonts, out of 8000000 for 9000
  59 hyphenation exceptions out of 8191
- 74i,5n,79p,1021b,548s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/ty
-pe1/public/lm/lmex10.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi12.pfb></u
-sr/share/texmf/fonts/type1/public/lm/lmmi8.pfb></usr/share/texmf/fonts/type1/pu
-blic/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb></usr/share/
-texmf/fonts/type1/public/lm/lmri12.pfb></usr/share/texmf/fonts/type1/public/lm/
-lmsy10.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy8.pfb></usr/share/texliv
-e/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on "4 - Documentation/main.pdf" (17 pages, 163688 bytes).
+ 74i,12n,79p,1123b,576s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/ty
+pe1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmex10.pfb></u
+sr/share/texmf/fonts/type1/public/lm/lmmi10.pfb></usr/share/texmf/fonts/type1/p
+ublic/lm/lmmi12.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi6.pfb></usr/sha
+re/texmf/fonts/type1/public/lm/lmmi8.pfb></usr/share/texmf/fonts/type1/public/l
+m/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf
+/fonts/type1/public/lm/lmr6.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pf
+b></usr/share/texmf/fonts/type1/public/lm/lmri10.pfb></usr/share/texmf/fonts/ty
+pe1/public/lm/lmri12.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb></u
+sr/share/texmf/fonts/type1/public/lm/lmsy8.pfb></usr/share/texmf/fonts/type1/pu
+blic/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt12.pfb></usr/sha
+re/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on main.pdf (31 pages, 425886 bytes).
 PDF statistics:
- 385 PDF objects out of 1000 (max. 8388607)
- 340 compressed objects within 4 object streams
- 69 named destinations out of 1000 (max. 500000)
- 35153 words of extra memory for PDF output out of 35830 (max. 10000000)
+ 726 PDF objects out of 1000 (max. 8388607)
+ 645 compressed objects within 7 object streams
+ 200 named destinations out of 1000 (max. 500000)
+ 50561 words of extra memory for PDF output out of 51595 (max. 10000000)
 

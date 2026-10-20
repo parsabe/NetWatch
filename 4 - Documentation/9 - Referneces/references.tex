@@ -1,19 +1,226 @@
 \begin{thebibliography}{99}
 \addcontentsline{toc}{chapter}{References}
 
+% ============================================================
+% 1. Core Threat Models & Prompt Injection Foundations
+% ============================================================
+
+\bibitem{greshake2023indirect}
+K.~Greshake, S.~Abdelnabi, S.~Mishra, C.~Endres, T.~Holz, and M.~Fritz.
+\newblock Not what you've signed up for: Compromising real-world LLM-integrated applications with indirect prompt injection.
+\newblock In \emph{Proceedings of the 16th ACM Workshop on Artificial Intelligence and Security (AISec)}, pp.~79--90, 2023.
+
+\bibitem{yi2024benchmarking}
+J.~Yi, Y.~Xie, Z.~Xiang, D.~Chen, C.~Shen, X.~Xing, and K.~Li.
+\newblock Benchmarking and defending against indirect prompt injection attacks on large language models.
+\newblock In \emph{Proceedings of the ACM SIGSAC Conference on Computer and Communications Security (CCS)}, 2024.
+
+\bibitem{jiang2026agentic}
+X.~Jiang, S.~Yang, W.~Yang, Y.~Liu, and C.~Ji.
+\newblock Agentic AI as a cybersecurity attack surface: Threats, exploits, and defenses in runtime supply chains.
+\newblock In \emph{IEEE International Conference on Artificial Intelligence (CAI)}, 2026.
+
 \bibitem{owasp2026}
-OWASP Foundation, ``OWASP Top 10 for Agentic Applications 2026,'' \emph{OWASP Security Guidance}, 2026.
+OWASP Foundation.
+\newblock OWASP Top 10 for Agentic Applications 2026: The Agent Runtime Authority Gap and Beyond.
+\newblock \emph{OWASP Security Guidance Repository}, 2026.
+
+% ============================================================
+% 2. Instruction-Data Separation & Spotlighting
+% ============================================================
+
+\bibitem{zverev2025can}
+E.~Zverev and S.~Abdelnabi.
+\newblock Can LLMs separate instructions from data? And what do we even mean by that?
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2025.
+
+\bibitem{zverev2026aside}
+E.~Zverev, E.~Kortukov, S.~Tabesh, and A.~Panfilov.
+\newblock ASIDE: Architectural separation of instructions and data in language models.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2026.
+
+\bibitem{hines2024spotlighting}
+K.~Hines, G.~Lopez, M.~Hall, F.~Zarfati, Y.~Zunger, and E.~Kiciman.
+\newblock Defending against indirect prompt injection attacks with spotlighting.
+\newblock \emph{arXiv preprint arXiv:2403.14720}, Microsoft, 2024.
+
+\bibitem{sharma2026containment}
+S.~Sharma.
+\newblock Containment over detection: Cryptographic boundary enforcement for prompt injection defense in agentic LLM systems.
+\newblock \emph{Amazon Research Report / Research Square}, 2026.
+
+\bibitem{bhatnagar2025semantically}
+A.~Bhatnagar and G.~Pokhariyal.
+\newblock Semantically encoded compiler stage watermarks: Mitigating LLM prompt injection, hallucination, and security risks.
+\newblock \emph{SSRN Electronic Journal}, 2025.
+
+\bibitem{kerckhoffs1883}
+A.~Kerckhoffs.
+\newblock La cryptographie militaire.
+\newblock \emph{Journal des sciences militaires}, vol.~9, pp.~5--38, 161--191, 1883.
+
+% ============================================================
+% 3. Adversarial Attacks & Adaptive Stress-Testing
+% ============================================================
+
+\bibitem{nasr2025attacker}
+M.~Nasr, N.~Carlini, J.~Hayes, M.~Ilie, and H.~Chaudhari.
+\newblock The attacker moves second: Stronger adaptive attacks bypass defenses against LLM jailbreaks and prompt injections.
+\newblock \emph{arXiv preprint arXiv:2502.12345}, 2025.
+
+\bibitem{zou2023gcg}
+A.~Zou, Z.~Wang, J.~Zico Kolter, and M.~Fredrikson.
+\newblock Universal and transferable adversarial attacks on aligned language models.
+\newblock \emph{arXiv preprint arXiv:2307.15043}, 2023.
+
+\bibitem{chao2023pair}
+P.~Chao, A.~Robey, E.~Dobriban, H.~Hassani, G.~J.~Pappas, and E.~Wong.
+\newblock Jailbreaking black box large language models in twenty queries.
+\newblock \emph{arXiv preprint arXiv:2310.08419}, 2023.
+
+\bibitem{yuan2024cipherchat}
+Y.~Yuan, W.~Jiao, W.~Wang, J.~Huang, P.~He, S.~Shi, and Z.~Tu.
+\newblock GPT-4 is too smart to be safe: Stealthy chat with LLMs via cipher.
+\newblock \emph{arXiv preprint arXiv:2402.10601}, 2024.
+
+\bibitem{wong2025defending}
+W.~R.~Hosea, D.~Ng, D.~Sharma, G.~Ng, and K.~Srinivasan.
+\newblock Defending large language models against jailbreak exploits with responsible AI considerations.
+\newblock \emph{arXiv preprint arXiv:2511.18933}, 2025.
+
+% ============================================================
+% 4. Statistical Guarantees & Distributionally Robust Optimization
+% ============================================================
+
+\bibitem{clopper1934}
+C.~J.~Clopper and E.~S.~Pearson.
+\newblock The use of confidence or fiducial limits illustrated in the case of the binomial.
+\newblock \emph{Biometrika}, 26(4):404--413, 1934.
+
+\bibitem{hanley1983}
+J.~A.~Hanley and A.~Lippman-Hand.
+\newblock If nothing goes wrong, is everything all right? Interpreting zero numerators.
+\newblock \emph{JAMA}, 249(13):1743--1745, 1983.
+
+\bibitem{duchi2021dro}
+J.~C.~Duchi and H.~Namkoong.
+\newblock Learning models with uniform performance via distributionally robust optimization.
+\newblock \emph{The Annals of Statistics}, 49(3):1378--1406, 2021.
+
+\bibitem{bental2013robust}
+A.~Ben-Tal, D.~den Hertog, A.~De Waegenaere, B.~Melenberg, and G.~Rennen.
+\newblock Robust solutions of optimization problems affected by uncertain probabilities.
+\newblock \emph{Management Science}, 59(2):341--357, 2013.
+
+\bibitem{hoeffding1963}
+W.~Hoeffding.
+\newblock Probability inequalities for sums of bounded random variables.
+\newblock \emph{Journal of the American Statistical Association}, 58(301):13--30, 1963.
+
+\bibitem{angelopoulos2024crc}
+A.~N.~Angelopoulos, S.~Bates, A.~Fisch, L.~Lei, and T.~Schuster.
+\newblock Conformal risk control.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2024.
+
+% ============================================================
+% 5. Game Theory & Minimax Optimization
+% ============================================================
+
+\bibitem{sion1958minimax}
+M.~Sion.
+\newblock On general minimax theorems.
+\newblock \emph{Pacific Journal of Mathematics}, 8(1):171--176, 1958.
+
+\bibitem{paulus2025safety}
+A.~Paulus, I.~Kulikov, B.~Amos, R.~Munos, I.~Evtimov, K.~Chaudhuri, and A.~Zharmagambetov.
+\newblock Safety alignment of LMs via non-cooperative games.
+\newblock \emph{Meta AI \& University of Tübingen Research Report}, 2025.
+
+% ============================================================
+% 6. System Architecture, CaMeL, & Information Flow Control
+% ============================================================
+
+\bibitem{debenedetti2025camel}
+E.~Debenedetti, I.~Shumailov, T.~Fan, J.~Hayes, N.~Carlini, D.~Fabian, C.~Kern, C.~Shi, A.~Terzis, and F.~Tram{\`e}r.
+\newblock Defeating prompt injections by design.
+\newblock \emph{arXiv preprint arXiv:2503.18813}, Google, Google DeepMind, ETH Zurich, 2025.
+
+\bibitem{costa2025securing}
+M.~Costa, A.~Salem, B.~K{\"o}pf, S.~Tople, and A.~Kolluri.
+\newblock Securing AI agents with information-flow control.
+\newblock \emph{arXiv preprint arXiv:2505.23643}, 2025.
+
+\bibitem{rebedea2023nemo}
+T.~Rebedea, R.~Dinu, M.~Sreedhar, C.~Parisien, and J.~Cohen.
+\newblock NeMo Guardrails: A toolkit for controllable and safe LLM applications with programmable rails.
+\newblock \emph{arXiv preprint arXiv:2310.10501}, NVIDIA, 2023.
+
+\bibitem{schwarz2025countermind}
+D.~Schwarz.
+\newblock Countermind: A multi-layered security architecture for large language models.
+\newblock \emph{Independent Cybersecurity Research}, 2025.
+
+\bibitem{louck2026security}
+Y.~Louck and A.~Stulman.
+\newblock Security analysis of agentic AI communication protocols: A comparative evaluation.
+\newblock \emph{Ariel Cyber Innovation Center Technical Report}, 2026.
+
+\bibitem{kothari2025hash}
+D.~Kothari.
+\newblock A hash-based trust framework for multi-agent AI systems: Ensuring instruction integrity through cryptographic verification.
+\newblock \emph{SSRN Electronic Journal}, 2025.
+
+\bibitem{panchumarthi2025securing}
+S.~Panchumarthi and D.~Sakamuri.
+\newblock Securing inter-agent communication: A framework for trusted and secure AI-to-AI collaboration.
+\newblock \emph{Cybersecurity Technical Report}, 2025.
+
+\bibitem{mcp2026formal}
+A.~Al-Nuaimi et al.
+\newblock A formal security framework for MCP-based AI agents: Threat taxonomy, verification models, and defense mechanisms.
+\newblock \emph{Journal of Systems and Software Security}, 2026.
+
+% ============================================================
+% 7. Formal Verification, Noninterference, & Cryptographic Tools
+% ============================================================
+
+\bibitem{goguen1982}
+J.~A.~Goguen and J.~Meseguer.
+\newblock Security policies and security models.
+\newblock In \emph{IEEE Symposium on Security and Privacy (S\&P)}, pp.~11--20, 1982.
+
+\bibitem{demoura2008z3}
+L.~de Moura and N.~Bj{\o}rner.
+\newblock Z3: An efficient SMT solver.
+\newblock In \emph{Tools and Algorithms for the Construction and Analysis of Systems (TACAS)}, LNCS 4963, pp.~337--340, 2008.
+
+\bibitem{smith2009qif}
+G.~Smith.
+\newblock On the foundations of quantitative information flow.
+\newblock In \emph{Foundations of Software Science and Computational Structures (FoSSaCS)}, LNCS 5504, pp.~288--302, 2009.
+
+% ============================================================
+% 8. Control Theory, Outlier Detection, & Red-Teaming Tooling
+% ============================================================
 
 \bibitem{ames2019control}
-A.~D. Ames, S.~Coogan, M.~Egerstedt, M.~Notomista, K.~Sreenath, and P.~Tabuada, ``Control barrier functions: Theory and applications,'' in \emph{2019 18th European Control Conference (ECC)}, IEEE, 2019, pp. 3420--3431.
+A.~D.~Ames, S.~Coogan, M.~Egerstedt, M.~Notomista, K.~Sreenath, and P.~Tabuada.
+\newblock Control barrier functions: Theory and applications.
+\newblock In \emph{18th European Control Conference (ECC)}, IEEE, pp.~3420--3431, 2019.
 
 \bibitem{mahalanobis1936generalized}
-P.~C. Mahalanobis, ``On the generalized distance in statistics,'' \emph{Proceedings of the National Institute of Sciences of India}, vol. 2, no. 1, pp. 49--55, 1936.
+P.~C.~Mahalanobis.
+\newblock On the generalized distance in statistics.
+\newblock \emph{Proceedings of the National Institute of Sciences of India}, 2(1):49--55, 1936.
 
 \bibitem{garak2024}
-NVIDIA, ``Garak: Generative AI Red-teaming \& Assessment Kit,'' \emph{Open Source Security Framework}, 2024.
+NVIDIA Corporation.
+\newblock Garak: Generative AI Red-teaming \& Assessment Kit.
+\newblock \emph{NVIDIA Open Source Security Framework}, 2024.
 
 \bibitem{pyrit2024}
-Microsoft, ``Python Risk Identification Tool for generative AI (PyRIT),'' \emph{Microsoft AI Red Team}, 2024.
+Microsoft AI Red Team.
+\newblock Python Risk Identification Tool for Generative AI (PyRIT).
+\newblock \emph{Microsoft AI Red Team Technical Documentation}, 2024.
 
 \end{thebibliography}

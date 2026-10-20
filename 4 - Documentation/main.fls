@@ -1,10 +1,10 @@
-PWD /home/hounaar/Desktop/codes/cyber
+PWD /home/hounaar/Desktop/codes/cyber/4 - Documentation
 INPUT /etc/texmf/web2c/texmf.cnf
 INPUT /usr/share/texmf/web2c/texmf.cnf
 INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
 INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
-INPUT 4 - Documentation/main.tex
-OUTPUT 4 - Documentation/main.log
+INPUT main.tex
+OUTPUT main.log
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/report.cls
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/report.cls
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/size12.clo
@@ -33,6 +33,8 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
@@ -137,10 +139,10 @@ INPUT /usr/share/texmf/tex/latex/lm/t1lmr.fd
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr12.tfm
 INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/l3backend-pdftex.def
 INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/l3backend-pdftex.def
-INPUT 4 - Documentation/main.aux
-INPUT 4 - Documentation/main.aux
-INPUT 4 - Documentation/main.aux
-OUTPUT 4 - Documentation/main.aux
+INPUT ./main.aux
+INPUT ./main.aux
+INPUT main.aux
+OUTPUT main.aux
 INPUT /usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 INPUT /usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 INPUT /usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
@@ -150,14 +152,14 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 INPUT /usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 INPUT /usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics/color.sty
-INPUT 4 - Documentation/main.out
-INPUT 4 - Documentation/main.out
-INPUT 4 - Documentation/main.out
-INPUT 4 - Documentation/main.out
-OUTPUT 4 - Documentation/main.pdf
-INPUT 4 - Documentation/main.out
-INPUT 4 - Documentation/main.out
-OUTPUT 4 - Documentation/main.out
+INPUT ./main.out
+INPUT ./main.out
+INPUT main.out
+INPUT main.out
+OUTPUT main.pdf
+INPUT ./main.out
+INPUT ./main.out
+OUTPUT main.out
 INPUT /usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg
 INPUT /usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg
 INPUT /usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg
@@ -166,15 +168,15 @@ INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr12.tfm
 INPUT /var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc
-INPUT 4 - Documentation/0 - abstract/abstract.tex
-INPUT 4 - Documentation/0 - abstract/abstract.tex
-INPUT 4 - Documentation/0 - abstract/abstract.tex
+INPUT ./0 - abstract/abstract.tex
+INPUT ./0 - abstract/abstract.tex
+INPUT 0 - abstract/abstract.tex
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr17.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx12.tfm
-INPUT 4 - Documentation/main.toc
-INPUT 4 - Documentation/main.toc
-INPUT 4 - Documentation/main.toc
+INPUT ./main.toc
+INPUT ./main.toc
+INPUT main.toc
 INPUT /usr/share/texmf/tex/latex/lm/ot1lmr.fd
 INPUT /usr/share/texmf/tex/latex/lm/ot1lmr.fd
 INPUT /usr/share/texmf/tex/latex/lm/ot1lmr.fd
@@ -215,10 +217,10 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg
 INPUT /usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm
-OUTPUT 4 - Documentation/main.toc
-INPUT 4 - Documentation/1- introduction/introduction.tex
-INPUT 4 - Documentation/1- introduction/introduction.tex
-INPUT 4 - Documentation/1- introduction/introduction.tex
+OUTPUT main.toc
+INPUT ./1- introduction/introduction.tex
+INPUT ./1- introduction/introduction.tex
+INPUT 1- introduction/introduction.tex
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr17.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx12.tfm
 INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
@@ -226,51 +228,75 @@ INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
 INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ts1-lmr12.tfm
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc
-INPUT 4 - Documentation/2- related work/related_work.tex
-INPUT 4 - Documentation/2- related work/related_work.tex
-INPUT 4 - Documentation/2- related work/related_work.tex
-INPUT 4 - Documentation/3- methodology/methodology.tex
-INPUT 4 - Documentation/3- methodology/methodology.tex
-INPUT 4 - Documentation/3- methodology/methodology.tex
+INPUT ./2- related work/related_work.tex
+INPUT ./2- related work/related_work.tex
+INPUT 2- related work/related_work.tex
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmri12.tfm
+INPUT /usr/share/texmf/tex/latex/lm/t1lmtt.fd
+INPUT /usr/share/texmf/tex/latex/lm/t1lmtt.fd
+INPUT /usr/share/texmf/tex/latex/lm/t1lmtt.fd
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt12.tfm
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathsy.enc
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr10.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmr10.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/lmmi10.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/lmsy10.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx10.tfm
+INPUT ./3- methodology/methodology.tex
+INPUT ./3- methodology/methodology.tex
+INPUT 3- methodology/methodology.tex
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr8.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr6.tfm
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathsy.enc
-INPUT 4 - Documentation/4 - Experiments/experiments.tex
-INPUT 4 - Documentation/4 - Experiments/experiments.tex
-INPUT 4 - Documentation/4 - Experiments/experiments.tex
-INPUT 4 - Documentation/5 - evaluation/evaluation.tex
-INPUT 4 - Documentation/5 - evaluation/evaluation.tex
-INPUT 4 - Documentation/5 - evaluation/evaluation.tex
-INPUT 4 - Documentation/6 - discussion/discussion.tex
-INPUT 4 - Documentation/6 - discussion/discussion.tex
-INPUT 4 - Documentation/6 - discussion/discussion.tex
-INPUT 4 - Documentation/7 - future work/future_work.tex
-INPUT 4 - Documentation/7 - future work/future_work.tex
-INPUT 4 - Documentation/7 - future work/future_work.tex
-INPUT 4 - Documentation/8 - AI Disclousure/ai_disclosure.tex
-INPUT 4 - Documentation/8 - AI Disclousure/ai_disclosure.tex
-INPUT 4 - Documentation/8 - AI Disclousure/ai_disclosure.tex
-INPUT 4 - Documentation/9 - Referneces/references.tex
-INPUT 4 - Documentation/9 - Referneces/references.tex
-INPUT 4 - Documentation/9 - Referneces/references.tex
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmri12.tfm
-INPUT 4 - Documentation/10 - Appendixes/appendixes.tex
-INPUT 4 - Documentation/10 - Appendixes/appendixes.tex
-INPUT 4 - Documentation/10 - Appendixes/appendixes.tex
-INPUT 4 - Documentation/main.aux
-INPUT 4 - Documentation/main.out
-INPUT 4 - Documentation/main.out
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmri10.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt10.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmbx12.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmbx8.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmbx6.tfm
+INPUT ./4 - Experiments/experiments.tex
+INPUT ./4 - Experiments/experiments.tex
+INPUT 4 - Experiments/experiments.tex
+INPUT ./5 - evaluation/evaluation.tex
+INPUT ./5 - evaluation/evaluation.tex
+INPUT 5 - evaluation/evaluation.tex
+INPUT ./6 - discussion/discussion.tex
+INPUT ./6 - discussion/discussion.tex
+INPUT 6 - discussion/discussion.tex
+INPUT ./7 - future work/future_work.tex
+INPUT ./7 - future work/future_work.tex
+INPUT 7 - future work/future_work.tex
+INPUT ./8 - AI Disclousure/ai_disclosure.tex
+INPUT ./8 - AI Disclousure/ai_disclosure.tex
+INPUT 8 - AI Disclousure/ai_disclosure.tex
+INPUT ./9 - Referneces/references.tex
+INPUT ./9 - Referneces/references.tex
+INPUT 9 - Referneces/references.tex
+INPUT ./10 - Appendixes/appendixes.tex
+INPUT ./10 - Appendixes/appendixes.tex
+INPUT 10 - Appendixes/appendixes.tex
+INPUT main.aux
+INPUT ./main.out
+INPUT ./main.out
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmex10.pfb
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmmi10.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmmi12.pfb
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmmi6.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmmi8.pfb
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmr10.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmr12.pfb
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmr6.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmr8.pfb
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmri10.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmri12.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmsy8.pfb
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmtt12.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb
