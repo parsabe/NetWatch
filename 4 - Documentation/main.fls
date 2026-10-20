@@ -279,6 +279,8 @@ INPUT 9 - Referneces/references.tex
 INPUT ./10 - Appendixes/appendixes.tex
 INPUT ./10 - Appendixes/appendixes.tex
 INPUT 10 - Appendixes/appendixes.tex
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmri8.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmri7.tfm
 INPUT main.aux
 INPUT ./main.out
 INPUT ./main.out

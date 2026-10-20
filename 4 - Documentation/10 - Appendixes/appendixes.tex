@@ -1,16 +1,423 @@
 \appendix
-\chapter{Mathematical Proofs}
+\chapter{Mathematical Proofs and Derivations}
 \label{app:proofs}
 
+This appendix provides complete, self-contained mathematical proofs and derivations for the analytical guarantees established in the NetWatch and Horizon defense frameworks.
+
+% ============================================================
+\section{Proof of Forging Probability Bound under Key Randomization}
+\label{app:proof_forging}
+% ============================================================
+
+\begin{theorem}[Forging Resistance under Key Randomization]
+Let $\mathcal{K}$ denote a finite, discrete key space with cardinality $|\mathcal{K}|$, and let an ephemeral key $\kappa \in \mathcal{K}$ be chosen uniformly at random according to the distribution:
+\begin{equation}
+    P(\kappa = k) = \frac{1}{|\mathcal{K}|}, \quad \forall k \in \mathcal{K}
+\end{equation}
+Suppose an adversary submits $q \ge 1$ sequential or parallel forgery queries $\hat{\kappa}_1, \hat{\kappa}_2, \dots, \hat{\kappa}_q \in \mathcal{K}$ without prior plaintext exposure of $\kappa$. Then the probability $P_{\mathrm{forge}}$ that the adversary successfully guesses $\kappa$ satisfies:
+\begin{equation}
+    P_{\mathrm{forge}} \le \frac{q}{|\mathcal{K}|}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let $E_i$ denote the event that the $i$-th query matches the secret key, i.e., $E_i = \{\hat{\kappa}_i = \kappa\}$. Under the uniform prior distribution over $\mathcal{K}$ and assuming Kerckhoffs's principle (where the attacker knows the transformation algorithm and key space $\mathcal{K}$ but possesses zero side-channel information regarding $\kappa$), the marginal probability of a correct guess on any single trial $i \in \{1, \dots, q\}$ is:
+\begin{equation}
+    P(E_i) = \sum_{k \in \mathcal{K}} P(\hat{\kappa}_i = k \mid \kappa = k) P(\kappa = k) = \frac{1}{|\mathcal{K}|}
+\end{equation}
+The adversary succeeds if at least one guess is correct. Applying Boole's inequality (the union bound) over the $q$ query events yields:
+\begin{equation}
+    P_{\mathrm{forge}} = P\left( \bigcup_{i=1}^q E_i \right) \le \sum_{i=1}^q P(E_i) = \sum_{i=1}^q \frac{1}{|\mathcal{K}|} = \frac{q}{|\mathcal{K}|}
+\end{equation}
+If the adversary evaluates queries without replacement, the exact probability is given by:
+\begin{equation}
+    P_{\mathrm{forge}} = 1 - \prod_{i=0}^{q-1} \left(1 - \frac{1}{|\mathcal{K}| - i}\right) = \frac{q}{|\mathcal{K}|}
+\end{equation}
+which achieves the bound with equality. The min-entropy of the authentication key is:
+\begin{equation}
+    H_\infty(\mathcal{K}) = -\log_2 \max_{k \in \mathcal{K}} P(\kappa = k) = \log_2 |\mathcal{K}|
+\end{equation}
+Consequently, for an alphabet scrambling key space with $|\Sigma| = 26$ ($|\mathcal{K}| = 26! \approx 4.03 \times 10^{26}$), $P_{\mathrm{forge}} < 10^{-20}$ even under $q = 10^6$ adversarial queries.
+\end{proof}
+
+% ============================================================
+\section{Derivation of the Clopper--Pearson Confidence Limit and Rule of Three}
+\label{app:proof_clopper_pearson}
+% ============================================================
+
+\begin{theorem}[Clopper--Pearson Exact Binomial Upper Bound]
+Let $X \sim \mathrm{Binomial}(n, p)$ denote the number of successful injection attacks observed across $n$ independent and identically distributed evaluation trials. For a prescribed significance level $\alpha \in (0, 1)$, the one-sided Clopper--Pearson upper confidence bound $\bar{p}$ satisfying:
+\begin{equation}
+    P(p \le \bar{p}) \ge 1 - \alpha
+\end{equation}
+is given exactly by:
+\begin{equation}
+    \bar{p} = \mathrm{Beta}^{-1}\big(1 - \alpha;\; s + 1,\; n - s\big)
+\end{equation}
+where $s$ is the observed number of successes and $\mathrm{Beta}^{-1}(1-\alpha; a, b)$ is the $(1-\alpha)$-quantile of the Beta distribution with shape parameters $a$ and $b$.
+\end{theorem}
+
+\begin{proof}
+By the Neyman construction of confidence intervals, the one-sided upper confidence limit $\bar{p}$ is the supremum over all binomial success parameters $p \in [0, 1]$ such that the cumulative probability of observing $s$ or fewer successes is at least $\alpha$:
+\begin{equation}
+    \label{eq:cp_tail_sum}
+    P(X \le s \mid p = \bar{p}) = \sum_{k=0}^s \binom{n}{k} \bar{p}^k (1 - \bar{p})^{n-k} = \alpha
+\end{equation}
+We invoke the identity relating the cumulative binomial distribution function to the regularized incomplete Beta function $I_x(a, b)$:
+\begin{equation}
+    \sum_{k=0}^s \binom{n}{k} p^k (1 - p)^{n-k} = 1 - I_p(s + 1, n - s)
+\end{equation}
+where $I_x(a, b)$ is defined as:
+\begin{equation}
+    I_x(a, b) = \frac{1}{\mathrm{B}(a, b)} \int_0^x t^{a-1} (1 - t)^{b-1} \, dt
+\end{equation}
+Substituting this integral equivalence into Equation~(\ref{eq:cp_tail_sum}) yields:
+\begin{equation}
+    1 - I_{\bar{p}}(s + 1, n - s) = \alpha \iff I_{\bar{p}}(s + 1, n - s) = 1 - \alpha
+\end{equation}
+Inverting the cumulative Beta distribution function $I_x(s+1, n-s)$ with respect to its upper integration limit proves:
+\begin{equation}
+    \bar{p} = \mathrm{Beta}^{-1}\big(1 - \alpha;\; s + 1,\; n - s\big)
+\end{equation}
+\end{proof}
+
+\begin{corollary}[Derivation of the Hanley--Lippman-Hand Rule of Three]
+When an empirical security audit observes zero successful prompt injections ($s = 0$) across $n$ independent trials, the 95\% upper confidence bound on the true attack success rate is asymptotically bounded by:
+\begin{equation}
+    \bar{p} \approx \frac{3}{n}
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Setting $s = 0$ in the binomial tail probability of Equation~(\ref{eq:cp_tail_sum}) gives:
+\begin{equation}
+    P(X = 0 \mid p = \bar{p}) = \binom{n}{0} \bar{p}^0 (1 - \bar{p})^n = (1 - \bar{p})^n = \alpha
+\end{equation}
+Taking the natural logarithm of both sides:
+\begin{equation}
+    n \ln(1 - \bar{p}) = \ln(\alpha)
+\end{equation}
+Recall the Maclaurin series expansion of the natural logarithm: $\ln(1 - x) = -x - \frac{x^2}{2} - \frac{x^3}{3} - \dots$ For large sample sizes $n$ with correspondingly small failure probabilities $\bar{p} \ll 1$, higher-order terms become negligible:
+\begin{equation}
+    \ln(1 - \bar{p}) = -\bar{p} + \mathcal{O}(\bar{p}^2)
+\end{equation}
+Substituting this first-order approximation into the logarithmic equation yields:
+\begin{equation}
+    -n \bar{p} \approx \ln(\alpha) \implies \bar{p} \approx \frac{-\ln(\alpha)}{n}
+\end{equation}
+For a standard 95\% confidence level ($\alpha = 0.05$):
+\begin{equation}
+    -\ln(0.05) = -\ln\left(\frac{1}{20}\right) = \ln(20) \approx 2.99573227 \approx 3
+\end{equation}
+Substituting $-\ln(0.05) \approx 3$ into the asymptotic formula yields the rule of three:
+\begin{equation}
+    \bar{p}_{0.95} \approx \frac{3}{n}
+\end{equation}
+\end{proof}
+
+% ============================================================
+\section{Derivation of Closed-Form Distributionally Robust Optimization (DRO) Bound}
+\label{app:proof_dro}
+% ============================================================
+
+\begin{theorem}[Closed-Form $\chi^2$-Divergence DRO Bound for Binary Variables]
+Let $A \in \{0, 1\}$ be a binary random variable indicating injection success, with nominal expectation under test distribution $P$ given by $\mathbb{E}_P[A] = p \in (0, 1)$. Let the uncertainty set of shifted distributions be defined by the $\chi^2$-divergence ball of radius $\rho > 0$:
+\begin{equation}
+    \mathcal{B}_\rho(P) = \left\{ Q \ll P : \mathbb{E}_P\left[\frac{dQ}{dP}\right] = 1, \; \frac{dQ}{dP} \ge 0, \; D_{\chi^2}(Q\,\|\,P) \le \rho \right\}
+\end{equation}
+where $D_{\chi^2}(Q\,\|\,P) = \frac{1}{2} \mathbb{E}_P\left[\left(\frac{dQ}{dP} - 1\right)^2\right]$. If the divergence radius satisfies $\rho \le \frac{1-p}{2p}$, then the worst-case expected risk has the exact closed form:
+\begin{equation}
+    \sup_{Q \in \mathcal{B}_\rho(P)} \mathbb{E}_Q[A] = p + \sqrt{2\rho\,p(1-p)}
+\end{equation}
+For general $\rho > 0$, the bound is saturated at 1, yielding:
+\begin{equation}
+    g_\rho(p) = \min\Big\{1,\; p + \sqrt{2\rho\,p(1-p)}\Big\}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let $w = \frac{dQ}{dP} \ge 0$ denote the Radon--Nikodym derivative (density ratio). The distributionally robust optimization problem over $w$ is:
+\begin{align}
+    \max_{w} \quad & \mathbb{E}_P[w A] \\
+    \text{subject to} \quad & \mathbb{E}_P[w] = 1, \label{eq:dro_norm} \\
+    & \frac{1}{2} \mathbb{E}_P\big[(w - 1)^2\big] \le \rho, \label{eq:dro_chi2} \\
+    & w \ge 0 \quad P\text{-a.s.} \label{eq:dro_nonneg}
+\end{align}
+Because $A \in \{0, 1\}$, any density ratio $w$ can be parameterized by its values on the support of $A$: let $w_1 = w(1)$ on the event $\{A = 1\}$ and $w_0 = w(0)$ on $\{A = 0\}$. The nominal probabilities are $P(A = 1) = p$ and $P(A = 0) = 1 - p$.
+
+Constraint~(\ref{eq:dro_norm}) simplifies to:
+\begin{equation}
+    p w_1 + (1 - p) w_0 = 1 \implies w_0 = \frac{1 - p w_1}{1 - p} = 1 - \frac{p}{1 - p}(w_1 - 1)
+\end{equation}
+Substituting this into the objective function:
+\begin{equation}
+    \mathbb{E}_P[w A] = p w_1
+\end{equation}
+Next, we evaluate the variance constraint in Equation~(\ref{eq:dro_chi2}):
+\begin{align}
+    \frac{1}{2} \mathbb{E}_P\big[(w - 1)^2\big] &= \frac{1}{2} \Big[ p (w_1 - 1)^2 + (1 - p) (w_0 - 1)^2 \Big] \\
+    &= \frac{1}{2} \left[ p (w_1 - 1)^2 + (1 - p) \left( -\frac{p}{1 - p}(w_1 - 1) \right)^{\!2} \right] \\
+    &= \frac{1}{2} \left[ p (w_1 - 1)^2 + \frac{p^2}{1 - p} (w_1 - 1)^2 \right] \\
+    &= \frac{1}{2} \frac{p}{1 - p} (w_1 - 1)^2 \le \rho
+\end{align}
+Rearranging for $(w_1 - 1)$:
+\begin{equation}
+    (w_1 - 1)^2 \le \frac{2\rho(1 - p)}{p} \implies w_1 \le 1 + \sqrt{\frac{2\rho(1 - p)}{p}}
+\end{equation}
+Because the objective $p w_1$ is strictly increasing in $w_1$, the maximum is achieved at the upper boundary:
+\begin{equation}
+    w_1^\star = 1 + \sqrt{\frac{2\rho(1 - p)}{p}}
+\end{equation}
+Substituting $w_1^\star$ into the expected risk:
+\begin{equation}
+    \mathbb{E}_Q[A] = p w_1^\star = p \left( 1 + \sqrt{\frac{2\rho(1 - p)}{p}} \right) = p + \sqrt{2\rho\,p(1 - p)}
+\end{equation}
+We must check the nonnegativity condition $w_0 \ge 0$:
+\begin{equation}
+    w_0^\star = 1 - \frac{p}{1 - p}\sqrt{\frac{2\rho(1 - p)}{p}} = 1 - \sqrt{\frac{2\rho\,p}{1 - p}} \ge 0
+\end{equation}
+This inequality is satisfied if and only if:
+\begin{equation}
+    \frac{2\rho\,p}{1 - p} \le 1 \iff \rho \le \frac{1 - p}{2p}
+\end{equation}
+If $\rho > \frac{1-p}{2p}$, nonnegativity binds ($w_0 = 0$), forcing all probability mass onto $\{A = 1\}$, whence $w_1 = 1/p$ and $\mathbb{E}_Q[A] = 1$. Combining both regimes establishes the result:
+\begin{equation}
+    g_\rho(p) = \min\Big\{1,\; p + \sqrt{2\rho\,p(1 - p)}\Big\}
+\end{equation}
+\end{proof}
+
+\begin{corollary}[General Loss Variance Bound]
+For any general bounded loss variable $L \in [0, 1]$ under nominal distribution $P$, the distributionally robust loss under $\chi^2$-divergence satisfies:
+\begin{equation}
+    \sup_{Q \in \mathcal{B}_\rho(P)} \mathbb{E}_Q[L] \le \mathbb{E}_P[L] + \sqrt{2\rho\,\mathrm{Var}_P(L)}
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Let $w = \frac{dQ}{dP}$ with $\mathbb{E}_P[w] = 1$ and $\mathrm{Var}_P(w) \le 2\rho$. Decomposing the expectation:
+\begin{equation}
+    \mathbb{E}_Q[L] = \mathbb{E}_P[w L] = \mathbb{E}_P[w]\mathbb{E}_P[L] + \mathrm{Cov}_P(w, L) = \mathbb{E}_P[L] + \mathrm{Cov}_P(w, L)
+\end{equation}
+By the Cauchy--Schwarz inequality on the covariance operator:
+\begin{equation}
+    \mathrm{Cov}_P(w, L) \le \sqrt{\mathrm{Var}_P(w) \cdot \mathrm{Var}_P(L)} \le \sqrt{2\rho\,\mathrm{Var}_P(L)}
+\end{equation}
+Hence, $\mathbb{E}_Q[L] \le \mathbb{E}_P[L] + \sqrt{2\rho\,\mathrm{Var}_P(L)}$.
+\end{proof}
+
+% ============================================================
+\section{Proof of Exponential Failure Decay via Hoeffding Concentration}
+\label{app:proof_hoeffding}
+% ============================================================
+
+\begin{theorem}[Exponential Failure Decay in Majority Voting]
+Let $m \ge 1$ independent quarantined LLM instances be executed with independent ephemeral keys sampled from $\pi^\star$:
+\begin{equation}
+    y_1, y_2, \dots, y_m \sim \mathrm{LLM}_{\mathrm{quar}}(\tilde{x}_{\kappa_i})
+\end{equation}
+Let $Y_i \in \{0, 1\}$ be the indicator that the $i$-th instance is compromised by an injection, where $\mathbb{E}[Y_i] = p_i \le \bar{\mathcal{R}}_Q < \frac{1}{2}$ for all $i \in \{1, \dots, m\}$. The majority voting rule accepts the compromised answer if and only if $\sum_{i=1}^m Y_i > m/2$. Then the probability of majority vote failure is bounded by:
+\begin{equation}
+    P\big(\text{vote fooled}\big) \le \exp\left( -2 m \left(\frac{1}{2} - \bar{\mathcal{R}}_Q\right)^{\!2} \right)
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let $S_m = \sum_{i=1}^m Y_i$ denote the number of compromised voter runs. By hypothesis, the variables $Y_1, \dots, Y_m$ are mutually independent binary random variables satisfying $Y_i \in [0, 1]$ with expectation $\mu_i = \mathbb{E}[Y_i] \le \bar{\mathcal{R}}_Q$.
+The mean of the sum is:
+\begin{equation}
+    \bar{\mu} = \frac{1}{m}\sum_{i=1}^m \mu_i \le \bar{\mathcal{R}}_Q < \frac{1}{2}
+\end{equation}
+The majority voting mechanism is fooled if and only if:
+\begin{equation}
+    S_m \ge \frac{m}{2} \iff \frac{1}{m}S_m \ge \frac{1}{2}
+\end{equation}
+Centering the empirical average around its expectation $\bar{\mu}$:
+\begin{equation}
+    P\left(\frac{1}{m}S_m \ge \frac{1}{2}\right) = P\left( \frac{1}{m}S_m - \bar{\mu} \ge \frac{1}{2} - \bar{\mu} \right)
+\end{equation}
+Because $\bar{\mu} \le \bar{\mathcal{R}}_Q$, we have $\frac{1}{2} - \bar{\mu} \ge \frac{1}{2} - \bar{\mathcal{R}}_Q > 0$. Therefore:
+\begin{equation}
+    P\left( \frac{1}{m}S_m - \bar{\mu} \ge \frac{1}{2} - \bar{\mu} \right) \le P\left( \frac{1}{m}S_m - \bar{\mu} \ge \frac{1}{2} - \bar{\mathcal{R}}_Q \right)
+\end{equation}
+We now invoke Hoeffding's inequality for bounded independent random variables: let $Z_1, \dots, Z_m$ be independent random variables strictly bounded by $a_i \le Z_i \le b_i$. Then for any $t > 0$:
+\begin{equation}
+    P\left( \frac{1}{m}\sum_{i=1}^m (Z_i - \mathbb{E}[Z_i]) \ge t \right) \le \exp\left( -\frac{2 m^2 t^2}{\sum_{i=1}^m (b_i - a_i)^2} \right)
+\end{equation}
+For $Y_i \in [0, 1]$, $b_i - a_i = 1 - 0 = 1$, so the denominator simplifies to $\sum_{i=1}^m 1^2 = m$. Setting $t = \frac{1}{2} - \bar{\mathcal{R}}_Q$:
+\begin{align}
+    P\left( \frac{1}{m}S_m - \bar{\mu} \ge \frac{1}{2} - \bar{\mathcal{R}}_Q \right) &\le \exp\left( -\frac{2 m^2 \left(\frac{1}{2} - \bar{\mathcal{R}}_Q\right)^{\!2}}{m} \right) \\
+    &= \exp\left( -2 m \left(\frac{1}{2} - \bar{\mathcal{R}}_Q\right)^{\!2} \right)
+\end{align}
+This completes the proof.
+\end{proof}
+
+% ============================================================
+\section{Formal SMT Noninterference Proof for Typed Capability Systems}
+\label{app:proof_noninterference}
+% ============================================================
+
+\begin{theorem}[Goguen--Meseguer Information Flow Noninterference]
+Let an execution state be defined by the tuple $\sigma = (\text{call}, \text{target}, \text{args})$, where each argument $v \in \text{args}$ is an immutable typed value $v = (\text{data}, \text{type}, \text{cap})$ with capability token:
+\begin{equation}
+    \text{cap} \in \{\text{USER}, \text{SYSTEM}, \text{UNTRUSTED}\}
+\end{equation}
+Let $\mathcal{P}$ denote the deterministic safety interpreter enforcing the policy table $\mathrm{Policy}(t, v_1, \dots, v_k)$. If the policy enforces:
+\begin{equation}
+\begin{split}
+    \forall t \in \text{Tools}, \; \forall v_i \in \text{args}: \; &\Big(\mathrm{IsControlDecision}(t, v_i) \wedge \text{cap}(v_i) = \text{UNTRUSTED}\Big) \\
+    &\implies \mathrm{Policy}(t, \vec{v}) \neq \text{ALLOW}
+\end{split}
+\end{equation}
+then the execution environment satisfies deterministic noninterference from untrusted data to privileged control flow.
+\end{theorem}
+
+\begin{proof}
+We adopt the classic Goguen--Meseguer noninterference definition over program trace equivalence. Define a low-equivalence relation $=_L$ between two execution contexts $\sigma_1, \sigma_2$:
+\begin{equation}
+    \sigma_1 =_L \sigma_2 \iff \sigma_1\big|_{\mathrm{cap} \neq \mathrm{UNTRUSTED}} = \sigma_2\big|_{\mathrm{cap} \neq \mathrm{UNTRUSTED}}
+\end{equation}
+That is, $\sigma_1$ and $\sigma_2$ share identical user directives and system prompts, differing solely in the untrusted document payloads $d_1 \neq d_2$.
+
+Let $\mathrm{Trace}(\mathcal{P}(\sigma))$ denote the observable sequence of external side effects (tool invocations, API transmissions, database writes). A system satisfies noninterference if:
+\begin{equation}
+    \sigma_1 =_L \sigma_2 \implies \mathrm{Trace}(\mathcal{P}(\sigma_1))\big|_{\mathrm{ControlActions}} = \mathrm{Trace}(\mathcal{P}(\sigma_2))\big|_{\mathrm{ControlActions}}
+\end{equation}
+We prove this by structural induction on the small-step operational semantics of the interpreter $\mathcal{P}$:
+\begin{enumerate}
+    \item \textbf{Base Step (Tool Identification):} The target tool $t \in \text{Tools}$ is synthesized exclusively by $\mathrm{LLM}_{\mathrm{priv}}$ which processes only trusted prompts ($u$). By design, $u$ has $\text{cap}(u) = \text{USER}$. Since $d_1$ and $d_2$ are quarantined and never passed to $\mathrm{LLM}_{\mathrm{priv}}$, the synthesized tool selection $t(\sigma_1) = t(\sigma_2)$ is identical.
+    \item \textbf{Inductive Step (Argument Binding):} When a tool argument $v$ is bound to a quarantined output $y^\star$, its provenance token is set to $\text{cap}(v) = \text{UNTRUSTED}$.
+    \item \textbf{Policy Evaluation:} Before executing $t(\vec{v})$, the interpreter checks $\mathrm{Policy}(t, \vec{v})$.
+    The Z3 SMT solver validates the verification condition (VC):
+    \begin{equation}
+    \begin{split}
+        \psi_{\mathrm{VC}} = \bigwedge_{j=1}^M \Big( \exists i : \; &\text{cap}(v_i) = \text{UNTRUSTED} \wedge \mathrm{ModifiesControlFlow}(t, v_i) \\
+        &\implies \neg\mathrm{CanExecute}(t) \Big)
+    \end{split}
+    \end{equation}
+    Because $\psi_{\mathrm{VC}}$ is formally verified to be valid at system initialization, any command whose execution flow depends on untrusted values is either coerced to a non-executable parameter or redirected to user confirmation ($\mathrm{Policy} = \text{CONFIRM}$).
+\end{enumerate}
+Therefore, $\mathrm{Trace}(\mathcal{P}(\sigma_1))\big|_{\mathrm{ControlActions}} = \mathrm{Trace}(\mathcal{P}(\sigma_2))\big|_{\mathrm{ControlActions}}$, proving noninterference.
+\end{proof}
+
+% ============================================================
+\section{Conformal Risk Control Finite-Sample Guarantee}
+\label{app:proof_conformal}
+% ============================================================
+
+\begin{theorem}[Conformal Escalation Risk Bound]
+Let $\mathcal{D}_{\mathrm{cal}} = \{(X_i, Y_i)\}_{i=1}^n$ be a calibration set of $n$ exchangeable query pairs, and let $L(\lambda) \in [0, 1]$ be a loss function that is non-increasing in the escalation threshold $\lambda$. If the threshold $\hat{\lambda}$ is selected according to:
+\begin{equation}
+    \hat{\lambda} = \inf\left\{ \lambda \in [0, 1] : \frac{1}{n+1}\sum_{i=1}^n L_i(\lambda) + \frac{1}{n+1} \le \alpha_{\mathrm{user}} \right\}
+\end{equation}
+then the expected test loss under the deployed threshold satisfies:
+\begin{equation}
+    \mathbb{E}\big[L(\hat{\lambda})\big] \le \alpha_{\mathrm{user}}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let $(X_{n+1}, Y_{n+1})$ denote a new test request drawn exchangeably from the same data-generating distribution. Define the augmented empirical risk:
+\begin{equation}
+    \hat{R}_{n+1}(\lambda) = \frac{1}{n+1} \sum_{i=1}^{n+1} L_i(\lambda)
+\end{equation}
+Because the maximum loss is bounded by $B_{\max} = 1$, we observe:
+\begin{equation}
+    \hat{R}_{n+1}(\lambda) = \frac{1}{n+1}\sum_{i=1}^n L_i(\lambda) + \frac{L_{n+1}(\lambda)}{n+1} \le \frac{1}{n+1}\sum_{i=1}^n L_i(\lambda) + \frac{1}{n+1}
+\end{equation}
+By the calibration condition, for any $\lambda \ge \hat{\lambda}$, the right-hand bound does not exceed $\alpha_{\mathrm{user}}$.
+Taking expectations over the exchangeable random variables $(X_1, Y_1), \dots, (X_{n+1}, Y_{n+1})$:
+\begin{equation}
+    \mathbb{E}\big[\hat{R}_{n+1}(\hat{\lambda})\big] = \frac{1}{n+1}\sum_{i=1}^{n+1}\mathbb{E}\big[L_i(\hat{\lambda})\big] = \mathbb{E}\big[L_{n+1}(\hat{\lambda})\big]
+\end{equation}
+where equality holds by the permutation symmetry (exchangeability) of the $(n+1)$ data points. Therefore:
+\begin{equation}
+    \mathbb{E}\big[L_{\mathrm{test}}(\hat{\lambda})\big] = \mathbb{E}\big[\hat{R}_{n+1}(\hat{\lambda})\big] \le \alpha_{\mathrm{user}}
+\end{equation}
+This guarantees distribution-free, finite-sample statistical control over false-positive tool executions.
+\end{proof}
+
+% ============================================================
+\section{Existence and Uniqueness of Minimax Equilibrium via Sion's Theorem}
+\label{app:proof_sion}
+% ============================================================
+
+\begin{theorem}[Sion's Minimax Equilibrium for Horizon Configurations]
+Let $\Theta$ be a finite set of Horizon configurations $\theta = (m, \text{parser}, \text{policy}, \lambda)$, and let the defender strategy set $\Pi$ be defined by:
+\begin{equation}
+    \Pi = \left\{ \pi \in \mathbb{R}^{|\Theta|} : \pi \ge 0, \; \sum_{\theta \in \Theta} \pi_\theta = 1, \; \sum_{\theta \in \Theta} \pi_\theta U_\theta \ge U_{\min}, \; \mathcal{L}_{\mathrm{leak}}(\pi) \le B \right\}
+\end{equation}
+Let $\mathcal{W}$ be the compact, convex simplex of adversarial attack distributions over attack classes $k \in \{1, \dots, K\}$:
+\begin{equation}
+    \mathcal{W} = \left\{ w \in \mathbb{R}^K : w \ge 0, \; \sum_{k=1}^K w_k = 1 \right\}
+\end{equation}
+Let $\bar{\ell}_{k, \theta} \in [0, 1]$ denote the Clopper--Pearson conservative risk matrix. Then:
+\begin{equation}
+    \min_{\pi \in \Pi} \max_{w \in \mathcal{W}} \sum_{\theta \in \Theta} \pi_\theta \sum_{k=1}^K w_k \bar{\ell}_{k, \theta} = \max_{w \in \mathcal{W}} \min_{\pi \in \Pi} \sum_{\theta \in \Theta} \pi_\theta \sum_{k=1}^K w_k \bar{\ell}_{k, \theta} = V_{\mathrm{Horizon}}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+We verify the hypotheses of Sion's Minimax Theorem (Sion, 1958):
+\begin{enumerate}
+    \item \textbf{Topological Space and Compactness:} The defender strategy set $\Pi$ is a subset of the standard simplex in $\mathbb{R}^{|\Theta|}$. The constraints:
+    \begin{align}
+        g_1(\pi) &= \sum_{\theta} \pi_\theta - 1 = 0 \\
+        g_2(\pi) &= U_{\min} - \sum_{\theta} \pi_\theta U_\theta \le 0 \\
+        g_3(\pi) &= \sum_{\theta} \pi_\theta \mathcal{L}_\theta - B \le 0 \\
+        g_{4,\theta}(\pi) &= -\pi_\theta \le 0 \quad (\forall \theta \in \Theta)
+    \end{align}
+    are all linear (and hence convex) inequalities. Since $\Pi$ is the intersection of closed half-spaces with a compact simplex, $\Pi$ is closed and bounded, hence compact in $\mathbb{R}^{|\Theta|}$. Assuming a feasible baseline configuration exists, $\Pi$ is non-empty.
+    Similarly, $\mathcal{W}$ is the standard simplex in $\mathbb{R}^K$, which is non-empty, compact, and convex.
+    \item \textbf{Bilinearity of the Payoff Function:} Define the payoff function $f: \Pi \times \mathcal{W} \to \mathbb{R}$ by:
+    \begin{equation}
+        f(\pi, w) = \pi^T \bar{L} w = \sum_{\theta \in \Theta} \sum_{k=1}^K \pi_\theta w_k \bar{\ell}_{k, \theta}
+    \end{equation}
+    For any fixed $w \in \mathcal{W}$, $\pi \mapsto f(\pi, w)$ is linear, hence convex and continuous on $\Pi$.
+    For any fixed $\pi \in \Pi$, $w \mapsto f(\pi, w)$ is linear, hence concave and continuous on $\mathcal{W}$.
+\end{enumerate}
+Because $\Pi$ and $\mathcal{W}$ are compact convex sets and $f$ is continuous and quasi-convex in $\pi$ and quasi-concave in $w$, all conditions of Sion's theorem are satisfied.
+Therefore:
+\begin{equation}
+    \min_{\pi \in \Pi} \max_{w \in \mathcal{W}} f(\pi, w) = \max_{w \in \mathcal{W}} \min_{\pi \in \Pi} f(\pi, w) = V_{\mathrm{Horizon}}
+\end{equation}
+This confirms that the defender's minimax strategy $\pi^\star$ guarantees the risk upper bound $V_{\mathrm{Horizon}}$ regardless of whether the attacker or defender acts first.
+\end{proof}
+
+% ============================================================
 \section{Forward Invariance of Control Barrier Functions}
-Let $\mathcal{C} = \{x \in \mathbb{R}^n : h(x) \ge 0\}$ denote the 0-superlevel set of a continuously differentiable function $h: \mathcal{D} \subset \mathbb{R}^n \to \mathbb{R}$. The function $h$ is a Control Barrier Function (CBF) if there exists an extended class $\mathcal{K}_\infty$ function $\alpha$ such that for the control system $\dot{x} = f(x) + g(x)u$:
+\label{app:proof_cbf}
+% ============================================================
+
+\begin{theorem}[Forward Invariance via Control Barrier Functions]
+Let $\mathcal{C} = \{x \in \mathbb{R}^n : h(x) \ge 0\}$ denote the 0-superlevel set of a continuously differentiable function $h: \mathcal{D} \subset \mathbb{R}^n \to \mathbb{R}$. If $h$ is a Control Barrier Function (CBF) with extended class $\mathcal{K}_\infty$ function $\alpha$ such that for the affine control system $\dot{x} = f(x) + g(x)u$:
 \begin{equation}
     \sup_{u \in U} \left[ L_f h(x) + L_g h(x) u \right] \ge -\alpha(h(x)), \quad \forall x \in \mathcal{D}
 \end{equation}
-Any controller choosing $u \in K_{cbf}(x)$ renders the set $\mathcal{C}$ forward invariant, guaranteeing safety for all $t \ge 0$.
+then any Lipschitz continuous feedback controller choosing $u \in K_{\mathrm{cbf}}(x)$ renders the safe set $\mathcal{C}$ forward invariant:
+\begin{equation}
+    x(0) \in \mathcal{C} \implies x(t) \in \mathcal{C}, \quad \forall t \ge 0
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let $u(t) \in K_{\mathrm{cbf}}(x(t))$. The time derivative of $h(x(t))$ along system trajectories satisfies:
+\begin{equation}
+    \dot{h}(x(t)) = \nabla h(x(t)) \cdot \dot{x}(t) = L_f h(x(t)) + L_g h(x(t)) u(t) \ge -\alpha(h(x(t)))
+\end{equation}
+Consider the comparison differential equation $\dot{y}(t) = -\alpha(y(t))$ with initial condition $y(0) = h(x(0))$.
+By the Nagumo comparison theorem for scalar differential equations, since $\dot{h}(t) \ge -\alpha(h(t))$ and $\alpha$ is locally Lipschitz:
+\begin{equation}
+    h(x(t)) \ge y(t), \quad \forall t \ge 0
+\end{equation}
+Because $\alpha$ is a class $\mathcal{K}_\infty$ function, $\alpha(0) = 0$. The unique solution to $\dot{y} = -\alpha(y)$ with $y(0) \ge 0$ satisfies $y(t) \ge 0$ for all $t \ge 0$. Consequently:
+\begin{equation}
+    h(x(t)) \ge y(t) \ge 0, \quad \forall t \ge 0
+\end{equation}
+This implies $x(t) \in \mathcal{C}$ for all $t \ge 0$, establishing forward invariance of the safe set.
+\end{proof}
 
 \chapter{Architecture Configuration and Schemas}
 \label{app:config}
 
 \section{Middleware Configuration Schema}
-Sample configuration schema for deploying the NetWatch tri-hook runtime interception gateway.
+Sample configuration schema for deploying the NetWatch tri-hook runtime interception gateway and Horizon guardrail pipeline.

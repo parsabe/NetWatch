@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Debian) (preloaded format=pdflatex 2026.10.1)  20 OCT 2026 21:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Debian) (preloaded format=pdflatex 2026.10.1)  20 OCT 2026 22:12
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -426,8 +426,10 @@ Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 25.
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 31
+\c@theorem=\count326
+\c@definition=\count327
+Package hyperref Info: Option `colorlinks' set `true' on input line 34.
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 40
 .
 
 (/usr/share/texmf/tex/latex/lm/t1lmr.fd
@@ -435,41 +437,41 @@ File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 (/usr/share/texlive/texmf-dist/tex/latex/l3kernel/l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-08-10 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count326
+\l__color_backend_stack_int=\count328
 )
 (./main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
  (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count327
+\scratchcounter=\count329
 \scratchdimen=\dimen192
 \scratchbox=\box58
-\nofMPsegments=\count328
-\nofMParguments=\count329
+\nofMPsegments=\count330
+\nofMParguments=\count331
 \everyMPshowfont=\toks35
-\MPscratchCnt=\count330
+\MPscratchCnt=\count332
 \MPscratchDim=\dimen193
-\MPnumerator=\count331
-\makeMPintoPDFobject=\count332
+\MPnumerator=\count333
+\makeMPintoPDFobject=\count334
 \everyMPtoPDFconversion=\toks36
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -514,18 +516,18 @@ e
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-Package hyperref Info: Link coloring ON on input line 31.
+Package hyperref Info: Link coloring ON on input line 40.
 (./main.out) (./main.out)
 \@outlinefile=\write3
 \openout3 = `main.out'.
 
-LaTeX Info: Redefining \microtypecontext on input line 31.
-Package microtype Info: Applying patch `item' on input line 31.
-Package microtype Info: Applying patch `toc' on input line 31.
-Package microtype Info: Applying patch `eqnum' on input line 31.
-Package microtype Info: Applying patch `footnote' on input line 31.
-Package microtype Info: Applying patch `verbatim' on input line 31.
-LaTeX Info: Redefining \microtypesetup on input line 31.
+LaTeX Info: Redefining \microtypecontext on input line 40.
+Package microtype Info: Applying patch `item' on input line 40.
+Package microtype Info: Applying patch `toc' on input line 40.
+Package microtype Info: Applying patch `eqnum' on input line 40.
+Package microtype Info: Applying patch `footnote' on input line 40.
+Package microtype Info: Applying patch `verbatim' on input line 40.
+LaTeX Info: Redefining \microtypesetup on input line 40.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -541,7 +543,7 @@ Package microtype Info: No adjustment of character kerning.
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
 (RS)
 )
-\c@lstlisting=\count333
+\c@lstlisting=\count335
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/
@@ -550,7 +552,7 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.38 \tableofcontents
+l.47 \tableofcontents
                       [1
 
 ] (./main.toc
@@ -739,9 +741,17 @@ Chapter 7.
 Appendix A.
 [29
 
-]
+] [30] [31] [32] [33]
+Overfull \hbox (11.74805pt too wide) in paragraph at lines 263--265
+\T1/lmr/m/it/12 (-20) Let $\OMS/lmsy/m/n/12 P$ \T1/lmr/m/it/12 (-20) de-note th
+e de-ter-min-is-tic safety in-ter-preter en-forc-ing the pol-icy ta-ble $[]\OT1
+/lmr/m/n/12 (-20) (\OML/lmm/m/it/12 t; v[]; [] ; v[]\OT1/lmr/m/n/12 (-20) )$\T1
+/lmr/m/it/12 (-20) .
+ []
+
+[34] [35] [36] [37] [38]
 Appendix B.
-) [30
+) [39
 
 ] (./main.aux)
  ***********
@@ -749,16 +759,16 @@ LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: BAA122BC12981FD61FF7A7388A59FE61;10891.
+(rerunfilecheck)             Checksum: 601B52DE6C7B3B02491F7B2198B7C42E;13707.
  ) 
 Here is how much of TeX's memory you used:
- 15232 strings out of 469013
- 235142 string characters out of 5457712
- 692943 words of memory out of 5000000
- 43601 multiletter control sequences out of 15000+600000
- 718358 words of font info for 219 fonts, out of 8000000 for 9000
+ 15477 strings out of 469013
+ 238436 string characters out of 5457712
+ 697337 words of memory out of 5000000
+ 43680 multiletter control sequences out of 15000+600000
+ 729909 words of font info for 250 fonts, out of 8000000 for 9000
  59 hyphenation exceptions out of 8191
- 74i,12n,79p,1123b,576s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 74i,19n,79p,1123b,674s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/ty
 pe1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmex10.pfb></u
 sr/share/texmf/fonts/type1/public/lm/lmmi10.pfb></usr/share/texmf/fonts/type1/p
@@ -771,10 +781,10 @@ pe1/public/lm/lmri12.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb></u
 sr/share/texmf/fonts/type1/public/lm/lmsy8.pfb></usr/share/texmf/fonts/type1/pu
 blic/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt12.pfb></usr/sha
 re/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on main.pdf (31 pages, 425886 bytes).
+Output written on main.pdf (40 pages, 478998 bytes).
 PDF statistics:
- 726 PDF objects out of 1000 (max. 8388607)
- 645 compressed objects within 7 object streams
- 200 named destinations out of 1000 (max. 500000)
- 50561 words of extra memory for PDF output out of 51595 (max. 10000000)
+ 919 PDF objects out of 1000 (max. 8388607)
+ 827 compressed objects within 9 object streams
+ 306 named destinations out of 1000 (max. 500000)
+ 54713 words of extra memory for PDF output out of 61914 (max. 10000000)
 

@@ -64,7 +64,14 @@
 \contentsline {section}{\numberline {7.3}Multi-Agent Swarm Defense Protocols}{24}{section.7.3}%
 \contentsline {chapter}{AI Disclosure}{25}{chapter*.25}%
 \contentsline {chapter}{References}{26}{chapter*.26}%
-\contentsline {chapter}{\numberline {A}Mathematical Proofs}{29}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Forward Invariance of Control Barrier Functions}{29}{appendix.A.1}%
-\contentsline {chapter}{\numberline {B}Architecture Configuration and Schemas}{30}{appendix.B}%
-\contentsline {section}{\numberline {B.1}Middleware Configuration Schema}{30}{appendix.B.1}%
+\contentsline {chapter}{\numberline {A}Mathematical Proofs and Derivations}{29}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Proof of Forging Probability Bound under Key Randomization}{29}{appendix.A.1}%
+\contentsline {section}{\numberline {A.2}Derivation of the Clopper--Pearson Confidence Limit and Rule of Three}{30}{appendix.A.2}%
+\contentsline {section}{\numberline {A.3}Derivation of Closed-Form Distributionally Robust Optimization (DRO) Bound}{31}{appendix.A.3}%
+\contentsline {section}{\numberline {A.4}Proof of Exponential Failure Decay via Hoeffding Concentration}{33}{appendix.A.4}%
+\contentsline {section}{\numberline {A.5}Formal SMT Noninterference Proof for Typed Capability Systems}{34}{appendix.A.5}%
+\contentsline {section}{\numberline {A.6}Conformal Risk Control Finite-Sample Guarantee}{35}{appendix.A.6}%
+\contentsline {section}{\numberline {A.7}Existence and Uniqueness of Minimax Equilibrium via Sion's Theorem}{36}{appendix.A.7}%
+\contentsline {section}{\numberline {A.8}Forward Invariance of Control Barrier Functions}{37}{appendix.A.8}%
+\contentsline {chapter}{\numberline {B}Architecture Configuration and Schemas}{39}{appendix.B}%
+\contentsline {section}{\numberline {B.1}Middleware Configuration Schema}{39}{appendix.B.1}%
