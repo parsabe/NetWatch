@@ -1,0 +1,6 @@
+{
+  "latex-workshop.latex.autoBuild.run": "onFileChange",
+  "latex-workshop.latex.rootFile.useSubFile": true,
+  "latex-workshop.latex.rootFile.doNotPrompt": false,
+  "latex-workshop.view.pdf.viewer": "tab"
+}
