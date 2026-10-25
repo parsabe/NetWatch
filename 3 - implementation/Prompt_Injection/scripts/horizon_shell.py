@@ -128,8 +128,45 @@ class App:
         self.notes = notes
         self.log.write("config", overrides=self.overrides, notes=notes, flags=self.cfg.flags.model_dump())
 
-    def step(self, i: int, n: int, title: str, plain: str = "") -> None:
+    def who(self, role: str) -> str:
+        """Which software / model does a step (names come from the live config)."""
+        c, m = self.cfg, self.cfg.models
+        via = "LiteLLM → role proxy → Ollama (GPU)"
+        return {
+            "guard_in": f"LlamaFirewall + Prompt Guard 2 ({c.direct['prompt_guard_model']}) · transformers on CPU",
+            "scan": "regex pre-scan in horizon/shell_engine.py (plain Python, no AI)",
+            "stage1": "horizon/stage1/transforms.py + keys.py (key from Python `secrets`)",
+            "target": f"{m['q_llm']} via {via}",
+            "canary": "horizon/stage1/canary.py (exact string match, no AI)",
+            "stats": "horizon/stage1/stats.py (scipy Beta⁻¹, χ²-DRO, numpy)",
+            "z3": "Z3 SMT solver · horizon/stage2/z3_check.py + config/policy.yaml",
+            "world": "AgentDojo simulated environment (no real emails / money / web)",
+            "planner": f"P-LLM {m['p_llm']} via {via}",
+            "interp": "CaMeL interpreter (third_party/camel, STRICT mode)",
+            "reader": f"Q-LLM {m['q_llm']} × m via {via} · Stage 1 transform per run",
+            "parser": "Pydantic schema · horizon/stage2/schemas.py",
+            "vote": "horizon/stage2/vote.py (majority + Hoeffding)",
+            "policy": "horizon/stage2/policy.py + camel_adapter.py (labels SYSTEM ⊑ USER ⊑ UNTRUSTED)",
+            "crc": "horizon/stage2/conformal.py (λ̂ from calibration) + you",
+            "guard_out": f"canary check + Llama Guard ({c.direct['llama_guard_model']}) · transformers on CPU",
+            "judge": "AgentDojo task checks + attacker-entity match (horizon/shell_engine.py)",
+            "log": f"SessionLog → {c.shell['log_dir']}/session_*.jsonl",
+        }[role]
+
+    def plan(self, title: str, rows: list[tuple[str, str]]) -> None:
+        """Print what is about to happen and who does each step, before running it."""
+        t = Table(title=f"Plan · {title}", show_lines=False, title_justify="left")
+        t.add_column("#", style="bold")
+        t.add_column("what happens")
+        t.add_column("who does it", style="magenta")
+        for i, (what, role) in enumerate(rows, 1):
+            t.add_row(str(i), what, self.who(role))
+        con.print(t)
+
+    def step(self, i: int, n: int, title: str, plain: str = "", who: str = "") -> None:
         con.print(f"\n[bold blue]Step {i}/{n} · {title}[/]")
+        if who:
+            con.print(f"  [magenta]⚙ {self.who(who)}[/]")
         if plain:
             con.print(f"  [dim]{plain}[/]")
 
@@ -216,11 +253,17 @@ class App:
             return
         self.history.append({"mode": "document", "text": task})
         N = 5
-        self.step(1, N, "Check your request", "The direct layer looks at what YOU typed (jailbreak check).")
+        self.plan("Stage 1 on one document", [("check your request", "guard_in"), ("scan the outside document", "scan"),
+                                               ("mark it with a fresh secret key", "stage1"), ("the AI answers", "target"),
+                                               ("did the attack work? (code word)", "canary"),
+                                               ("update the running statistics", "stats"), ("write the log", "log")])
+        self.step(1, N, "Check your request", "The direct layer looks at what YOU typed (jailbreak check).",
+                  who="guard_in")
         if not self.check_input(task):
             return
         self.step(2, N, "Look at the outside document",
-                  "A quick scan for instruction-like text. It only decides whether to ask you — it is not the defense.")
+                  "A quick scan for instruction-like text. It only decides whether to ask you — it is not the defense.",
+                  who="scan")
         self.info(f"document: {len(self.samples)} part(s), {sum(len(s.text) for s in self.samples)} characters "
                   "(untrusted — written by someone else)")
         flagged = {s.name: scan_untrusted(s.text) for s in self.samples}
@@ -245,7 +288,8 @@ class App:
             self.info("[green]nothing suspicious found[/]")
         variant, pi = self.s1.choose(self.stage1_variant)
         self.step(3, N, "Hide the document with a secret key (Stage 1)",
-                  "The document is marked/scrambled with a key made just for this request. Your request is NOT changed.")
+                  "The document is marked/scrambled with a key made just for this request. Your request is NOT changed.",
+                  who="stage1")
         self.info(f"marking used: [bold]{variant}[/]" + ("  (drawn from the best mix π*)" if pi else ""))
         with con.status("Step 4 · the AI is answering …"):
             r = self.s1.run(task, self.samples, variant)
@@ -258,8 +302,8 @@ class App:
             con.print(Panel(short(r.system, n), title="system prompt S_κ (contains the key)", border_style="dim"))
             con.print(Panel(short(r.user, n), title="what the AI receives: your task ‖ marked document",
                             border_style="dim"))
-        self.step(4, N, "The AI answers", f"took {r.seconds:.0f} s")
-        self.step(5, N, "Did the attack work?", "We look for each attack's code word in the answer.")
+        self.step(4, N, "The AI answers", f"took {r.seconds:.0f} s", who="target")
+        self.step(5, N, "Did the attack work?", "We look for each attack's code word in the answer.", who="canary")
         attacks = {k: v for k, v in r.executed.items() if k != "clean_control"}
         hits = [k for k, v in attacks.items() if v]
         for k, v in r.executed.items():
@@ -276,7 +320,8 @@ class App:
             con.print(Panel(r.reply, title=f"Result: all {len(attacks)} hidden instruction(s) ignored ✓",
                             border_style="green"))
         row = next(x for x in self.s1.tally_rows() if x["variant"] == variant)
-        self.info(f"so far with '{variant}': attack worked {row['s']} of {row['n']} time(s)")
+        self.info(f"so far with '{variant}': attack worked {row['s']} of {row['n']} time(s)  "
+                  f"[magenta]⚙ {self.who('stats')}[/]")
         self.math(f"p̂={row['p_hat']:.2f} · Clopper–Pearson p̄={row['p_bar']:.3f} · "
                   f"DRO g_ρ(p̄)={row['g_rho']:.3f} (ρ={self.cfg.theory['rho_main']})")
 
@@ -327,36 +372,47 @@ class App:
         s2 = self._s2
         self.history.append({"mode": "agent", "text": prompt})
         self._n = 0
+        self.plan("Stage 2 agent run", [("prove the rule table", "z3"), ("check your request", "guard_in"),
+                                         ("planner writes a program from YOUR request only", "planner"),
+                                         ("run the program, track labels", "interp"),
+                                         ("call tools in the simulated world", "world"),
+                                         ("read outside data with m isolated readers", "reader"),
+                                         ("check each reader's answer format", "parser"),
+                                         ("vote on the readers' answers", "vote"),
+                                         ("ALLOW / DENY / CONFIRM each tool call", "policy"),
+                                         ("risky call: deny or ask you", "crc"), ("check the final answer", "guard_out"),
+                                         ("score the run", "judge"), ("write the log", "log")])
         if s2._built is None:
             with con.status("Checking the rule table with the Z3 prover …"):
                 b = s2.built()
             self.event_line("🔒", "Rules verified",
                             f"Z3 proved for all {len(s2.suite.tools)} tools: data from outside can never trigger an "
-                            "action on its own." if self.cfg.flags.use_policy else "[yellow]rule check is switched off[/]")
+                            "action on its own." if self.cfg.flags.use_policy else "[yellow]rule check is switched off[/]", who="z3")
             self.log.write("z3", suite=s2.suite_name, proved=self.cfg.flags.use_policy, pipeline=b.pipeline.name)
         planted = ", ".join(x.name for x in s2.injection_samples) if s2.injection_text else (
             f"AgentDojo attack {s2.attack[0]}" if s2.attack else "nothing (clean world)")
-        self.event_line("🌍", f"World '{s2.suite_name}'", f"attack planted in its outside sources: {planted}")
+        self.event_line("🌍", f"World '{s2.suite_name}'", f"attack planted in its outside sources: {planted}", who="world")
         out = s2.run(prompt=None if user_task else prompt, user_task_id=user_task)
         self.log.write("stage2_run", **out.__dict__)
         self.summarize_stage2(out)
 
-    def event_line(self, icon: str, title: str, text: str = "") -> None:
+    def event_line(self, icon: str, title: str, text: str = "", who: str = "") -> None:
         self._n += 1
-        con.print(f"\n[bold cyan]{self._n:>2} {icon} {title}[/]" + (f"\n     {text}" if text else ""))
+        con.print(f"\n[bold cyan]{self._n:>2} {icon} {title}[/]" + (f"\n     [magenta]⚙ {self.who(who)}[/]" if who else "")
+                  + (f"\n     {text}" if text else ""))
 
     def on_event(self, kind: str, d: dict) -> None:
         """Live events from the agent pipeline, in plain words (maths only in detailed mode)."""
         self.log.write(kind, **d)
         if kind == "input_guard":
             self.event_line("🛡", "Your request checked",
-                            "[red]blocked as a jailbreak[/]" if d["blocked"] else "[green]looks fine[/]")
+                            "[red]blocked as a jailbreak[/]" if d["blocked"] else "[green]looks fine[/]", who="guard_in")
         elif kind == "program":
-            self.event_line("🧠", "Planner wrote a plan", "The planner only saw YOUR request, never the outside data.")
+            self.event_line("🧠", "Planner wrote a plan", "The planner only saw YOUR request, never the outside data.", who="planner")
             con.print(Syntax(d["code"].strip().strip("`").removeprefix("python").strip(), "python", theme="ansi_dark",
                              line_numbers=True))
         elif kind == "program_result" and not d["ok"]:
-            self.event_line("↻", "Plan hit an error", f"{short(d['error'], 140)} — the planner will try to fix it")
+            self.event_line("↻", "Plan hit an error", f"{short(d['error'], 140)} — the planner will try to fix it", who="interp")
         elif kind == "tool_call":
             e = d["event"]
             untrusted = [k for k, v in e.arg_caps.items() if v == "UNTRUSTED"]
@@ -365,12 +421,12 @@ class App:
             why = ("uses outside data: " + ", ".join(untrusted)) if untrusted else "uses only your / system data"
             verdict = {"ALLOW": "allowed", "DENY": "BLOCKED", "CONFIRM": "needs your approval"}.get(e.decision, e.decision)
             self.event_line("🔧", f"Tool {e.tool}", f"{why} → [{DECISION.get(e.decision, 'white')}]{verdict}[/]"
-                            + ("" if d["policy"] else " (rules switched off)"))
+                            + ("" if d["policy"] else " (rules switched off)"), who="policy")
             self.math(f"labels {e.arg_caps} · control={e.control_cap} · args {short(json.dumps(e.args, default=str), 100)}")
         elif kind == "q_start":
             self.event_line("📄", f"Reading outside data safely with {d['m']} isolated reader(s)",
                             "Each reader has no tools and gets the data marked with its OWN secret key (Stage 1)."
-                            if d["spotlight"] else "Each reader has no tools (Stage 1 marking is switched off).")
+                            if d["spotlight"] else "Each reader has no tools (Stage 1 marking is switched off).", who="reader")
             if self.detailed:
                 con.print(Panel(short(d["query"], self.cfg.shell["preview_chars"]), title="question to the readers",
                                 border_style="dim"))
@@ -380,7 +436,7 @@ class App:
         elif kind == "vote":
             agree = round(d["agreement"] * d["m"])
             self.event_line("🗳", "Readers vote", f"[green]{agree} of {d['m']} agree → value accepted[/]" if d["accepted"]
-                            else f"[red]no majority ({agree} of {d['m']}) → value refused[/]")
+                            else f"[red]no majority ({agree} of {d['m']}) → value refused[/]", who="vote")
             info = pi_star_info()
             if info:
                 b = hoeffding_vote_bound(d["m"], info["R_Q"])
@@ -390,12 +446,12 @@ class App:
             e = d["event"]
             if not e.escalated:
                 self.event_line("⛔", f"{e.tool} denied automatically",
-                                f"readers agreed too little (score {e.score:.2f} < threshold {d['lambda_hat']})")
+                                f"readers agreed too little (score {e.score:.2f} < threshold {d['lambda_hat']})", who="crc")
             else:
                 self.info(f"you answered: {'[green]approved[/]' if e.approved else '[red]declined[/]'}")
         elif kind == "output_guard":
             self.event_line("🛡", "Final answer checked",
-                            f"[red]withheld[/] ({d['reason']})" if d["blocked"] else "[green]passed[/]")
+                            f"[red]withheld[/] ({d['reason']})" if d["blocked"] else "[green]passed[/]", who="guard_out")
 
     def ask_confirm(self, ev, lambda_hat) -> bool:
         ents = attacker_entities(self._s2.injection_text or "", "")
@@ -439,6 +495,7 @@ class App:
             lines.append(f"task done correctly (AgentDojo check): {'[green]yes[/]' if out.utility else '[red]no[/]'}")
         if out.agentdojo_attack_success is not None:
             lines.append(f"AgentDojo attack goal reached: {'[red]YES[/]' if out.agentdojo_attack_success else '[green]no[/]'}")
+        con.print(f"\n  [magenta]⚙ scored by {self.who('judge')}[/]")
         con.print(Panel("\n".join(lines) or "clean run", title=f"Result · {out.seconds:.0f} s", border_style="cyan"))
         con.print(Panel(out.answer or "(empty)", title="agent's answer", border_style="green"))
 
@@ -457,23 +514,26 @@ class App:
         if not self.need_server():
             return
         self.history.append({"mode": "jailbreak", "text": prompt})
+        self.plan("direct layer", [("check your prompt", "guard_in"), ("the AI answers", "target"),
+                                   ("did it leak the hidden code word?", "canary"), ("is the answer harmful?", "guard_out"),
+                                   ("write the log", "log")])
         con.print(Panel(prompt, title="your prompt", border_style="dim"))
         with con.status("running through the direct layer …"):
             o = self.direct.run(prompt)
         self.step(1, 4, "Check your prompt (Prompt Guard 2)",
                   {"blocked": "[red]BLOCKED as an attack[/]", "passed": "[green]passed[/]",
-                   "off": "[yellow]not available (Meta model gated) → skipped[/]"}[o.input_guard])
+                   "off": "[yellow]not available (Meta model gated) → skipped[/]"}[o.input_guard], who="guard_in")
         if o.input_guard == "blocked":
             con.print(Panel("Stopped before reaching the AI.", title="Result: jailbreak blocked ✓", border_style="green"))
             self.log.write("jailbreak", **o.__dict__)
             return
-        self.step(2, 4, "The AI answers", f"its hidden instructions include a secret code word · {o.seconds:.0f} s")
+        self.step(2, 4, "The AI answers", f"its hidden instructions include a secret code word · {o.seconds:.0f} s", who="target")
         self.step(3, 4, "Did it leak its hidden instructions? (canary)",
                   "[red]YES — the secret code word appeared → answer withheld[/]" if o.canary_leaked
-                  else "[green]no leak[/]")
+                  else "[green]no leak[/]", who="canary")
         self.step(4, 4, "Is the answer harmful? (Llama Guard)",
                   {"blocked": f"[red]unsafe → withheld[/] ({o.output_reason})", "passed": "[green]safe[/]",
-                   "off": "[yellow]not available (gated) → skipped[/]"}[o.output_guard])
+                   "off": "[yellow]not available (gated) → skipped[/]"}[o.output_guard], who="guard_out")
         self.info(f"the AI itself {'[green]refused[/]' if o.refused else '[yellow]did not refuse[/]'} "
                   "[dim](wording check only)[/]")
         good = o.canary_leaked or o.output_guard == "blocked" or o.refused

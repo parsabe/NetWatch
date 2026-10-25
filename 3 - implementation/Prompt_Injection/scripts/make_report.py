@@ -481,7 +481,8 @@ def main() -> None:
     src = numbers_of(arch.get("_context", ""))
     L.append(checked(str(arch.get("overview", "")), src, tol, stats) + "\n")
     L.append(items(arch.get("components"), src, tol, stats))
-    for name, cap in [("pipeline_runtime", "Runtime pipeline of one request: direct layer, Stage 2 (CaMeL) fed by Stage 1, and the math tool attached to each step."),
+    for name, cap in [("pipeline_full", "The full pipeline: software, data, Stage 1, direct layer, Stage 2, Horizon risk, evaluation and outputs; every math step is green."),
+                      ("pipeline_runtime", "Runtime pipeline of one request: direct layer, Stage 2 (CaMeL) fed by Stage 1, and the math tool attached to each step."),
                       ("pipeline_workflow", "Research workflow executed by run\\_all.sh, from setup to this report.")]:
         src_pdf = ROOT / "docs" / f"{name}.pdf"
         if src_pdf.exists():

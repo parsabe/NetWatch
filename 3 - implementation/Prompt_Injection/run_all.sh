@@ -38,7 +38,8 @@ LOG="report/run_all.log"
 exec > >(tee -a "$LOG") 2>&1
 export MLFLOW_DISABLE_AGENT_HINT=1
 STEP=0
-step() { STEP=$((STEP+1)); printf '\n\033[1;32m==== [%d] %s ====\033[0m  (%s)\n' "$STEP" "$*" "$(date +%H:%M:%S)"; }
+step() { STEP=$((STEP+1)); printf '\n\033[1;32m==== [%d] %s ====\033[0m  (%s)\n' "$STEP" "$1" "$(date +%H:%M:%S)"
+         [ $# -ge 2 ] && printf '     what: %s\n' "$2"; [ $# -ge 3 ] && printf '\033[35m     who:  %s\033[0m\n' "$3"; return 0; }
 PY() { "$UV" run --no-sync python "$@"; }
 FAILED=()
 try() { "$@" || { echo "!! step failed: $*"; FAILED+=("$*"); }; }   # keep going; the report records what exists
@@ -74,51 +75,51 @@ ensure_report_model() {
 echo "run_all: level=$LEVEL  $(date)"
 
 if [ "$REPORT_ONLY" = 0 ]; then
-  if [ "$SKIP_SETUP" = 0 ]; then step "setup (idempotent)"; ./scripts/setup.sh $REDTEAM || exit 1; fi
-  step "model server"
+  if [ "$SKIP_SETUP" = 0 ]; then step "install uv, Python 3.11, pinned packages, CaMeL, Ollama, Qwen3-8B, data" "scripts/setup.sh"; ./scripts/setup.sh $REDTEAM || exit 1; fi
+  step "start the local LLM server used by every AI step" "Ollama (GPU) + role proxy (scripts/openai_role_proxy.py)"
   curl -s localhost:11434/api/version >/dev/null || ./scripts/serve_local.sh
 
-  step "unit tests (§9)";               try "$UV" run --no-sync pytest -q
-  step "theory-mode figures";           try PY scripts/make_figures.py --theory "${SETS[@]}"
-  step "smoke test (each layer)";       try PY scripts/smoke_test.py "${SETS[@]}"
+  step "check every formula against the slide examples (no AI)" "pytest · tests/";               try "$UV" run --no-sync pytest -q
+  step "draw the figures from params.yaml inputs (SIMULATED, labelled)" "matplotlib · scripts/make_figures.py";           try PY scripts/make_figures.py --theory "${SETS[@]}"
+  step "does each layer fire once? quarantine+vote, policy, Z3, canary, guards" "Qwen3-8B · Z3 · scripts/smoke_test.py";       try PY scripts/smoke_test.py "${SETS[@]}"
 
   GATED=$(gated_ok | tail -1)
   NOGUARD=(); [ "$GATED" = yes ] || NOGUARD=(--set flags.use_firewall=false --set flags.use_output_guard=false)
   [ "$GATED" = yes ] || echo "Meta guard models are gated → direct-layer flags switched off for this run"
 
   if [ "$LEVEL" = pilot ]; then
-    step "Stage 1 pilot (fit split)"
+    step "small paired run: every transform τ on the same attacks + clean docs, then CP / DRO / π*" "Qwen3-8B (target) · scipy · cvxpy/Clarabel · eval/stage1_runner.py"
     try PY eval/stage1_runner.py --split fit --pilot --static --clean --adaptive --analyze "${SETS[@]}"
-    step "AgentDojo paired mini-run (none vs stage1+2)"
+    step "same tasks + attacks with and without Horizon" "CaMeL + Qwen3-8B (P-LLM, Q-LLM) · AgentDojo · eval/agentdojo_runner.py"
     for ab in none stage1+2; do
       try PY eval/agentdojo_runner.py --split report --ablation "$ab" --limit-user 3 --limit-injection 2 \
             --attacks important_instructions --set flags.use_conformal=false "${SETS[@]}"
     done
-    step "pilot figures";  try PY scripts/make_figures.py --stage1-run fit_pilot --out figures/pilot "${SETS[@]}"
+    step "figures from the pilot results" "matplotlib · scripts/make_figures.py";  try PY scripts/make_figures.py --stage1-run fit_pilot --out figures/pilot "${SETS[@]}"
   fi
 
   if [ "$LEVEL" = full ]; then
-    step "Stage 1 full — fit split (chooses τ*, π*)"
+    step "all transforms on the fit split + adaptive PAIR attacker → τ*, π* (Sion V1)" "Qwen3-8B (target + attacker) · scipy · cvxpy/Clarabel"
     try PY eval/stage1_runner.py --split fit --static --clean --adaptive --analyze "${SETS[@]}"
-    step "Stage 1 full — report split (evaluated at fixed π*)"
+    step "evaluate the choices on unseen data (never report on the choosing split)" "Qwen3-8B · eval/stage1_runner.py"
     try PY eval/stage1_runner.py --split report --static --clean --adaptive --analyze "${SETS[@]}"
-    step "conformal calibration of λ̂"
+    step "pick the agreement threshold λ̂ on the calibration split (CRC)" "Qwen3-8B readers · horizon/stage2/conformal.py"
     try PY eval/agentdojo_runner.py --calibrate --ablation stage1+2 "${SETS[@]}"
-    step "AgentDojo ablations (paired, static attacks)"
+    step "none · stage1 · stage2 · stage1+2 · full on the same tasks/attacks → G, C, F, Sion LP" "CaMeL + Qwen3-8B · AgentDojo · scipy linprog"
     for ab in none stage1 stage2 stage1+2 full; do
       try PY eval/agentdojo_runner.py --split report --ablation "$ab" "${NOGUARD[@]}" "${SETS[@]}"
     done
-    step "AgentDojo adaptive attacks (full pipeline)"
+    step "attacker LLM rewrites injections against the full pipeline" "Qwen3-8B (attacker) · AgentDojo"
     try PY eval/agentdojo_runner.py --split report --ablation full --adaptive "${NOGUARD[@]}" "${SETS[@]}"
-    if [ "$GATED" = yes ]; then step "direct layer: detection / FPR"; try PY eval/jailbreak_runner.py --detect "${SETS[@]}"; fi
-    step "result figures";  try PY scripts/make_figures.py --stage1-run report --out figures/results "${SETS[@]}"
+    if [ "$GATED" = yes ]; then step "jailbreak sets (incl. HackAPrompt) vs benign sets through the guards" "Prompt Guard 2 + Llama Guard · eval/jailbreak_runner.py"; try PY eval/jailbreak_runner.py --detect "${SETS[@]}"; fi
+    step "figures from the report-split results" "matplotlib · scripts/make_figures.py";  try PY scripts/make_figures.py --stage1-run report --out figures/results "${SETS[@]}"
   fi
 
-  step "notebook (executed, outputs saved)"
+  step "rebuild and run Horizon.ipynb" "nbclient · scripts/build_notebook.py"
   try PY scripts/build_notebook.py --execute
 fi
 
-step "model analysis → LaTeX → PDF (report/)"
+step "the report model reads every figure/CSV/result, writes LaTeX; numbers are checked" "colibri (Qwen3.6-35B-A3B) · xelatex · scripts/make_report.py"
 try ensure_report_model
 try PY scripts/make_report.py "${REPORT_ARGS[@]}" "${SETS[@]}"
 

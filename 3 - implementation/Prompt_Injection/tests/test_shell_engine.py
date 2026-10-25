@@ -52,3 +52,18 @@ def test_shell_menu_has_a_flow_for_every_entry():
     import horizon_shell as h
     assert all(hasattr(h.App, f"flow_{k}") for k, _ in h.App.MENU if k != "command")
     assert len(h.GLOSSARY) >= len(h.App.MENU)
+
+
+def test_every_step_names_who_does_it():
+    import re
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import horizon_shell as h
+    app = h.App.__new__(h.App)
+    app.cfg = CFG
+    src = (ROOT / "scripts/horizon_shell.py").read_text()
+    plans = "".join(re.findall(r"self\.plan\((.*?)\]\)", src, re.S))
+    used = (set(re.findall(r'who="(\w+)"', src)) | set(re.findall(r"self\.who\('(\w+)'\)", src))
+            | set(re.findall(r'\("[^"]+", "(\w+)"\)', plans)))
+    assert {"guard_in", "planner", "reader", "vote", "z3", "crc"} <= used
+    assert all(app.who(r) for r in used)

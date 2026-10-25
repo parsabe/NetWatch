@@ -47,6 +47,10 @@ All numbers on the slides are illustrative: they live only in `config/params.yam
 **Whole pipeline as built** (`scripts/make_pipeline_diagram.py` → `docs/`): runtime flow of one request with every math
 tool, and the research workflow run by `./run_all.sh`.
 
+**Everything in one picture** (green = math): `docs/pipeline_full.pdf`
+
+<img src="docs/pipeline_full.png" width="1000">
+
 <img src="docs/pipeline_runtime.png" width="760"> <img src="docs/pipeline_workflow.png" width="380">
 """)
 

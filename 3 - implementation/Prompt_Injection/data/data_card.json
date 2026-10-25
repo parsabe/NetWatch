@@ -160,8 +160,17 @@
     "name": "hackaprompt",
     "license": "MIT",
     "role": "Direct layer: HackAPrompt competition submissions",
+    "note": "",
+    "download_date": "2026-10-25",
+    "local_path": "data/raw/hackaprompt",
     "source": "https://huggingface.co/datasets/hackaprompt/hackaprompt-dataset",
-    "skipped": "gated (accept terms on HF, then rerun with --include-gated)"
+    "version": "25b87fbedfb86840abaf8cd09af7a029208a971a",
+    "size_bytes": 150428847,
+    "files": [
+      ".gitattributes",
+      "README.md",
+      "hackaprompt.parquet"
+    ]
   },
   "tensor_trust": {
     "name": "tensor_trust",
