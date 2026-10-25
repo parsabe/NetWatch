@@ -31,7 +31,8 @@ from camel.interpreter import interpreter
 from camel.interpreter import namespace as ns
 from camel.interpreter.value import CaMeLValue
 from camel.pipeline_elements.agentdojo_function import make_agentdojo_namespace
-from camel.pipeline_elements.privileged_llm import PrivilegedLLM
+from camel.interpreter import result as camel_result
+from camel.pipeline_elements.privileged_llm import PrivilegedLLM, extract_print_output, make_ad_tool_calls
 from camel.security_policy import Allowed, Denied, SecurityPolicyResult
 from camel.system_prompt_generator import default_system_prompt_generator
 
@@ -97,6 +98,11 @@ class EpisodeState:
     votes: list[dict] = field(default_factory=list)
     pending_spans: list[str] = field(default_factory=list)
     alarms: int = 0
+    listener: Any = field(default=None, repr=False)     # listener(kind, data): live stage events
+
+    def emit(self, kind: str, **data) -> None:
+        if self.listener is not None:
+            self.listener(kind, data)
 
     def reset(self) -> None:
         self.events.clear()
@@ -114,10 +120,11 @@ class HorizonPolicyEngine:
     """CaMeL SecurityPolicyEngine protocol, backed by the Horizon policy table."""
 
     def __init__(self, env, table: PolicyTable | None, tool_names: set[str], state: EpisodeState,
-                 lambda_hat: float | None, role: str, stage2_cfg: dict):
+                 lambda_hat: float | None, role: str, stage2_cfg: dict, approver=None):
         self._env = env
         self.table, self.tool_names, self.state = table, tool_names, state
         self.lambda_hat, self.role, self.cfg = lambda_hat, role, stage2_cfg
+        self.approver = approver          # approver(Event) -> bool: a human answers CONFIRM (interactive shell)
         self.policies, self.no_side_effect_tools = [], set()
 
     def check_policy(self, tool_name: str, kwargs: Mapping[str, CaMeLValue],
@@ -134,12 +141,14 @@ class HorizonPolicyEngine:
         ctrl = join(cap_of(d) for d in dependencies)
         raw_args = {k: v.raw for k, v in kwargs.items()}
         if self.table is None:                         # use_policy = False
-            self.state.events.append(Event(tool_name, "ALLOW", {k: c.name for k, c in arg_caps.items()},
-                                           ctrl.name, args=raw_args))
+            ev = Event(tool_name, "ALLOW", {k: c.name for k, c in arg_caps.items()}, ctrl.name, args=raw_args)
+            self.state.events.append(ev)
+            self.state.emit("tool_call", event=ev, policy=None)
             return Allowed()
         dec = self.table.decide(CallContext(tool_name, arg_caps, ctrl, self.role))
         ev = Event(tool_name, dec.value, {k: c.name for k, c in arg_caps.items()}, ctrl.name, args=raw_args)
         self.state.events.append(ev)
+        self.state.emit("tool_call", event=ev, policy=self.table.name)
         if dec == Decision.ALLOW:
             return Allowed()
         if dec == Decision.DENY:
@@ -149,8 +158,11 @@ class HorizonPolicyEngine:
         ev.score = self.cfg["unvoted_agreement"] if score is None else score
         ev.escalated = True if self.lambda_hat is None else escalate(ev.score, self.lambda_hat)
         if not ev.escalated:
+            self.state.emit("confirm", event=ev, lambda_hat=self.lambda_hat)
             return Denied("Below the calibrated confirmation threshold.")
-        ev.approved = self.cfg["simulated_user"] == "approve"
+        ev.approved = (bool(self.approver(ev, self.lambda_hat)) if self.approver is not None
+                       else self.cfg["simulated_user"] == "approve")
+        self.state.emit("confirm", event=ev, lambda_hat=self.lambda_hat)
         return Allowed() if ev.approved else Denied("User declined.")
 
 
@@ -196,7 +208,12 @@ class HorizonPrivilegedLLM(PrivilegedLLM):
             model = create_model("Result", output=(output_schema, Field(description="The requested value")),
                                  have_enough_information=enough)
         spans, self.state.pending_spans = self.state.pending_spans, []
+        self.state.emit("q_start", query=query, spans=spans, schema=output_schema.__name__
+                        if isinstance(output_schema, type) else str(output_schema), m=self.m,
+                        spotlight=self.quarantine.mix is not None)
         res = self.quarantine.run(query, spans, model, self.m)
+        self.state.emit("vote", accepted=res.vote.accepted, agreement=res.vote.agreement, counts=res.vote.counts,
+                        m=res.vote.m, value=res.vote.canonical)
         self.state.votes.append({"accepted": res.vote.accepted, "agreement": res.vote.agreement,
                                  "value": res.vote.canonical, "m": res.vote.m, "n_spans": len(spans),
                                  "runs": [dataclasses.asdict(r) for r in res.runs]})
@@ -209,6 +226,23 @@ class HorizonPrivilegedLLM(PrivilegedLLM):
         if issubclass(output_schema, BaseModel) if isinstance(output_schema, type) else False:
             return output_schema.model_validate(v.model_dump(exclude={"have_enough_information"}))
         return v.output
+
+    def run_code(self, code, env, namespace, dependencies):
+        """CaMeL's run_code, emitting the program (and its outcome) as events instead of printing it."""
+        self.state.emit("program", code=code)
+        eval_args = interpreter.EvalArgs(self.security_policy_engine(env), self.eval_mode)
+        res, namespace, tool_calls, dependencies = interpreter.parse_and_interpret_code(
+            code, namespace, [], dependencies, eval_args)
+        printed = extract_print_output(tool_calls)
+        ad_calls = make_ad_tool_calls(tool_calls)
+        match res:
+            case camel_result.Error(error):
+                self.state.emit("program_result", ok=False, printed=printed, error=str(error.exception))
+                return printed, ad_calls, error, namespace, dependencies
+            case camel_result.Ok(v):
+                out = f"{printed}\n{v.raw if v.raw is not None else ''}"
+                self.state.emit("program_result", ok=True, printed=out, error=None)
+                return out, ad_calls, None, namespace, dependencies
 
     def query(self, query: str, runtime: functions_runtime.FunctionsRuntime,
               env=functions_runtime.EmptyEnv(), messages: Sequence = [], extra_args: dict = {}):

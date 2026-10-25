@@ -64,12 +64,14 @@ def resolve_lambda(cfg: Config) -> float | None:
 class InputGuard(agent_pipeline.BasePipelineElement):
     name = "input_guard"
 
-    def __init__(self, guard: PromptGuardInput, log: list):
-        self.guard, self.log = guard, log
+    def __init__(self, guard: PromptGuardInput, log: list, emit=None):
+        self.guard, self.log, self.emit = guard, log, emit
 
     def query(self, query, runtime, env=functions_runtime.EmptyEnv(), messages=(), extra_args={}):
         v = self.guard.check(query)
         self.log.append({"layer": "firewall", "blocked": v.blocked, "score": v.score, "reason": v.reason})
+        if self.emit:
+            self.emit("input_guard", blocked=v.blocked, score=v.score, reason=v.reason)
         if v.blocked:
             raise AbortAgentError(f"Blocked by {v.detector}", list(messages), env)
         return query, runtime, env, messages, extra_args
@@ -79,8 +81,8 @@ class OutputGuard(agent_pipeline.BasePipelineElement):
     name = "output_guard"
     BLOCKED = "[Horizon: response withheld by the output guard]"
 
-    def __init__(self, guard: LlamaGuardOutput | None, token: str | None, log: list):
-        self.guard, self.token, self.log = guard, token, log
+    def __init__(self, guard: LlamaGuardOutput | None, token: str | None, log: list, emit=None):
+        self.guard, self.token, self.log, self.emit = guard, token, log, emit
 
     def query(self, query, runtime, env=functions_runtime.EmptyEnv(), messages=(), extra_args={}):
         if not messages or messages[-1]["role"] != "assistant" or not messages[-1]["content"]:
@@ -93,6 +95,9 @@ class OutputGuard(agent_pipeline.BasePipelineElement):
             v = self.guard.check(query, text)
             blocked, why = v.blocked, v.reason
         self.log.append({"layer": "output_guard", "blocked": blocked, "reason": why})
+        if self.emit:
+            self.emit("output_guard", blocked=blocked, reason=why, canary=bool(self.token),
+                      llama_guard=self.guard is not None)
         if blocked:
             msg = ad_types.ChatAssistantMessage(role="assistant", tool_calls=None,
                                                 content=[ad_types.text_content_block_from_string(self.BLOCKED)])
@@ -119,27 +124,31 @@ class Built:
     canary: str | None
 
 
-def build_pipeline(cfg: Config, suite, role: str | None = None) -> Built:
-    """Assemble the pipeline for one AgentDojo suite and run the Z3 proof (refuses to start on failure)."""
+def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, approver=None) -> Built:
+    """Assemble the pipeline for one AgentDojo suite and run the Z3 proof (refuses to start on failure).
+
+    listener(kind, data): optional live observer of every stage event (used by the interactive shell).
+    approver(event) -> bool: optional human answer to CONFIRM prompts (default: stage2.simulated_user).
+    """
     f, s2 = cfg.flags, cfg.stage2
     runtime = functions_runtime.FunctionsRuntime(suite.tools)
     policy = PolicyTable.load(s2["policy"])
     if f.use_policy:
         assert_noninterference(policy, tool_signatures(runtime))
-    state, log = EpisodeState(), []
+    state, log = EpisodeState(listener=listener), []
     token = canary_mod.new_token(cfg.direct["canary_hex_bytes"]) if f.use_canary else None
     elements: list = [agent_pipeline.InitQuery()]
     if f.use_firewall:
-        elements.insert(0, InputGuard(PromptGuardInput(cfg.direct), log))
+        elements.insert(0, InputGuard(PromptGuardInput(cfg.direct), log, state.emit))
     mix = resolve_mix(cfg)
     if f.use_stage2:
         q = Quarantine(LLM(cfg.models["q_llm"], cfg.models), mix, s2["parser"], s2,
-                       use_typing=f.use_typing, use_vote=f.use_vote)
+                       use_typing=f.use_typing, use_vote=f.use_vote, listener=state.emit)
         lam = resolve_lambda(cfg)
         tool_names = set(tool_signatures(runtime))
         role = role or policy.default_role
         factory = lambda env: HorizonPolicyEngine(env, policy if f.use_policy else None, tool_names, state,  # noqa: E731
-                                                  lam, role, s2)
+                                                  lam, role, s2, approver)
         elements.append(HorizonPrivilegedLLM(LLM(cfg.models["p_llm"], cfg.models), q, f.m, factory, state, token,
                                              s2["p_llm_max_attempts"]))
     else:
@@ -153,7 +162,8 @@ def build_pipeline(cfg: Config, suite, role: str | None = None) -> Built:
         elements = [agent_pipeline.SystemMessage(sysmsg), *elements, llm,
                     agent_pipeline.ToolsExecutionLoop([executor, llm])]
     if f.use_output_guard or f.use_canary:
-        elements.append(OutputGuard(LlamaGuardOutput(cfg.direct) if f.use_output_guard else None, token, log))
+        elements.append(OutputGuard(LlamaGuardOutput(cfg.direct) if f.use_output_guard else None, token, log,
+                                    state.emit))
     pipe = agent_pipeline.AgentPipeline(elements)
     pipe.name = ablation_name(cfg)
     return Built(pipe, state, log, token)

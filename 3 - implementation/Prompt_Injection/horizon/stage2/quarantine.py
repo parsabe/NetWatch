@@ -79,9 +79,10 @@ def spotlight(text: str, spans: list[str], variant: Variant, key: Any) -> str:
 
 class Quarantine:
     def __init__(self, llm: LLM, mix: Mix | None, parser: str, stage2_cfg: dict,
-                 use_typing: bool = True, use_vote: bool = True):
+                 use_typing: bool = True, use_vote: bool = True, listener=None):
         self.llm, self.mix, self.parser, self.cfg = llm, mix, parser, stage2_cfg
         self.use_typing, self.use_vote = use_typing, use_vote
+        self.listener = listener          # listener(kind, **data): live per-run events (interactive shell)
 
     def _one_run(self, query: str, spans: list[str], schema: type[BaseModel]) -> tuple[RunRecord, Any]:
         if self.mix is not None and spans:
@@ -112,9 +113,12 @@ class Quarantine:
         """m independent quarantined runs → majority vote (Slides 34-35)."""
         m_eff = m if self.use_vote else 1
         records, outs = [], []
-        for _ in range(m_eff):
+        for i in range(m_eff):
             rec, obj = self._one_run(query, untrusted_spans, schema)
             records.append(rec)
+            if self.listener:
+                self.listener("q_run", i=i + 1, m=m_eff, variant=rec.variant, key_fp=rec.key_fingerprint,
+                              parsed=rec.parsed, canonical=rec.canonical, error=rec.error)
             if rec.parsed:
                 outs.append((rec.canonical, obj))
         return QuarantineResult(majority_vote(outs, m_eff), records)

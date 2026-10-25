@@ -44,6 +44,20 @@ project tree, every figure, result tables computed from the files, and the model
 prose are checked against the data and unmatched ones are marked red), the copied figures and CSVs,
 the model's raw analyses (`analysis/*.json`), `tests.xml` and `run_all.log`. Setup alone: `./scripts/setup.sh`.
 
+## Interactive shell (watch every stage live)
+
+```bash
+./horizon.sh
+```
+
+`stage1` mode: `load all` plants the sample outside sources (`demo/untrusted_samples.txt`, 16 injection techniques +
+a clean control, fresh canary each), then type a task. You see the pre-scan (and are asked before continuing),
+τ ~ π*, the key fingerprint, S_κ and τ_κ(D), whether each section's injection ran, and the running CP / DRO tally.
+`compare` runs all 8 variants. `stage2` mode (`mode stage2`, `where`, `inject <section>`, then a prompt or
+`run user_task_N`): the P-LLM program, every tool call with its labels and policy decision, each quarantined run
+with its own key, the vote + Hoeffding bound, and you answer every CONFIRM. `stats`, `analyze` (report model),
+`reports`, `set key=value`. Every event goes to `results/shell/session_*.jsonl`.
+
 ## Step by step
 
 ```bash
