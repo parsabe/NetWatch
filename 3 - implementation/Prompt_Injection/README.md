@@ -44,19 +44,18 @@ project tree, every figure, result tables computed from the files, and the model
 prose are checked against the data and unmatched ones are marked red), the copied figures and CSVs,
 the model's raw analyses (`analysis/*.json`), `tests.xml` and `run_all.log`. Setup alone: `./scripts/setup.sh`.
 
-## Interactive shell (watch every stage live)
+## Start here: `./horizon.sh`
 
 ```bash
-./horizon.sh
+./horizon.sh          # numbered menu (no commands to remember)
+./horizon.sh help     # every project command: setup, test, run quick|pilot|full, report, figures, notebook, status
 ```
 
-`stage1` mode: `load all` plants the sample outside sources (`demo/untrusted_samples.txt`, 16 injection techniques +
-a clean control, fresh canary each), then type a task. You see the pre-scan (and are asked before continuing),
-τ ~ π*, the key fingerprint, S_κ and τ_κ(D), whether each section's injection ran, and the running CP / DRO tally.
-`compare` runs all 8 variants. `stage2` mode (`mode stage2`, `where`, `inject <section>`, then a prompt or
-`run user_task_N`): the P-LLM program, every tool call with its labels and policy decision, each quarantined run
-with its own key, the vote + Hoeffding bound, and you answer every CONFIRM. `stats`, `analyze` (report model),
-`reports`, `set key=value`. Every event goes to `results/shell/session_*.jsonl`.
+Menu: **1** attack a document (Stage 1) · **2** attack an agent (Stage 2, you approve risky actions) ·
+**3** try a jailbreak (direct layer) · **4** self-test · **5** results & reports · **6** settings ·
+**7** help & glossary · **8** command mode. Every demo shows numbered plain-language steps; switch
+*Settings → detail* to also see the maths. Attack texts: `demo/untrusted_samples.txt` (indirect) and
+`demo/jailbreak_samples.txt` (direct). Every step is logged to `results/shell/session_*.jsonl`.
 
 ## Step by step
 

@@ -173,7 +173,8 @@ shell:
   # Interactive terminal (./horizon.sh): type commands to the protected AI and watch every stage live.
   sample_file: demo/untrusted_samples.txt   # outside-source texts with indirect injections ({CANARY} planted)
   log_dir: results/shell                    # one JSONL log per session (every stage event)
-  default_mode: stage1                      # stage1 = one call on an untrusted document · stage2 = agent with tools
+  detail: simple                            # simple = plain-language steps · detailed = also the maths
+  example_tasks: 8                          # how many example requests the agent demo offers
   default_suite: slack                      # AgentDojo world for stage2 mode: slack | workspace | travel
   default_variant: datamark_dynamic         # used when π* has not been fitted yet (results/stage1/pi_star.json)
   preview_chars: 400                        # how much of prompts / transformed text to print

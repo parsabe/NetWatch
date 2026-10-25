@@ -36,3 +36,19 @@ def test_prepare_config_always_runnable():
     f = cfg.flags
     assert not (f.use_stage1 and not f.stage1_variant and f.stage1_mix == "pi_star"
                 and not (ROOT / "results/stage1/pi_star.json").exists())
+
+
+def test_jailbreak_samples_and_refusal_indicator():
+    from horizon.shell_engine import REFUSAL_RE
+    jb = load_samples(ROOT / "demo/jailbreak_samples.txt", "C-", 1)
+    assert {"benign_question", "system_prompt_leak"} <= {s.name for s in jb}
+    assert REFUSAL_RE.search("I'm sorry, but I can't help with that.")
+    assert not REFUSAL_RE.search("Here are three habits for strong passwords.")
+
+
+def test_shell_menu_has_a_flow_for_every_entry():
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import horizon_shell as h
+    assert all(hasattr(h.App, f"flow_{k}") for k, _ in h.App.MENU if k != "command")
+    assert len(h.GLOSSARY) >= len(h.App.MENU)
