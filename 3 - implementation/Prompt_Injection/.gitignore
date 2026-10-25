@@ -1,0 +1,7 @@
+data/raw/
+results/
+.venv/
+third_party/camel-prompt-injection/
+figures/*.png
+__pycache__/
+*.pyc

@@ -1,0 +1,4 @@
+run_all: level=quick  Sun Oct 25 11:59:27 AM CET 2026
+
+[1;32m==== [1] model analysis → LaTeX → PDF (report/) ====[0m  (11:59:27)
+report model openai/qwen3.6-colibri @ http://127.0.0.1:8000/v1: up

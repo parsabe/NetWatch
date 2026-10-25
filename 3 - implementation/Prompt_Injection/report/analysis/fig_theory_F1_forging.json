@@ -1,0 +1,15 @@
+{
+ "summary": "Figure F1_forging illustrates the theoretical analysis of forging the per-request key in the Horizon project. The plot shows the logarithmic base 10 of the forging probability (log10_P_forge) against the number of queries (q). The formula provided indicates that the forging probability is bounded by the ratio of the query count to the size of the key space. The data suggests that as q increases, the forging probability decreases, which aligns with the theoretical expectation.",
+ "observations": [
+  "The minimum value of q is 1, and the maximum is 1,000,000, indicating a wide range of query counts analyzed.",
+  "The log10_P_forge ranges from -109.39 to 6.0, showing a significant variation in forging probabilities depending on q.",
+  "For q = 1, log10_P_forge is 0.0, which corresponds to a forging probability of 1, as expected from the formula.",
+  "As q increases, log10_P_forge increases linearly, indicating a decrease in forging probability."
+ ],
+ "caveats": [
+  "The data is in theory-mode and simulated, so the results are not based on experimental measurements.",
+  "The sample size is large (169 rows), but the actual number of queries (q) is small for some cases, which may affect the generalizability of the results.",
+  "The formula assumes uniform distribution over the key space, which may not hold in real-world scenarios."
+ ],
+ "_context": "Figure F1_forging (group: Theory-mode figures (math-only or SIMULATED inputs)).\nCaption and formula: Union bound on forging the per-request key; key spaces in log-space (|Σ|! via lgamma). Formula: $P_{forge}\\leq q/|\\mathcal{K}_\\tau|$\n\nPlotted data:\nfile F1_forging.csv: 169 rows × 3 columns: ['variant', 'q', 'log10_P_forge']\nnumeric summary:\n                       mean        min        max\nq              112498.06408    1.00000  1000000.0\nlog10_P_forge      -7.44558 -109.39461        6.0\nfirst 8 rows:\nvariant          q  log10_P_forge\n   none    1.00000            0.0\n   none    3.16228            0.5\n   none   10.00000            1.0\n   none   31.62278            1.5\n   none  100.00000            2.0\n   none  316.22777            2.5\n   none 1000.00000            3.0\n   none 3162.27766            3.5"
+}

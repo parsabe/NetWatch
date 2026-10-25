@@ -1,0 +1,13 @@
+{
+ "summary": "Figure F15_leakage illustrates a theoretical model of side-channel leakage in a system, using placeholder data. The data shows the average bits and capacity values for two parsers, 'strict' and 'loose'. The 'cap' column remains constant at 1024 across all entries, indicating a fixed capacity limit.",
+ "observations": [
+  "The 'bits' column varies significantly, with the 'strict' parser having a lower average value of 788.21 and the 'loose' parser having a much higher value of 6728.56.",
+  "The minimum and maximum values for 'bits' are 788.21 and 6728.56, respectively, showing a large range of possible leakage values.",
+  "The 'cap' column is fixed at 1024, suggesting a constant upper bound on capacity regardless of parser type."
+ ],
+ "caveats": [
+  "The data is in theory-mode and not based on experimental measurements, so the results are illustrative rather than empirical.",
+  "The sample size is very small (only 2 rows), which limits the reliability of the numeric summary."
+ ],
+ "_context": "Figure F15_leakage (group: Theory-mode figures (math-only or SIMULATED inputs)).\nCaption and formula: Representative schemas (email, date, bool). side-channel leakage term is a placeholder (not measured). Formula: $\\mathrm{leak}(\\theta)=\\sum_{outputs}\\log_2|S|+L_{side}$\n\nPlotted data:\nfile F15_leakage.csv: 2 rows × 3 columns: ['parser', 'bits', 'cap']\nnumeric summary:\n            mean         min         max\nbits  3758.38562   788.20856  6728.56268\ncap   1024.00000  1024.00000  1024.00000\nfirst 8 rows:\nparser       bits  cap\nstrict  788.20856 1024\n loose 6728.56268 1024"
+}

@@ -1,0 +1,15 @@
+{
+ "summary": "Figure F13_sion_lp illustrates a theoretical analysis of a minimax optimization problem under a Sion LP framework. The plot shows the value of different configurations of the spotlighting strategy, with the value ranging from 0.0 to 1.0. The results suggest that certain configurations, such as 'm=1|strict|strict', achieve the maximum value of 1.0, while others like 'm=1|strict|confirm_untrusted' achieve a value of 0.0. This indicates that the choice of configuration significantly impacts the outcome of the optimization problem.",
+ "observations": [
+  "The configuration 'm=1|strict|strict' achieves the highest value of 1.0, suggesting it is the optimal choice under the given constraints.",
+  "Other configurations, such as 'm=1|strict|confirm_untrusted', result in a value of 0.0, indicating they may not be effective under the same conditions.",
+  "The mean value of 0.06877 suggests that, on average, the configurations have a relatively low value, with most values clustering near 0.0.",
+  "The range of values from 0.0 to 1.0 highlights the variability in performance across different configurations."
+ ],
+ "caveats": [
+  "The data is in theory-mode, meaning the results are based on mathematical formulations and not experimental data.",
+  "The small sample size (33 rows) may limit the generalizability of the findings.",
+  "The interpretation of the values as performance metrics is based on the theoretical framework provided, and actual performance may differ in practice."
+ ],
+ "_context": "Figure F13_sion_lp (group: Theory-mode figures (math-only or SIMULATED inputs)).\nCaption and formula: ℓ̄[k,θ] = CP upper bound of the loss of style k under θ; Π: utility ≥ U_min, per-config leakage cap. Formula: $\\min_{\\pi\\in\\Pi}\\max_{w\\in\\mathcal{W}}\\ \\pi^\\top\\bar\\ell\\,w$\n\nPlotted data:\nfile F13_sion_lp.csv: 33 rows × 3 columns: ['kind', 'name', 'value']\nnumeric summary:\n          mean  min  max\nvalue  0.06877  0.0  1.0\nfirst 8 rows:\nkind                         name  value\n  pi            m=1|strict|strict    1.0\n  pi m=1|strict|confirm_untrusted    0.0\n  pi             m=1|loose|strict    0.0\n  pi  m=1|loose|confirm_untrusted    0.0\n  pi            m=3|strict|strict    0.0\n  pi m=3|strict|confirm_untrusted    0.0\n  pi             m=3|loose|strict    0.0\n  pi  m=3|loose|confirm_untrusted    0.0"
+}

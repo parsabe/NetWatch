@@ -1,0 +1,15 @@
+{
+ "summary": "Figure F6_risk_utility illustrates the trade-off between utility (U) and risk (R_bar) for different defense variants in a theoretical framework. The goal is to minimize risk while maintaining a certain level of utility, as defined by the constraint $U_\\tau \\geq U_{none} - \\eta$. The none variant has the highest utility but also the highest risk, while some variants like datamark_dynamic show a significant reduction in risk at the cost of lower utility.",
+ "observations": [
+  "The none variant has the highest utility (U = 1.00) and the highest risk (R_bar = 1.00).",
+  "The datamark_dynamic variant has the lowest utility (U = 0.96) but the lowest risk (R_bar = 0.37768).",
+  "The random_scramble variant has the lowest utility (U = 0.50) and the lowest risk (R_bar = 0.21642).",
+  "The base64 variant has a moderate utility (U = 0.75) and a high risk (R_bar = 1.00)."
+ ],
+ "caveats": [
+  "The data is in theory-mode and simulated, so the results are not based on real-world experiments.",
+  "The sample size is small (11 rows), which may limit the generalizability of the findings.",
+  "The figure does not provide information on the actual performance metrics or real-world applicability of the defense variants."
+ ],
+ "_context": "Figure F6_risk_utility (group: Theory-mode figures (math-only or SIMULATED inputs)).\nCaption and formula: Each point is one defense; shaded bands are the feasible regions for each η. Formula: $\\tau^\\star=\\arg\\min_\\tau\\bar{\\mathcal{R}}_\\tau(\\rho)\\ \\ \\mathrm{s.t.}\\ U_\\tau\\geq U_{none}-\\eta$\n\nPlotted data:\nfile F6_risk_utility.csv: 11 rows × 3 columns: ['variant', 'U', 'R_bar']\nnumeric summary:\n          mean      min  max\nU      0.85091  0.50000  1.0\nR_bar  0.75904  0.21642  1.0\nfirst 8 rows:\n         variant    U   R_bar\n            none 1.00 1.00000\n      delimiting 0.98 1.00000\n  datamark_fixed 0.97 1.00000\ndatamark_dynamic 0.96 0.37768\n           rot13 0.70 1.00000\n    random_shift 0.60 1.00000\n random_scramble 0.50 0.21642\n          base64 0.75 1.00000"
+}

@@ -1,0 +1,79 @@
+# Horizon Deterministic Tool Policy and Role-Based Access Control
+# Checked at startup by Z3 Noninterference Verifier (Slide 39)
+# Noninterference Invariant: Tool call depends on UNTRUSTED data => Policy != ALLOW
+
+tools:
+  read_email:
+    description: "Read emails from inbox (read-only query)"
+    default_action: "ALLOW"
+    rules:
+      - condition: "control_flow == 'UNTRUSTED'"
+        action: "CONFIRM"
+      - condition: "any_arg == 'UNTRUSTED'"
+        action: "CONFIRM"
+
+  send_email:
+    description: "Send an email to a recipient (side-effect)"
+    default_action: "CONFIRM"
+    rules:
+      - condition: "control_flow == 'UNTRUSTED'"
+        action: "DENY"
+      - condition: "args['recipient'] == 'UNTRUSTED'"
+        action: "CONFIRM"
+      - condition: "args['body'] == 'UNTRUSTED'"
+        action: "CONFIRM"
+
+  delete_file:
+    description: "Delete a file from disk (destructive side-effect)"
+    default_action: "DENY"
+    rules:
+      - condition: "control_flow == 'UNTRUSTED' or any_arg == 'UNTRUSTED'"
+        action: "DENY"
+      - condition: "user_role == 'admin'"
+        action: "CONFIRM"
+
+  read_file:
+    description: "Read a local file"
+    default_action: "ALLOW"
+    rules:
+      - condition: "control_flow == 'UNTRUSTED' or any_arg == 'UNTRUSTED'"
+        action: "CONFIRM"
+
+  write_file:
+    description: "Write content to a local file"
+    default_action: "CONFIRM"
+    rules:
+      - condition: "control_flow == 'UNTRUSTED'"
+        action: "DENY"
+      - condition: "any_arg == 'UNTRUSTED'"
+        action: "CONFIRM"
+
+  slack_post_message:
+    description: "Post a message to a Slack channel"
+    default_action: "CONFIRM"
+    rules:
+      - condition: "control_flow == 'UNTRUSTED'"
+        action: "DENY"
+      - condition: "any_arg == 'UNTRUSTED'"
+        action: "CONFIRM"
+
+  search_web:
+    description: "Search the web"
+    default_action: "ALLOW"
+    rules:
+      - condition: "control_flow == 'UNTRUSTED'"
+        action: "CONFIRM"
+      - condition: "any_arg == 'UNTRUSTED'"
+        action: "CONFIRM"
+
+# Role-based policy rules for the direct channel
+roles:
+  admin:
+    can_confirm_destructive: true
+    max_tool_risk: "high"
+  user:
+    can_confirm_destructive: false
+    max_tool_risk: "medium"
+  guest:
+    can_confirm_destructive: false
+    max_tool_risk: "low"

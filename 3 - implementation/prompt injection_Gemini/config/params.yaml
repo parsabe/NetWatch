@@ -1,0 +1,79 @@
+# Horizon: Two-Stage Defense & Evaluation Parameters
+# All parameters live in this file, are CLI-overridable, and are logged per run via MLflow.
+# Nothing numeric is hard-coded in code outside tests/.
+
+experiment:
+  seed: 42
+  seeds: [42, 123, 456, 789, 999]
+  results_dir: "./results"
+  mlflow_tracking_uri: "./results/mlflow"
+  experiment_name: "horizon_defense"
+
+models:
+  p_llm: "Kreuzzelg/qwen36-35b-a3b-colibri-i4-gs64"
+  q_llm: "Kreuzzelg/qwen36-35b-a3b-colibri-i4-gs64"
+  attacker_model: "Kreuzzelg/qwen36-35b-a3b-colibri-i4-gs64"
+  report_model: "Kreuzzelg/qwen36-35b-a3b-colibri-i4-gs64"
+  colibri_model_dir: "/home/hounaar/colibri-models/qwen36-35b"
+  colibri_binary: "/home/hounaar/Desktop/codes/colibri/c/qwen36"
+  model_size_gb: 23.1
+  quantization: "int4 gs64"
+  direct_detector: "meta-llama/Llama-Guard-3-8B"
+  prompt_guard: "meta-llama/Prompt-Guard-86M"
+  temperature: 0.0
+  max_tokens: 512
+  cache_dir: "./results/cache"
+
+# Ablation Flags (§1.7)
+ablations:
+  use_firewall: true
+  use_stage1: true
+  stage1_variant: "datamark_dyn"  # or specific variant name
+  stage1_mix: "optimal"           # "optimal" (uses pi*) or "uniform" or specific variant
+  use_stage2: true
+  m: 5
+  use_vote: true
+  use_typing: true
+  use_policy: true
+  use_conformal: true
+  use_output_guard: true
+  use_canary: true
+
+# Stage 1 Parameters (§5, §7)
+stage1:
+  alpha: 0.05
+  rho_grid: [
+    0.0, 0.001, 0.002, 0.005, 0.01, 0.015, 0.02, 0.03, 0.04, 0.05,
+    0.07, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6,
+    0.7, 0.8, 0.9, 1.0
+  ]
+  eta_list: [0.01, 0.02, 0.05, 0.10, 0.15]
+  q_list: [1, 10, 100, 1000, 10000, 100000, 1000000]
+  dyn_marker_N: 12
+  dyn_marker_alphabet: "#&@!%*~+=?$|"
+  dyn_marker_k_list: [2, 3, 4, 6, 8]
+  dyn_marker_k_default: 4
+  scramble_alphabet: "abcdefghijklmnopqrstuvwxyz0123456789"
+  attack_budget: 10
+  n_static: 1000
+  n_adaptive: 500
+  utility_metric: "token_f1"  # pluggable: token_f1, exact_match, rouge_l, llm_judge
+
+# Stage 2 Parameters (§6, §7)
+stage2:
+  m_list: [1, 3, 5, 7, 9, 11, 15]
+  m_default: 5
+  alpha_user: 0.01
+  user_mistake_rate: 0.05       # symbol 'a' on slides
+  harm_rate: 0.50               # symbol 'h' on slides
+  leakage_cap_bits: 32.0        # B (bits cap) on Slide 41
+  u_min: 0.80                   # minimum utility threshold U_min
+  calibration_fraction: 0.50    # split for conformal calibration
+  conformal_grid_size: 100
+
+# Direct Layer Parameters
+direct_layer:
+  canary_prefix: "CANARY-HORIZON-"
+  canary_bytes: 6
+  firewall_block_threshold: 0.5
+  prompt_guard_block_threshold: 0.5

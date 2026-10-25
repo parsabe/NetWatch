@@ -1,0 +1,15 @@
+# Pinned dependencies for Python 3.11 environment
+numpy==1.26.4
+scipy==1.13.1
+pandas==2.2.2
+statsmodels==0.14.2
+cvxpy==1.5.1
+clarabel==0.7.1
+z3-solver==4.13.0.0
+pydantic==2.8.2
+pyyaml==6.0.1
+mlflow==2.14.1
+pytest==8.2.2
+matplotlib==3.9.0
+litellm==1.41.0
+openai==1.35.7

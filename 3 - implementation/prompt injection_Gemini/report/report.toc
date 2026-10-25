@@ -1,0 +1,22 @@
+\contentsline {section}{\numberline {1}System Architecture \& Codebase Layout}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Repository Hierarchy}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Module Responsibilities}{2}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Stage 1: Keyed Spotlighting \& Minimax Risk Bounds}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Mathematical Formulation}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Slide 23 Worked Example Exact Reproduction}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Stage 1 Empirical Figures}{4}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Stage 2: Deterministic Guardrails \& Math-Hardened CaMeL}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Quarantined LLM Execution \& Hoeffding Majority Voting}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Z3 SMT Noninterference Proof \& Capability Lattice}{6}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Conformal Calibration \& Level 2 Sion Game}{6}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Direct Injection \& Jailbreak Defense Layer}{7}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Multi-Class Prompt Guard 2 \& Generative Llama Guard 3}{7}{subsection.4.1}%
+\contentsline {section}{\numberline {5}End-to-End Evaluation: The Attacker Moves Second}{8}{section.5}%
+\contentsline {section}{\numberline {6}AI Model-Driven Synthesis \& Security Discussion}{9}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Executive Findings \& Scientific Assessment}{9}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Stage 1: Keyed Spotlighting \& Minimax Optimality}{9}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Stage 2: Deterministic Guardrails \& SMT Verification}{9}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Direct Layer Robustness \& Multi-Class Separation}{9}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}Pareto Efficiency: Security, Utility, and Latency}{9}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}The Attacker Moves Second: Threat Model Critique}{10}{subsection.6.6}%
+\contentsline {section}{\numberline {7}Reproducibility \& Quick-Start Execution Guide}{10}{section.7}%

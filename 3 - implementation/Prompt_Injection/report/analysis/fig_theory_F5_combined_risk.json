@@ -1,0 +1,15 @@
+{
+ "summary": "Figure F5_combined_risk illustrates the theoretical behavior of the risk function $\\bar{\\mathcal{R}}_\\tau(\\rho)$ under different parameters. The main curves show how the risk changes with q and ρ, while the stacked decomposition highlights the contributions of different components at specific ρ values. The numbers indicate that the risk is generally high, with R_bar averaging around 0.82 and forging at 0.76.",
+ "observations": [
+  "The risk values are mostly above 0.7, indicating a high level of risk under the tested conditions.",
+  "The adaptive method has a lower risk compared to forging and dro, with an average of 0.45.",
+  "The minimum risk observed is 0.1788, which is significantly lower than the maximum of 1.0.",
+  "The data suggests that the risk function is sensitive to changes in q and ρ, with higher q leading to higher risk."
+ ],
+ "caveats": [
+  "The data is in theory-mode, so the results are not based on experimental trials.",
+  "The sample size is large, but the first few rows show some missing values, which may affect interpretation.",
+  "The formula is complex and may not be directly interpretable without further analysis."
+ ],
+ "_context": "Figure F5_combined_risk (group: Theory-mode figures (math-only or SIMULATED inputs)).\nCaption and formula: Main curves per q; right: stacked decomposition at three ρ values (bars grouped by ρ). Formula: $\\bar{\\mathcal{R}}_\\tau(\\rho)=\\min\\{1,\\,q/|\\mathcal{K}_\\tau|+\\max(g_\\rho(\\bar p_\\tau),\\bar p^{adp}_\\tau)\\}$\n\nPlotted data:\nfile F5_combined_risk.csv: 624 rows × 8 columns: ['q', 'variant', 'rho', 'R_bar', 'rho_bar', 'forging', 'dro', 'adaptive']\nnumeric summary:\n                  mean      min            max\nq         320872.11538  1.00000  1000000.00000\nrho            0.12121  0.00000        1.00000\nR_bar          0.82271  0.17880        1.00000\nrho_bar        0.33631  0.00074        1.00000\nforging        0.76250  0.00000        1.00000\ndro            0.43853  0.10001        1.00000\nadaptive       0.45297  0.17880        0.82905\nfirst 8 rows:\n q variant     rho  R_bar  rho_bar  forging  dro  adaptive\n 1    none 0.00000    1.0      NaN      NaN  NaN       NaN\n 1    none 0.00010    1.0      NaN      NaN  NaN       NaN\n 1    none 0.00015    1.0      NaN      NaN  NaN       NaN\n 1    none 0.00022    1.0      NaN      NaN  NaN       NaN\n 1    none 0.00033    1.0      NaN      NaN  NaN       NaN\n 1    none 0.00050    1.0      NaN      NaN  NaN       NaN\n 1    none 0.00074    1.0      NaN      NaN  NaN       NaN\n 1    none 0.00111    1.0      NaN      NaN  NaN       NaN"
+}

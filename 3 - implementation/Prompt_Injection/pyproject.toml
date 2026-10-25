@@ -1,0 +1,57 @@
+[project]
+name = "horizon"
+version = "0.1.0"
+description = "Horizon: keyed spotlighting (Stage 1) + math-hardened CaMeL (Stage 2) against indirect prompt injection, plus a direct/jailbreak layer."
+requires-python = "==3.11.*"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "statsmodels",
+    "cvxpy",
+    "clarabel",
+    "z3-solver",
+    "pydantic",
+    "pyyaml",
+    "mlflow",
+    "pytest",
+    "matplotlib",
+    "litellm",
+    "agentdojo",
+    "datasets",
+    "huggingface-hub",
+    "nbformat",
+    "nbclient",
+    "ipykernel",
+    # CaMeL reference implementation (vendored, unmodified) and the pydantic-ai API it was written for
+    "camel",
+    "pydantic-ai==0.2.12",
+    "opentelemetry-api<1.37",   # pydantic-ai 0.2.12 imports opentelemetry._events (removed later)
+]
+
+[project.optional-dependencies]
+# Direct/jailbreak layer (Meta PurpleLlama + HF models). Separate group so the core
+# install stays usable when the gated models are not yet accessible.
+direct = [
+    "llamafirewall",
+    "transformers",
+    "torch",
+]
+# Red-teaming runners for the testing phase (§11). Installed on demand.
+redteam = [
+    "pyrit",
+    "garak",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+camel = { path = "third_party/camel-prompt-injection" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "llm: needs a running local model server",
+    "gated: needs access to gated Hugging Face models",
+]

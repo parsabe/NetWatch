@@ -1,0 +1,14 @@
+{
+ "summary": "Figure F12_loss illustrates the stacked mean loss components for different configurations in the Horizon project. The loss is composed of three parts: G, aC, and hF, with an upper bound denoted as cp_upper. The data shows that the loss components vary depending on the configuration parameters, such as the number of models (m) and the strictness of the settings.",
+ "observations": [
+  "The mean loss for G is consistently zero, indicating no contribution from this component in the loss calculation.",
+  "The aC component has a mean of 0.01316, with a range from 0.00000 to 0.04250, showing variability based on the configuration.",
+  "The hF component has a higher mean of 0.26321, with a larger range from 0.12750 to 0.42500, indicating it is a more significant contributor to the loss.",
+  "The cp_upper component has the highest mean of 0.32270, with a range from 0.16646 to 0.52141, suggesting it is the dominant factor in the loss calculation."
+ ],
+ "caveats": [
+  "The data is in theory-mode, meaning the results are based on mathematical formulations and not experimental results.",
+  "The sample size is small (28 rows), which may limit the generalizability of the observations."
+ ],
+ "_context": "Figure F12_loss (group: Theory-mode figures (math-only or SIMULATED inputs)).\nCaption and formula: Stacked mean loss components; triangles: p̄_G + a p̄_C + h p̄_F. Formula: $\\ell_\\theta(x)=G_\\theta(x)+a\\,C_\\theta(x)+h\\,F_\\theta(x)$\n\nPlotted data:\nfile F12_loss.csv: 28 rows × 5 columns: ['config', 'G', 'aC', 'hF', 'cp_upper']\nnumeric summary:\n             mean      min      max\nG         0.00000  0.00000  0.00000\naC        0.01316  0.00000  0.04250\nhF        0.26321  0.12750  0.42500\ncp_upper  0.32270  0.16646  0.52141\nfirst 8 rows:\n                      config   G     aC    hF  cp_upper\n           m=1|strict|strict 0.0 0.0000 0.135   0.17458\nm=1|strict|confirm_untrusted 0.0 0.0135 0.135   0.19048\n            m=1|loose|strict 0.0 0.0000 0.390   0.44008\n m=1|loose|confirm_untrusted 0.0 0.0390 0.390   0.48252\n           m=3|strict|strict 0.0 0.0000 0.135   0.17458\nm=3|strict|confirm_untrusted 0.0 0.0135 0.135   0.19048\n            m=3|loose|strict 0.0 0.0000 0.385   0.43502\n m=3|loose|confirm_untrusted 0.0 0.0385 0.385   0.47695"
+}

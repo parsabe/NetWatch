@@ -1,0 +1,6 @@
+Ablation,Static ASR (%),Adaptive ASR (%),Median Queries,Utility (%),Cost / Task ($)
+none,86.4,98.2,3,99.5,0.012
+Stage 1 (Keyed Spotlighting),8.2,24.6,18,95.1,0.015
+Stage 2 (CaMeL Hardened),4.1,14.8,27,92.4,0.045
+Stage 1 + Stage 2 (Horizon Core),1.2,4.5,68,91.8,0.048
+Full Stack (Horizon + Direct Guard),0.6,2.1,>100,91.2,0.052

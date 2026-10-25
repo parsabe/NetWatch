@@ -1,0 +1,30 @@
+\contentsline {section}{\numberline {1}Project architecture}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Folder structure}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Modules}{4}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Configuration and data}{5}{section.2}%
+\contentsline {section}{\numberline {3}Tests}{6}{section.3}%
+\contentsline {section}{\numberline {4}Results}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Stage 2 AgentDojo episodes — report}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Smoke test — does each layer fire?}{7}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}CaMeL reference implementation (unmodified) baseline}{8}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Theory-mode figures (math-only or SIMULATED inputs)}{9}{section.5}%
+\contentsline {paragraph}{Analysis of F1 forging.}{9}{section*.8}%
+\contentsline {paragraph}{Analysis of F2 static asr.}{10}{section*.10}%
+\contentsline {paragraph}{Analysis of F3 dro.}{11}{section*.12}%
+\contentsline {paragraph}{Analysis of F5 combined risk.}{12}{section*.14}%
+\contentsline {paragraph}{Analysis of F6 risk utility.}{13}{section*.16}%
+\contentsline {paragraph}{Analysis of F7 v1.}{14}{section*.18}%
+\contentsline {paragraph}{Analysis of F8 mcnemar.}{15}{section*.20}%
+\contentsline {paragraph}{Analysis of F9 hoeffding.}{16}{section*.22}%
+\contentsline {paragraph}{Analysis of F10 failure hist.}{17}{section*.24}%
+\contentsline {paragraph}{Analysis of F11 conformal.}{18}{section*.26}%
+\contentsline {paragraph}{Analysis of F12 loss.}{19}{section*.28}%
+\contentsline {paragraph}{Analysis of F13 sion lp.}{20}{section*.30}%
+\contentsline {paragraph}{Analysis of F14 v horizon.}{21}{section*.32}%
+\contentsline {paragraph}{Analysis of F15 leakage.}{22}{section*.34}%
+\contentsline {section}{\numberline {6}Discussion}{22}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Limitations}{23}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Next steps}{23}{subsection.6.2}%
+\contentsline {section}{\numberline {A}Parameters (config/params.yaml)}{23}{appendix.A}%
+\contentsline {section}{\numberline {B}Policy table (config/policy.yaml)}{25}{appendix.B}%
+\contentsline {section}{\numberline {C}Reproducibility}{26}{appendix.C}%

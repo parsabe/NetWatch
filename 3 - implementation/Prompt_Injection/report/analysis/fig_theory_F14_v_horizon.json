@@ -1,0 +1,14 @@
+{
+ "summary": "Figure F14_v_horizon illustrates the theoretical behavior of the Horizon defense mechanism under varying values of rho. The plot shows how the value V, representing the minimum risk bound, changes as rho increases. The data suggests that V increases gradually with rho, indicating a trade-off between risk and security. The theoretical nature of the data means these results are not based on empirical experiments.",
+ "observations": [
+  "The value of V increases as rho increases, indicating a higher risk bound with higher rho.",
+  "The minimum value of V is 0.26646, and the maximum is 0.52903, showing a wide range of possible outcomes.",
+  "The first 8 rows show a consistent increase in V as rho increases from 0.00000 to 0.00111."
+ ],
+ "caveats": [
+  "The data is in theory-mode and not based on experimental results.",
+  "The sample size is small, and the results are simulated.",
+  "The formula for V_H includes theoretical bounds and is not validated with real-world data."
+ ],
+ "_context": "Figure F14_v_horizon (group: Theory-mode figures (math-only or SIMULATED inputs)).\nCaption and formula: E-term = CP bounds p̄_G + a p̄_C + h p̄_F; Var from per-attack losses (pending author confirmation). ℓ̄^adp equals the static bound until Stage-2 adaptive runs exist. Formula: $V_{H}=\\min_{\\pi\\in\\Pi}\\min\\{1,\\sum_\\theta\\pi_\\theta\\frac{q}{|\\mathcal{K}_\\theta|}+\\max(\\mathbb{E}_P[L_\\pi]+\\sqrt{2\\rho\\mathrm{Var}_P(L_\\pi)},\\sum_\\theta\\pi_\\theta\\bar\\ell^{adp}_\\theta)\\}$\n\nPlotted data:\nfile F14_v_horizon.csv: 36 rows × 3 columns: ['sweep', 'x', 'V']\nnumeric summary:\n        mean      min         max\nx  448.15362  0.00000  8192.00000\nV    0.33551  0.26646     0.52903\nfirst 8 rows:\nsweep       x       V\n  rho 0.00000 0.26646\n  rho 0.00010 0.27118\n  rho 0.00015 0.27222\n  rho 0.00022 0.27350\n  rho 0.00033 0.27496\n  rho 0.00050 0.27659\n  rho 0.00074 0.27829\n  rho 0.00111 0.28018"
+}

@@ -1,64 +1,75 @@
-# KS-RB: Keyed Spotlighting with Robust Risk Bounds — experiment code
+# Horizon — RQ1 implementation (indirect prompt injection)
 
-## Files
+Two-stage defense against **indirect** prompt injection, plus an off-the-shelf layer for direct injection and
+jailbreaks. The math follows the slides in `Meetings/20.10/combined_presentation.pdf`; every math function
+cites its slide number. **Start with `Horizon.ipynb`**: it walks through every build step with live demos and
+the saved results. `REPORT.md` has the status report.
 
-| File | What it does | Slide step |
-|---|---|---|
-| `transforms.py` | All spotlighting variants + key-space sizes \|K\| | Defense, Step 1 |
-| `data.py` | Builds attack samples with a random canary per sample, grouped by attack category | Test corpus |
-| `llm.py` | One `chat()` function for any OpenAI-compatible endpoint (Ollama, vLLM, OpenAI…) | — |
-| `experiment.py` | Static run: ASR on attacks + utility on clean docs, per defense | Step 2a, utility |
-| `adaptive.py` | Attacker-LLM loop with budget B, fresh key every try | Step 3 |
-| `stats.py` | Clopper–Pearson, DRO closed form, ρ between two mixes, combined risk, choice rule | Steps 1–5 |
-| `analyze.py` | Summary table, ASR per category, DRO curves, risk-vs-utility plot | Results |
+## Layout
 
-## Setup
+```
+config/params.yaml        every parameter (illustrative, sweepable; CLI: --set key=value)
+config/policy.yaml        deterministic policy table (Slide 38), proven noninterferent by Z3 at startup
+horizon/
+  keys.py                 CSPRNG keys (`secrets`)
+  llm.py                  LiteLLM client + on-disk cache
+  stage1/                 transforms, prompts, canary A(δ,κ), utility (token-F1), stats (CP, DRO, combined
+                          risk, choice rule, McNemar, bootstrap), sion (V1 SOCP), adaptive attacker, corpus
+  stage2/                 values (labels), schemas (parser, |S|), quarantine × m, vote (+Hoeffding), policy,
+                          z3_check, conformal (CRC), loss, leakage, sion_lp, horizon_value, camel_adapter
+  direct/                 LlamaFirewall/Prompt Guard 2, Llama Guard, canary
+  pipeline.py             end-to-end AgentDojo pipeline, all ablation flags
+  theory.py               theory-mode inputs for figures
+eval/                     stage1_runner, agentdojo_runner, jailbreak_runner (§11)
+scripts/                  serve_local.sh, openai_role_proxy.py, download_data.py, make_splits.py,
+                          camel_baseline.py, smoke_test.py, guarded_server.py, make_figures.py, build_notebook.py
+tests/                    §9 unit tests (the only place slide values appear) + grep check
+third_party/              CaMeL reference implementation (unmodified, Apache-2.0)
+data/                     README.md = data card; raw/ (git-ignored), processed/, splits/
+results/                  MLflow (results/mlflow.db), runs, logs (git-ignored)
+figures/                  F1–F18 as PDF + PNG + CSV (theory mode); figures/pilot/ from the Stage 1 pilot
+```
+
+## One command
 
 ```bash
-pip install -r requirements.txt
-# local model via Ollama (free, runs on a laptop/GPU):
-ollama pull llama3.1:8b
-export LLM_BASE_URL=http://localhost:11434/v1 LLM_API_KEY=ollama LLM_MODEL=llama3.1:8b
-# optional: a stronger attacker model for adaptive.py
-export ATTACKER_MODEL=qwen2.5:14b
+./run_all.sh                         # setup + tests + theory figures + smoke test + notebook + PDF report
+./run_all.sh --level pilot           # + Stage 1 pilot and a paired AgentDojo mini-run
+./run_all.sh --level full            # + every §11 experiment at full size
+./run_all.sh --report-only --report-model ollama_chat/<name> --report-api-base http://<colibri>:11434
 ```
 
-## Run
+Everything ends up in `report/`: `report.pdf` / `report.tex` (written by the analysis model, with the
+project tree, every figure, result tables computed from the files, and the model's analysis; numbers in the
+prose are checked against the data and unmatched ones are marked red), the copied figures and CSVs,
+the model's raw analyses (`analysis/*.json`), `tests.xml` and `run_all.log`. Setup alone: `./scripts/setup.sh`.
+
+## Step by step
 
 ```bash
-python stats.py                     # sanity check: reproduces the slide numbers
-python experiment.py --tasks data/tasks.jsonl --n-attacks 1000 --out results/static.jsonl
-for t in none datamark datamark_dyn substitution base64; do
-  python adaptive.py --tasks data/tasks.jsonl --transform $t --targets 100 --budget 10 \
-      --out results/adaptive_$t.jsonl
-done
-python analyze.py --static results/static.jsonl --adaptive-dir results --rho 0.1 --eta 0.05
+~/.local/bin/uv sync --extra direct            # pinned (uv.lock); add --extra redteam for PyRIT/garak
+./scripts/serve_local.sh                       # Ollama (qwen3:8b) + developer→system role proxy
+uv run pytest -q                               # §9 unit tests
+uv run python scripts/make_figures.py --theory # all theory-mode figures
+uv run python scripts/smoke_test.py            # does each layer fire?
 ```
 
-Runs append line by line, so an interrupted run resumes where it stopped.
+Data: `uv run python scripts/download_data.py` (gated sets only with `--include-gated`), then
+`uv run python scripts/make_splits.py` and `uv run python eval/agentdojo_runner.py --make-splits`.
 
-## Data format
+## Ablation flags (`flags:` in params.yaml)
 
-`data/tasks.jsonl`, one clean task per line:
+`use_firewall, use_stage1, stage1_variant | stage1_mix, use_stage2, m, use_vote, use_typing, use_policy,
+use_conformal, use_output_guard, use_canary`. Preset ablations `none | stage1 | stage2 | stage1+2 | full` in
+`eval/agentdojo_runner.py`.
 
-```json
-{"id": "t0", "task": "Summarize the email.", "document": "...", "reference": "expected answer"}
-```
+## Decisions recorded in code
 
-`data/tasks_example.jsonl` has 3 toy examples. For the thesis, fill it with a few
-hundred real tasks (see datasets in the chat answer) and convert their attacks into
-`TEMPLATES` in `data.py`, keeping the attack **category** labels.
-
-## Notes
-
-- **Success check:** the injection asks the model to print a random canary
-  (`CANARY-3F494E`); success = the canary appears in the output. Automatic, no judge needed.
-- **Forging term:** with `--attempts 1000`, fixed transforms (|K| = 1) get risk 1 by
-  construction — an attacker who knows the scheme can always forge them. Also report
-  `--attempts 0` to see the "model obeys anyway" part on its own.
-- **Measuring a realistic ρ:** label attacks in two datasets with the same category
-  names, then `stats.rho_between_mixes(test_labels, other_labels)`. Categories that
-  appear only in the other dataset give ρ = ∞ — a sign your test set is missing an
-  attack type.
-- **Utility:** `token_f1` is a simple baseline; swap in ROUGE-L or an LLM judge.
-- Fix the model version and temperature 0, and log both in the thesis.
+* Per-run independent keys in the quarantine (Slide 35; Slide 34 inconsistent).
+* `attack_budget` (Slide 20) and `leakage_cap_bits` (Slide 41) are distinct names.
+* Utility metric: SQuAD token-F1 (author decision).
+* CRC: ask user iff vote agreement s(x) ≥ λ, else DENY; λ̂ = smallest feasible λ (author decision).
+* Leakage: hard per-configuration cap in Π (author decision); side-channel term is a flagged placeholder (0).
+* V_Horizon: variance from per-attack losses, mean from CP bounds — *pending author confirmation* (Slide 42
+  as written gives Var = 0).
+* Report-split values are always evaluated at choices made on the fit split.

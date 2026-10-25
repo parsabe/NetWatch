@@ -1,0 +1,53 @@
+# Deterministic policy table (Slide 38): Policy(t, v1..vk) ∈ {ALLOW, DENY, CONFIRM}.
+#
+# Rules are evaluated top to bottom; the first rule whose `when` holds decides.
+# No matching rule → DENY. Conditions (all listed keys must hold):
+#   untrusted_any:      some argument OR a control dependency is UNTRUSTED
+#   untrusted_data:     some argument is UNTRUSTED
+#   untrusted_control:  the call sits under a branch/loop that depends on UNTRUSTED data
+#   untrusted_args:     [names]  any of these arguments is UNTRUSTED
+#   role_in:            [roles]  the requesting user's role (direct channel, role-based rules)
+#   tool_class:         read_only | side_effect
+# At startup Z3 proves: tool call depends on UNTRUSTED data ⇒ Policy ≠ ALLOW,
+# for every tool × every label assignment × every role (horizon/stage2/z3_check.py).
+
+roles:
+  default: owner
+  all: [owner, member, guest]
+
+# Tools that never change state. Everything else is side_effect.
+read_only_tools:
+  - "get_*"
+  - "read_*"
+  - "search_*"
+  - "list_*"
+  - "check_*"
+  - "query_*"
+
+# The quarantined-LLM call is the quarantine mechanism itself, not a tool: it has no
+# side effects and is the only place UNTRUSTED data is allowed to flow.
+internal_functions: [query_ai_assistant]
+
+policies:
+  strict:
+    default:
+      - {when: {role_in: [guest], tool_class: side_effect}, then: DENY}
+      - {when: {untrusted_any: true}, then: DENY}
+      - {then: ALLOW}
+
+  confirm_untrusted:
+    default:
+      - {when: {role_in: [guest], tool_class: side_effect}, then: DENY}
+      - {when: {untrusted_any: true}, then: CONFIRM}
+      - {when: {role_in: [member], tool_class: side_effect}, then: CONFIRM}
+      - {then: ALLOW}
+    overrides:
+      # money and account changes never run on untrusted inputs, even with confirmation
+      send_money:
+        - {when: {untrusted_any: true}, then: DENY}
+        - {when: {role_in: [owner]}, then: ALLOW}
+        - {then: DENY}
+      update_password:
+        - {when: {untrusted_any: true}, then: DENY}
+        - {when: {role_in: [owner]}, then: CONFIRM}
+        - {then: DENY}

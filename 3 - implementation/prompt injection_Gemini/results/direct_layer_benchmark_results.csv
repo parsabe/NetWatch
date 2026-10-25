@@ -1,0 +1,6 @@
+Detector,Adversarial Dataset,Detection Rate (TPR %),Benign Dataset,False Positive Rate (FPR %)
+Prompt Guard 2 (86M),JailbreakBench (JBB),94.2,JBB Benign Behaviors,2.1
+Prompt Guard 2 (86M),HarmBench Behaviors,91.8,XSTest Exaggerated Safety,3.4
+Prompt Guard 2 (86M),HackAPrompt,88.6,Alpaca Clean Samples,1.2
+Llama Guard 3 (Output),HarmBench Red-Team Outputs,96.5,Benign Task Responses,1.8
+Canary Token Guard,System Prompt Leakage Attacks,100.0,Normal User Interactions,0.0

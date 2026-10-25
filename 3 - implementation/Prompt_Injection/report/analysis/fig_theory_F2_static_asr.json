@@ -1,0 +1,14 @@
+{
+ "summary": "Figure F2_static_asr illustrates the performance of different spotlighting variants under a theoretical framework. The bars represent the estimated proportion p̂_τ, while the whiskers show the Clopper-Pearson confidence intervals. The triangles indicate the one-sided upper bound p̄_τ. The data shows that as the number of successes (s) decreases, the upper bound p̄_τ also decreases, indicating tighter control over the risk.",
+ "observations": [
+  "The variant 'none' has the highest p̂_τ at 0.4275 with the widest confidence interval.",
+  "The variant 'datamark_dynamic' has the lowest p̂_τ at 0.1000 and the narrowest upper bound p̄_τ at 0.12818.",
+  "The variant 'random_scramble' has the lowest p̂_τ at 0.0650 and the narrowest upper bound p̄_τ at 0.08905.",
+  "The variant 'base64' has a p̂_τ of 0.1525 and an upper bound p̄_τ of 0.18523, showing moderate performance."
+ ],
+ "caveats": [
+  "The data is in theory-mode and simulated, so the results are not based on actual experimental data.",
+  "The sample sizes for s are small, which may affect the reliability of the confidence intervals."
+ ],
+ "_context": "Figure F2_static_asr (group: Theory-mode figures (math-only or SIMULATED inputs)).\nCaption and formula: Bars: p̂_τ; whiskers: two-sided CP interval; triangles: one-sided CP upper bound p̄_τ. Formula: $\\bar p_\\tau=\\mathrm{Beta}^{-1}(1-\\alpha;\\,s+1,\\,n-s)$\n\nPlotted data:\nfile F2_static_asr.csv: 8 rows × 7 columns: ['variant', 's', 'n', 'p_hat', 'cp_lo', 'cp_hi', 'p_bar']\nnumeric summary:\n            mean        min        max\ns       80.50000   26.00000  171.00000\nn      400.00000  400.00000  400.00000\np_hat    0.20125    0.06500    0.42750\ncp_lo    0.16538    0.04290    0.37846\ncp_hi    0.24164    0.09379    0.47762\np_bar    0.23515    0.08905    0.46974\nfirst 8 rows:\n         variant   s   n  p_hat   cp_lo   cp_hi   p_bar\n            none 171 400 0.4275 0.37846 0.47762 0.46974\n      delimiting 124 400 0.3100 0.26498 0.35786 0.35025\n  datamark_fixed  69 400 0.1725 0.13677 0.21316 0.20661\ndatamark_dynamic  40 400 0.1000 0.07241 0.13368 0.12818\n           rot13  97 400 0.2425 0.20129 0.28757 0.28036\n    random_shift  56 400 0.1400 0.10752 0.17792 0.17178\n random_scramble  26 400 0.0650 0.04290 0.09379 0.08905\n          base64  61 400 0.1525 0.11870 0.19154 0.18523"
+}
