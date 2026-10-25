@@ -23,7 +23,7 @@ if [ "${1:-}" = "--prepare" ]; then
     --include-gated || echo "HackAPrompt not downloaded (gated: run 'hf auth login' first) — its set is skipped"
   pkill -f "[o]penai_role_proxy" 2>/dev/null; pkill -f "[o]llama serve" 2>/dev/null   # setup started it for pulls
   "$UV" run --no-sync python eval/campaign.py --plan
-  echo; echo "prepared. Next: ./run_campaign.sh   (cluster: sbatch cluster/horizon_campaign.sbatch)"
+  echo; echo "prepared. Next: qsub cluster/horizon_campaign.pbs   (PBS) · sbatch cluster/horizon_campaign.sbatch (SLURM) · ./run_campaign.sh (any GPU machine)"
   exit 0
 fi
 

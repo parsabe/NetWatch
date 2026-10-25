@@ -1,9 +1,8 @@
 #!/bin/bash
 # Horizon test campaign on the PBS Pro GPU cluster.     qsub cluster/horizon_campaign.pbs
 # Prepare once on the LOGIN node (internet):           ./run_campaign.sh --prepare
-# 15 min before the walltime the campaign pauses cleanly and this script submits the next part itself.
 #PBS -N horizon
-#PBS -q gpu
+#PBS -q teachingq
 #PBS -l select=1:ncpus=16:mem=64gb:ngpus=1
 #PBS -l walltime=24:00:00
 #PBS -l place=pack
@@ -15,22 +14,56 @@
 
 set -uo pipefail
 cd "${PBS_O_WORKDIR:-$(dirname "$0")/..}"
+[ -f run_campaign.sh ] || cd ..          # submitted from inside cluster/ → go to the project folder
+[ -f run_campaign.sh ] || { echo "!! run qsub from the project folder: qsub cluster/horizon_campaign.pbs"; exit 1; }
+exec > >(tee -a horizon_live.log) 2>&1   # live log (PBS copies horizon.log only when the job ends)
 WALLTIME_H=24                    # keep equal to the walltime above
 STOP_EARLY_S=900                 # pause 15 min before the end
-
+PARALLEL=8                       # Ollama parallel slots (cluster profile)
+UV="$HOME/.local/bin/uv"
+OLLAMA="$HOME/.local/ollama/bin/ollama"
 # module load cuda               # only if your cluster asks for it (Ollama brings its own CUDA libraries)
 export HF_HUB_OFFLINE=1          # compute nodes: no internet — everything was downloaded by --prepare
-# export HF_HOME=/scratch/$USER/hf  OLLAMA_MODELS=/scratch/$USER/ollama   # if --prepare used scratch
+mkdir -p results/campaign
 
-echo "job ${PBS_JOBID:-local} on $(hostname) at $(date)"
-nvidia-smi --query-gpu=name,memory.total --format=csv || echo "no GPU visible!"
+echo "==== job ${PBS_JOBID:-local} on $(hostname) at $(date)"
 
+echo "==== 1. GPU + driver (nvidia-smi)"
+nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv || echo "!! NO GPU VISIBLE — check '#PBS -q' and 'ngpus=1'"
+nvidia-smi | grep -i "cuda version" || true
+
+echo "==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)"
+"$UV" run --no-sync python - <<'EOF'
+import torch
+ok = torch.cuda.is_available()
+print("torch", torch.__version__, "· built for CUDA", torch.version.cuda, "· CUDA usable:", ok)
+print("guards run on:", torch.cuda.get_device_name(0) if ok else "CPU (driver too old for this torch build → slower guards)")
+EOF
+
+echo "==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)"
+HORIZON_PARALLEL=$PARALLEL ./scripts/serve_local.sh
+MODEL=$("$UV" run --no-sync python -c "from horizon.config import load_config; print(load_config().models['q_llm'].split('/',1)[1])")
+curl -s localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"prompt\":\"hi\",\"stream\":false}" >/dev/null
+"$OLLAMA" ps                     # PROCESSOR column must say "100% GPU"
+"$OLLAMA" ps | grep -q "100% GPU" && echo "OK: $MODEL runs fully on the GPU" \
+  || echo "!! $MODEL is NOT fully on the GPU (see PROCESSOR column above)"
+
+echo "==== 4. GPU usage every 5 min → results/campaign/gpu_usage.csv"
+nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used,memory.total --format=csv -l 300 \
+  >> results/campaign/gpu_usage.csv 2>/dev/null &
+GPUMON=$!
+
+echo "==== 5. campaign"
 timeout --preserve-status --signal=TERM $((WALLTIME_H * 3600 - STOP_EARLY_S)) \
   ./run_campaign.sh --profile cluster "$@"
 rc=$?
+kill "$GPUMON" 2>/dev/null
+echo "==== GPU use during the run (average utilization %):"
+awk -F', ' '$1 ~ /^[0-9]/ {s+=$2; n++} END {if (n) printf "  %.0f %% over %d samples\n", s/n, n}' \
+  results/campaign/gpu_usage.csv
 echo "campaign exit code $rc (0 done · 2 done with problems · 3 paused)"
 if [ "$rc" -eq 3 ]; then
   echo "paused before the walltime → submitting the next part"
-  qsub cluster/horizon_campaign.pbs || echo "could not resubmit from the node: run 'qsub cluster/horizon_campaign.pbs' on the login node"
+  qsub cluster/horizon_campaign.pbs || echo "resubmit by hand on the login node: qsub cluster/horizon_campaign.pbs"
 fi
 exit "$rc"
