@@ -1,0 +1,62 @@
+digraph G {
+  graph [fontname="DejaVu Sans" fontsize=13 rankdir=TB nodesep=0.45 ranksep=0.42 pad=0.35 splines=spline
+         newrank=true labelloc=t labeljust=c label=<<B>Horizon — how the whole pipeline works</B><BR/><FONT POINT-SIZE="11"><FONT COLOR="#0F6B50"><B>green = math</B></FONT> · lavender = AI model · rose = guard / attack tool · white = program code · beige = data</FONT>>];
+  node  [fontname="DejaVu Sans" fontsize=12 shape=box style="rounded,filled" penwidth=1.5 margin="0.20,0.10"];
+  edge  [fontname="DejaVu Sans" fontsize=10 color="#7A7974" arrowsize=0.8 penwidth=1.3 fontcolor="#52514E"];
+  subgraph cluster_before { label=<<B>① BEFORE — prepared once (offline)</B>> style="rounded,dashed" color="#7A7974" fontsize=15 margin=16;
+  data [label=<<B>Datasets</B><BR/><FONT POINT-SIZE="10">indirect: BIPIA · LLMail-Inject<BR/>direct: HackAPrompt · HarmBench · JBB · Gandalf · XSTest · Alpaca</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  s1run [label=<<B>Stage 1 experiment</B><BR/><FONT POINT-SIZE="10">every attack document × 8 markings τ<BR/>(delimiters · ^ · N<SUP>k</SUP> · ROT13 · shift · scramble · Base64)<BR/>new secret key κ each time · Qwen3-8B answers</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  s1math [label=<<B>Stage 1 maths</B><BR/><FONT POINT-SIZE="10">attack rate bound p̄ = Beta<SUP>−1</SUP>(1−α; s+1, n−s)<BR/>χ²-DRO  g<SUB>ρ</SUB>(p̄) = p̄ + √(2ρp̄(1−p̄))<BR/>forging q/|K<SUB>τ</SUB>| · adaptive attacker p̄<SUP>adp</SUP><BR/>R̄<SUB>τ</SUB> = min{1, q/|K<SUB>τ</SUB>| + max(g<SUB>ρ</SUB>, p̄<SUP>adp</SUP>)}</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  sion1 [label=<<B>Sion game (level 1)</B><BR/><FONT POINT-SIZE="10">V<SUB>1</SUB> = min<SUB>π</SUB> max<SUB>attack</SUB>  (cvxpy SOCP)<BR/>→ <B>π*</B> = best random mix of markings</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  cal [label=<<B>Calibration</B><BR/><FONT POINT-SIZE="10">conformal risk control on agent runs<BR/>λ̂ = smallest λ with (n/(n+1))R̂(λ) + 1/(n+1) ≤ α<SUB>user</SUB></FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  z3 [label=<<B>Rule table proof</B><BR/><FONT POINT-SIZE="10">Z3 proves config/policy.yaml:<BR/>untrusted data ⇒ never ALLOW</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  data -> s1run -> s1math -> sion1 -> cal;
+  {rank=same; s1run; z3}
+  }
+  subgraph cluster_during { label=<<B>② DURING — one request, step by step (online)</B>> style="rounded,dashed" color="#5B4FC9" fontsize=15 margin=16;
+  user [label=<<B>User request</B><BR/><FONT POINT-SIZE="10">e.g. “summarise my inbox”  (trusted)</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  ig [label=<<B>1 · Input guard</B><BR/><FONT POINT-SIZE="10">DeBERTa injection classifier<BR/>blocks a jailbreak / injection typed by the user</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  pllm [label=<<B>2 · Planner AI (P-LLM)</B><BR/><FONT POINT-SIZE="10">sees ONLY the request, never outside data<BR/>writes a small program</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  interp [label=<<B>3 · CaMeL interpreter</B><BR/><FONT POINT-SIZE="10">runs the program, calls tools,<BR/>remembers where every value came from</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  ext [label=<<B>Outside data</B><BR/><FONT POINT-SIZE="10">emails · web pages · tool results<BR/>(UNTRUSTED — may hide an attack)</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  qllm [label=<<B>4 · Reader AIs (Q-LLM) × m</B><BR/><FONT POINT-SIZE="10">each reader: own marking τ ~ π* and own key κ<BR/>no tools · must answer in a fixed format</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  vote [label=<<B>5 · Majority vote</B><BR/><FONT POINT-SIZE="10">&gt; m/2 readers agree → value, else refused</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  label [label=<<B>6 · Label the value</B><BR/><FONT POINT-SIZE="10">SYSTEM ⊑ USER ⊑ UNTRUSTED<BR/>mixed data keeps the strictest label</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  rules [label=<<B>7 · Rule check</B><BR/><FONT POINT-SIZE="10">rule table per tool</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  dec [label=<<B>decision?</B>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E" shape=diamond];
+  conf [label=<<B>8 · Ask or deny?</B><BR/><FONT POINT-SIZE="10">readers' agreement s(x) ≥ λ̂ ?</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37" shape=diamond];
+  ask [label=<<B>ask YOU</B><BR/><FONT POINT-SIZE="10">approve / decline</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  deny [label=<<B>DENY</B><BR/><FONT POINT-SIZE="10">action blocked</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  tool [label=<<B>9 · Tool runs</B><BR/><FONT POINT-SIZE="10">AgentDojo world (simulated, safe)</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  og [label=<<B>10 · Output guard</B><BR/><FONT POINT-SIZE="10">Qwen3Guard (harmful?) + canary<BR/>(secret code word leaked?)</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  ans [label=<<B>Answer</B>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  hoef [label=<<B>Hoeffding</B><BR/><FONT POINT-SIZE="10">P(vote fooled) ≤ exp(−2m(½ − R̄<SUB>Q</SUB>)²)</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  leak [label=<<B>Leakage</B><BR/><FONT POINT-SIZE="10">≤ Σ log<SUB>2</SUB>|S| bits per answer<BR/>≤ leakage_cap_bits</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  join [label=<<B>Label join</B><BR/><FONT POINT-SIZE="10">cap(f(v<SUB>1..k</SUB>)) = ⊔ cap(v<SUB>i</SUB>)</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  user -> ig -> pllm -> interp; interp -> qllm [label=" reads untrusted data"]; ext -> qllm;
+  qllm -> vote -> label -> rules -> dec;
+  dec -> tool [label=" ALLOW"]; dec -> deny [label=" DENY"]; dec -> conf [label=" CONFIRM"];
+  conf -> ask [label=" yes"]; conf -> deny [label=" no"]; ask -> tool [label=" approved"];
+  tool -> og -> ans;
+  vote -> hoef [style=dashed color="#0F6B50" arrowhead=none constraint=false];
+  qllm -> leak [style=dashed color="#0F6B50" arrowhead=none constraint=false];
+  label -> join [style=dashed color="#0F6B50" arrowhead=none constraint=false];
+  {rank=same; vote; hoef}
+  {rank=same; qllm; leak; ext}
+  {rank=same; label; join}
+  }
+  subgraph cluster_after { label=<<B>③ AFTER — test and measure</B>> style="rounded,dashed" color="#7A7974" fontsize=15 margin=16;
+  tools [label=<<B>Attack tools</B><BR/><FONT POINT-SIZE="10">AgentDojo injections · PyRIT XPIA (indirect)<BR/>PyRIT PAIR · TAP · Crescendo (jailbreaks)<BR/>garak probes · guard detection on datasets</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  setups [label=<<B>5 defence setups (same attacks)</B><BR/><FONT POINT-SIZE="10">none · stage1 · stage2 · stage1+2 · full<BR/>each test = one request through ②</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  count [label=<<B>Count &amp; bound</B><BR/><FONT POINT-SIZE="10">attack got through? → ASR = s/n<BR/>95 % Clopper–Pearson interval · McNemar · bootstrap<BR/>loss ℓ = G + a·C + h·F</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  sion2 [label=<<B>Sion game (level 2) + Horizon value</B><BR/><FONT POINT-SIZE="10">min over π∈Π, max over w of Σ w ℓ̄  (scipy LP)<BR/>V<SUB>H</SUB> = min{1, Σπ q/|K| + max(E[L] + √(2ρ Var L), Σπ ℓ̄<SUP>adp</SUP>)}</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  out [label=<<B>Results</B><BR/><FONT POINT-SIZE="10">./run_campaign.sh → report/campaign/ (process + through / blocked)<BR/>figures F1–F18 · report/report.pdf (written by the colibri model) · MLflow</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  tools -> setups -> count -> sion2 -> out;
+  }
+  sion1 -> qllm [color="#5B4FC9" penwidth=2.2 label=" π* (which markings, how often)"];
+  cal -> conf [color="#0F6B50" penwidth=2 style=dashed label=" λ̂"];
+  z3 -> rules [color="#0F6B50" penwidth=2 style=dashed label=" proven rules"];
+  cal -> user [style=invis weight=10];
+  z3 -> user [style=invis];
+  ans -> tools [style=invis];
+}

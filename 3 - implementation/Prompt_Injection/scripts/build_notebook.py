@@ -44,14 +44,10 @@ All numbers on the slides are illustrative: they live only in `config/params.yam
 
 <img src="docs/horizon-stage1.png" width="420"> <img src="docs/horizon-stage2.png" width="300">
 
-**Whole pipeline as built** (`scripts/make_pipeline_diagram.py` → `docs/`): runtime flow of one request with every math
-tool, and the research workflow run by `./run_all.sh`.
+**The whole pipeline as one flowchart** (`docs/pipeline.pdf`; green = math): ① prepared once, ② one request
+step by step, ③ testing and measurement.
 
-**Everything in one picture** (green = math): `docs/pipeline_full.pdf`
-
-<img src="docs/pipeline_full.png" width="1000">
-
-<img src="docs/pipeline_runtime.png" width="760"> <img src="docs/pipeline_workflow.png" width="380">
+<img src="docs/pipeline.png" width="900">
 """)
 
 code(r"""

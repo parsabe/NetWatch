@@ -4,7 +4,7 @@
 * scan_untrusted    pre-scan indicator for injected instructions (regex + the injection classifier if enabled).
                     It only decides whether to ASK the user; it is not part of Horizon's guarantees.
 * prepare_config    makes any config runnable: missing π* → fixed variant, missing λ̂ → conformal off,
-                    gated guards → direct layer off; every change is reported as a notice
+                    guards that cannot load → that guard off; every change is reported as a notice
 * Stage1Engine      one protected call: x_κ(δ) = S_κ ‖ T ‖ τ_κ(D ⊕ δ), attack indicator via canaries
 * Stage2Engine      the full agent (CaMeL + Horizon) on an AgentDojo world, with live events
 """

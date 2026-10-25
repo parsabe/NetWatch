@@ -83,6 +83,11 @@ GLOSSARY = {
     "λ̂ (conformal)": "Threshold on reader agreement: below it a risky call is denied, above it you are asked.",
     "G / C / F": "Loss terms: G = attack ran without asking, C = attack reached your approval, F = readers fooled.",
     "V_Horizon": "The final guaranteed ceiling on how often the whole system can be hijacked.",
+    "input guard (DeBERTa)": "A small classifier (ProtectAI) that scores what YOU type: 'injection' or 'safe'.",
+    "output guard (Qwen3Guard)": "A safety model that labels the AI's answer Safe / Controversial / Unsafe.",
+    "XPIA (PyRIT)": "Microsoft's red-team tool plants an attack inside a document, then Horizon processes it.",
+    "garak": "A scanner with ready-made attack probes (jailbreaks and hidden-document attacks).",
+    "campaign": "The big test run (./run_campaign.sh): thousands of tests, then a report of what got through.",
 }
 
 ALL_COMMANDS = """\
@@ -601,7 +606,7 @@ class App:
         t.add_column("what")
         t.add_column("where")
         for label, p in [("PDF report", ROOT / "report" / "report.pdf"), ("notebook", ROOT / "Horizon.ipynb"),
-                         ("pipeline diagrams", ROOT / "docs" / "pipeline_runtime.pdf"),
+                         ("pipeline flowchart", ROOT / "docs" / "pipeline.pdf"),
                          ("best Stage 1 mix π*", PI_STAR), ("conformal threshold λ̂", LAMBDA_HAT),
                          ("smoke test", res / "smoke" / "smoke.json")]:
             t.add_row(label, str(p.relative_to(ROOT)) if p.exists() else "[dim]not yet[/]")
