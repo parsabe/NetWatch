@@ -1,0 +1,36 @@
+#!/bin/bash
+# Horizon test campaign on the PBS Pro GPU cluster.     qsub cluster/horizon_campaign.pbs
+# Prepare once on the LOGIN node (internet):           ./run_campaign.sh --prepare
+# 15 min before the walltime the campaign pauses cleanly and this script submits the next part itself.
+#PBS -N horizon
+#PBS -q gpu
+#PBS -l select=1:ncpus=16:mem=64gb:ngpus=1
+#PBS -l walltime=24:00:00
+#PBS -l place=pack
+#PBS -r n
+#PBS -j oe
+#PBS -o horizon.log
+##PBS -m abe
+##PBS -M your.name@student.tu-freiberg.de
+
+set -uo pipefail
+cd "${PBS_O_WORKDIR:-$(dirname "$0")/..}"
+WALLTIME_H=24                    # keep equal to the walltime above
+STOP_EARLY_S=900                 # pause 15 min before the end
+
+# module load cuda               # only if your cluster asks for it (Ollama brings its own CUDA libraries)
+export HF_HUB_OFFLINE=1          # compute nodes: no internet — everything was downloaded by --prepare
+# export HF_HOME=/scratch/$USER/hf  OLLAMA_MODELS=/scratch/$USER/ollama   # if --prepare used scratch
+
+echo "job ${PBS_JOBID:-local} on $(hostname) at $(date)"
+nvidia-smi --query-gpu=name,memory.total --format=csv || echo "no GPU visible!"
+
+timeout --preserve-status --signal=TERM $((WALLTIME_H * 3600 - STOP_EARLY_S)) \
+  ./run_campaign.sh --profile cluster "$@"
+rc=$?
+echo "campaign exit code $rc (0 done · 2 done with problems · 3 paused)"
+if [ "$rc" -eq 3 ]; then
+  echo "paused before the walltime → submitting the next part"
+  qsub cluster/horizon_campaign.pbs || echo "could not resubmit from the node: run 'qsub cluster/horizon_campaign.pbs' on the login node"
+fi
+exit "$rc"

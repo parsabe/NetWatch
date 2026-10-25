@@ -35,7 +35,9 @@ in the job script.
 
 ```bash
 ./run_campaign.sh --plan                       # check what will run (no GPU needed)
-sbatch cluster/horizon_campaign.sbatch         # SLURM; adapt partition / account / GPU type at the top
+qsub cluster/horizon_campaign.pbs              # PBS Pro (TU Freiberg); check the queue name (-q) at the top
+qstat -u $USER                                 # is it running?
+# (SLURM clusters: sbatch cluster/horizon_campaign.sbatch)
 ```
 
 No SLURM? On any GPU machine: `./run_campaign.sh --profile cluster` (in `tmux` / `screen`).

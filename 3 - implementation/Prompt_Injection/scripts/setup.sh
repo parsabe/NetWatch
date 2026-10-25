@@ -36,8 +36,16 @@ say "Ollama (user install, GPU)"
 OLLAMA="$HOME/.local/ollama/bin/ollama"
 if [ ! -x "$OLLAMA" ]; then
   mkdir -p "$HOME/.local/ollama"
-  curl -sL "https://github.com/ollama/ollama/releases/download/$OLLAMA_VERSION/ollama-linux-amd64.tar.zst" \
-    | tar --zstd -x -C "$HOME/.local/ollama"
+  ARCHIVE="$(mktemp --suffix=.tar.zst)"
+  curl -sL "https://github.com/ollama/ollama/releases/download/$OLLAMA_VERSION/ollama-linux-amd64.tar.zst" -o "$ARCHIVE"
+  # older tar (e.g. on clusters) has no --zstd: fall back to the zstd tool, then to Python's zstandard
+  if tar --zstd -xf "$ARCHIVE" -C "$HOME/.local/ollama" 2>/dev/null; then :
+  elif command -v zstd >/dev/null; then zstd -dc "$ARCHIVE" | tar -x -C "$HOME/.local/ollama"
+  else "$UV" run --no-project --with zstandard python -c "import sys, zstandard; \
+zstandard.ZstdDecompressor().copy_stream(open(sys.argv[1], 'rb'), sys.stdout.buffer)" "$ARCHIVE" \
+         | tar -x -C "$HOME/.local/ollama"
+  fi
+  rm -f "$ARCHIVE"
 fi
 if ! curl -s localhost:11434/api/version >/dev/null; then ./scripts/serve_local.sh; else
   echo "model server already running (left untouched)"
