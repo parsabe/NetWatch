@@ -43,6 +43,11 @@ here we only *load* their outputs (re-running them is one command each, shown in
 All numbers on the slides are illustrative: they live only in `config/params.yaml` and in `tests/`.
 
 <img src="docs/horizon-stage1.png" width="420"> <img src="docs/horizon-stage2.png" width="300">
+
+**Whole pipeline as built** (`scripts/make_pipeline_diagram.py` → `docs/`): runtime flow of one request with every math
+tool, and the research workflow run by `./run_all.sh`.
+
+<img src="docs/pipeline_runtime.png" width="760"> <img src="docs/pipeline_workflow.png" width="380">
 """)
 
 code(r"""

@@ -1,0 +1,62 @@
+digraph G {
+  graph [fontname="DejaVu Sans" fontsize=12 rankdir=TB nodesep=0.35 ranksep=0.45 pad=0.3 splines=spline
+         labelloc=t labeljust=l label=<<B>Horizon — runtime pipeline (one request)</B><BR/><FONT POINT-SIZE="10">indirect injection = Stage 1 + Stage 2 (Horizon math) · direct injection / jailbreak = rose layer</FONT>>];
+  node  [fontname="DejaVu Sans" fontsize=11 shape=box style="rounded,filled" penwidth=1.4 margin="0.18,0.08"];
+  edge  [fontname="DejaVu Sans" fontsize=9 color="#7A7974" arrowsize=0.7 penwidth=1.1 fontcolor="#52514E"];
+  subgraph cluster_s1 { label=<<B>Stage 1 — keyed spotlighting (offline, Slides 11–27)</B>> style="rounded,dashed" color="#5B4FC9" fontsize=11;
+  s1data [label=<<B>Data</B><BR/><FONT POINT-SIZE="9">BIPIA clean docs · LLMail-Inject + BIPIA canary attacks</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  s1def [label=<<B>8 defenses τ, fresh key κ</B><BR/><FONT POINT-SIZE="9">none · delimit · ^ · dyn. marker N<SUP>k</SUP> · ROT13<BR/>shift 25 · scramble |Σ|! · Base64</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  s1forge [label=<<B>Forging</B><BR/><FONT POINT-SIZE="9">q / |K<SUB>τ</SUB>|  (log-space)</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  s1cp [label=<<B>ASR bound</B><BR/><FONT POINT-SIZE="9">Clopper–Pearson Beta<SUP>−1</SUP>(1−α; s+1, n−s)</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  s1dro [label=<<B>χ²-DRO</B><BR/><FONT POINT-SIZE="9">p̄ + √(2ρ p̄(1−p̄))</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  s1adp [label=<<B>Adaptive attacker</B><BR/><FONT POINT-SIZE="9">argmax<SUB>δ∈Δ_B</SUB> E<SUB>κ</SUB>[A] → p̄<SUP>adp</SUP></FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  s1comb [label=<<B>Combined risk</B><BR/><FONT POINT-SIZE="9">R̄<SUB>τ</SUB>(ρ) = min{1, q/|K| + max(DRO, adaptive)}</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  s1choice [label=<<B>Choice rule</B><BR/><FONT POINT-SIZE="9">τ* = argmin R̄  s.t.  U ≥ U<SUB>none</SUB> − η</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  s1sion [label=<<B>Sion game, level 1</B><BR/><FONT POINT-SIZE="9">V<SUB>1</SUB> SOCP on paired A[x, τ] → π*</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  s1out [label=<<B>Stage 1 outputs</B><BR/><FONT POINT-SIZE="9">π* · |K| = min |K<SUB>τ</SUB>| · R̄<SUB>Q</SUB> = Σ π* R̄<SUB>τ</SUB></FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  s1data -> s1def; s1def -> {s1forge s1cp s1dro s1adp}; {s1forge s1cp s1dro s1adp} -> s1comb;
+  s1comb -> {s1choice s1sion}; {s1choice s1sion} -> s1out;
+  }
+  user [label=<<B>User prompt u</B><BR/><FONT POINT-SIZE="9">trusted channel</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  fw [label=<<B>Input guard</B><BR/><FONT POINT-SIZE="9">LlamaFirewall + Prompt Guard 2</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  pllm [label=<<B>Privileged LLM</B><BR/><FONT POINT-SIZE="9">sees ONLY u → writes a program</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  interp [label=<<B>CaMeL interpreter</B><BR/><FONT POINT-SIZE="9">tracks data + control-flow dependencies</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  ext [label=<<B>External data</B><BR/><FONT POINT-SIZE="9">emails · web · tool outputs (untrusted)</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  qllm [label=<<B>Quarantined LLM × m</B><BR/><FONT POINT-SIZE="9">each run: own τ ~ π*, own fresh κ<BR/>no tools · typed JSON schema</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  vote [label=<<B>Majority vote</B><BR/><FONT POINT-SIZE="9">&gt; m/2 agree, else refuse · score s(x) = agreement</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  typed [label=<<B>Typed value + capability</B><BR/><FONT POINT-SIZE="9">v = (data, type, cap) · cap ∈ {SYSTEM ⊑ USER ⊑ UNTRUSTED}</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  policy [label=<<B>Policy check</B><BR/><FONT POINT-SIZE="9">YAML rule table per tool + role rules</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  allow [label=<<B>ALLOW</B><BR/><FONT POINT-SIZE="9">policy met</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  deny [label=<<B>DENY</B><BR/><FONT POINT-SIZE="9">violation</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  ask [label=<<B>CONFIRM → ask user</B><BR/><FONT POINT-SIZE="9">only if s(x) ≥ λ̂, else DENY</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  tool [label=<<B>Tool call</B><BR/><FONT POINT-SIZE="9">AgentDojo environment</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  og [label=<<B>Output guard</B><BR/><FONT POINT-SIZE="9">canary token check + Llama Guard</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  ans [label=<<B>Answer</B>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  user -> fw -> pllm -> interp; ext -> interp; interp -> qllm [label=" untrusted x"]; qllm -> vote -> typed -> policy;
+  policy -> {allow deny ask}; allow -> tool; ask -> tool [label=" approved"]; tool -> og -> ans;
+  s1out -> qllm [style=dashed color="#5B4FC9" label=" π*, |K|"];
+  mforge [label=<<B>Forging</B><BR/><FONT POINT-SIZE="9">Σ π*· q / |K<SUB>τ</SUB>|</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  mleak [label=<<B>QIF leakage</B><BR/><FONT POINT-SIZE="9">≤ Σ log<SUB>2</SUB>|S| bits · cap per config</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  mhoef [label=<<B>Hoeffding</B><BR/><FONT POINT-SIZE="9">exp(−2m(½ − R̄<SUB>Q</SUB>)²) · vs empirical</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  mz3 [label=<<B>Noninterference</B><BR/><FONT POINT-SIZE="9">Z3 proof at startup: UNTRUSTED ⇒ ¬ALLOW</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  mcrc [label=<<B>Conformal risk control</B><BR/><FONT POINT-SIZE="9">λ̂: (n/(n+1))R̂ + 1/(n+1) ≤ α<SUB>user</SUB></FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  mfinal [label=<<B>Horizon risk + Sion game</B><BR/><FONT POINT-SIZE="9">loss ℓ = G + a·C + h·F  ·  Sion LP → π* (Horizon), w*<BR/><BR/>V (Horizon) = min{1, Σπ q/|K| + max(E[L] + √(2ρ Var L), Σπ ℓ̄ adp)}</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  qllm -> mforge [style=dashed color="#0F6B50" arrowhead=none constraint=false];
+  qllm -> mleak [style=dashed color="#0F6B50" arrowhead=none constraint=false];
+  vote -> mhoef [style=dashed color="#0F6B50" arrowhead=none constraint=false];
+  policy -> mz3 [style=dashed color="#0F6B50" arrowhead=none constraint=false];
+  ask -> mcrc [style=dashed color="#0F6B50" arrowhead=none constraint=false];
+  s1out -> mhoef [style=dashed color="#5B4FC9" label=" R̄Q" constraint=false];
+  {tool deny ask} -> mfinal [style=dashed color="#0F6B50" label=" per-attack G, C, F"];
+  {rank=same; qllm; mforge; mleak}
+  {rank=same; vote; mhoef}
+  {rank=same; policy; mz3}
+  {rank=same; ask; mcrc}
+  subgraph cluster_leg { label=<<B>Legend</B>> style="rounded" color="#D8D6D0" fontsize=10;
+  l1 [label=<<B>LLM / spotlighting</B>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  l2 [label=<<B>Math tool</B>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  l3 [label=<<B>Code / data</B>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  l4 [label=<<B>Direct / jailbreak layer</B><BR/><FONT POINT-SIZE="9">not in the Horizon math</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  l1 -> l2 -> l3 -> l4 [style=invis];
+  }
+}

@@ -1,0 +1,27 @@
+digraph G {
+  graph [fontname="DejaVu Sans" fontsize=12 rankdir=TB nodesep=0.35 ranksep=0.45 pad=0.3 splines=spline
+         labelloc=t labeljust=l label=<<B>Horizon — research workflow (./run_all.sh)</B><BR/><FONT POINT-SIZE="10">quick = default · pilot = + small real runs · full = + every §11 experiment</FONT>>];
+  node  [fontname="DejaVu Sans" fontsize=11 shape=box style="rounded,filled" penwidth=1.4 margin="0.18,0.08"];
+  edge  [fontname="DejaVu Sans" fontsize=9 color="#7A7974" arrowsize=0.7 penwidth=1.1 fontcolor="#52514E"];
+  setup [label=<<B>1  Setup</B><BR/><FONT POINT-SIZE="9">scripts/setup.sh: uv · Python 3.11 · uv.lock · CaMeL (pinned) · Ollama + Qwen3-8B · Jupyter kernel</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  data [label=<<B>2  Data + data card</B><BR/><FONT POINT-SIZE="9">BIPIA · LLMail-Inject · HarmBench · JBB · deepset · Gandalf · Tensor Trust · XSTest · Alpaca</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  splits [label=<<B>3  Fixed splits</B><BR/><FONT POINT-SIZE="9">fit → choose τ*, π*, λ̂ · report → evaluate at fixed choices · paired design</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  serve [label=<<B>4  Model serving</B><BR/><FONT POINT-SIZE="9">Ollama (GPU) + developer→system role proxy · colibri (report model)</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  tests [label=<<B>5  Unit tests (§9)</B><BR/><FONT POINT-SIZE="9">77 tests · slide values only in tests/ (grep check)</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  theory [label=<<B>6  Theory-mode figures</B><BR/><FONT POINT-SIZE="9">F1–F15 from params.yaml (SIMULATED inputs labelled)</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  smoke [label=<<B>7  Smoke test</B><BR/><FONT POINT-SIZE="9">quarantine + vote · policy · Z3 refusal · canary · guards</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  subgraph cluster_exp { label=<<B>8  Experiments (level pilot / full)</B>> style="rounded,dashed" color="#5B4FC9" fontsize=11;
+  camel [label=<<B>CaMeL baseline</B><BR/><FONT POINT-SIZE="9">reference code, unmodified</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  s1run [label=<<B>Stage 1 runner</B><BR/><FONT POINT-SIZE="9">paired A[x, τ] · utility U<SUB>τ</SUB> · adaptive attacker<BR/>fit: π*, τ* → report: evaluated</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  cal [label=<<B>Calibrate λ̂</B><BR/><FONT POINT-SIZE="9">CRC on the calibration split</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  ablate [label=<<B>AgentDojo ablations</B><BR/><FONT POINT-SIZE="9">none · Stage 1 · Stage 2 · Stage 1+2 · full<BR/>static, then adaptive attacks</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  jb [label=<<B>Jailbreak runner</B><BR/><FONT POINT-SIZE="9">detection / FPR · PyRIT PAIR, TAP, Crescendo · garak</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  camel -> s1run; s1run -> cal [label=" pi_star.json"]; cal -> ablate [label=" lambda_hat.json"]; ablate -> jb;
+  }
+  figs [label=<<B>9  Figures</B><BR/><FONT POINT-SIZE="9">F1–F18 · PDF + PNG + CSV · formula + parameter footer</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+  mlflow [label=<<B>MLflow</B><BR/><FONT POINT-SIZE="9">config · seed · model · split · per-example outcomes</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
+  nb [label=<<B>10  Notebook</B><BR/><FONT POINT-SIZE="9">Horizon.ipynb executed: every step with outputs</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  report [label=<<B>11  Model-written report</B><BR/><FONT POINT-SIZE="9">Qwen3.6-35B-A3B (colibri) analyses every figure, CSV, result<BR/>tables from files · numbers checked → LaTeX → report.pdf</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+  setup -> data -> splits -> serve -> tests -> theory -> smoke -> camel;
+  jb -> figs -> nb -> report; {s1run ablate jb} -> mlflow [style=dashed]; mlflow -> report [style=dashed];
+}

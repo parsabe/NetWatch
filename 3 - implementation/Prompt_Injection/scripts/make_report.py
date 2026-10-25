@@ -481,6 +481,14 @@ def main() -> None:
     src = numbers_of(arch.get("_context", ""))
     L.append(checked(str(arch.get("overview", "")), src, tol, stats) + "\n")
     L.append(items(arch.get("components"), src, tol, stats))
+    for name, cap in [("pipeline_runtime", "Runtime pipeline of one request: direct layer, Stage 2 (CaMeL) fed by Stage 1, and the math tool attached to each step."),
+                      ("pipeline_workflow", "Research workflow executed by run\\_all.sh, from setup to this report.")]:
+        src_pdf = ROOT / "docs" / f"{name}.pdf"
+        if src_pdf.exists():
+            (REPORT / "figures" / "docs").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_pdf, REPORT / "figures" / "docs" / src_pdf.name)
+            L.append("\\begin{figure}[H]\\centering\n\\includegraphics[width=\\linewidth,height=0.8\\textheight,keepaspectratio]"
+                     f"{{figures/docs/{name}.pdf}}\n\\caption{{{cap}}}\n\\end{{figure}}\n")
     L.append("\\subsection{Folder structure}\n\\begin{lstlisting}\n" + tree + "\n\\end{lstlisting}\n")
     L.append("\\subsection{Modules}\n" + latex_table(mods, "Modules and their purpose (first docstring line)", longtable=True,
                                                   spec="p{0.36\\linewidth}p{0.58\\linewidth}"))
