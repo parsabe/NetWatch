@@ -18,7 +18,7 @@ digraph G {
   s1comb -> {s1choice s1sion}; {s1choice s1sion} -> s1out;
   }
   user [label=<<B>User prompt u</B><BR/><FONT POINT-SIZE="9">trusted channel</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
-  fw [label=<<B>Input guard</B><BR/><FONT POINT-SIZE="9">LlamaFirewall + Prompt Guard 2</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  fw [label=<<B>Input guard</B><BR/><FONT POINT-SIZE="9">DeBERTa injection classifier (ProtectAI)</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
   pllm [label=<<B>Privileged LLM</B><BR/><FONT POINT-SIZE="9">sees ONLY u → writes a program</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
   interp [label=<<B>CaMeL interpreter</B><BR/><FONT POINT-SIZE="9">tracks data + control-flow dependencies</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
   ext [label=<<B>External data</B><BR/><FONT POINT-SIZE="9">emails · web · tool outputs (untrusted)</FONT>> fillcolor="#F6F5F2" color="#A8A6A0" fontcolor="#1F1F1E"];
@@ -30,7 +30,7 @@ digraph G {
   deny [label=<<B>DENY</B><BR/><FONT POINT-SIZE="9">violation</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
   ask [label=<<B>CONFIRM → ask user</B><BR/><FONT POINT-SIZE="9">only if s(x) ≥ λ̂, else DENY</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
   tool [label=<<B>Tool call</B><BR/><FONT POINT-SIZE="9">AgentDojo environment</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
-  og [label=<<B>Output guard</B><BR/><FONT POINT-SIZE="9">canary token check + Llama Guard</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  og [label=<<B>Output guard</B><BR/><FONT POINT-SIZE="9">canary token check + Qwen3Guard</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
   ans [label=<<B>Answer</B>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
   user -> fw -> pllm -> interp; ext -> interp; interp -> qllm [label=" untrusted x"]; qllm -> vote -> typed -> policy;
   policy -> {allow deny ask}; allow -> tool; ask -> tool [label=" approved"]; tool -> og -> ans;

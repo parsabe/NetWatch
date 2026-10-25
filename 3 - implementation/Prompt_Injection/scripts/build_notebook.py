@@ -38,7 +38,7 @@ here we only *load* their outputs (re-running them is one command each, shown in
 |---|---|---|
 | Stage 1 | Keyed spotlighting + Clopper–Pearson, χ²-DRO, adaptive bound, combined risk, Sion game $V_1$, $\pi^\star$ | 11–27 |
 | Stage 2 | Math-hardened CaMeL: P-LLM / Q-LLM × m, majority vote + Hoeffding, typed values + capabilities, Z3 noninterference, conformal risk control, loss, leakage, Sion LP, $V_{Horizon}$ | 29–46 |
-| Direct layer | LlamaFirewall + Prompt Guard 2 (input), Llama Guard (output), canary tokens, role rules — *not* part of the Horizon math | — |
+| Direct layer | DeBERTa injection classifier (input), Qwen3Guard (output), canary tokens, role rules — *not* part of the Horizon math | — |
 
 All numbers on the slides are illustrative: they live only in `config/params.yaml` and in `tests/`.
 
@@ -85,7 +85,7 @@ md(r"""
 code(r"""
 import importlib.metadata as md_
 pk = ["numpy","scipy","pandas","statsmodels","cvxpy","clarabel","z3-solver","pydantic","mlflow","litellm",
-      "agentdojo","camel","pydantic-ai","llamafirewall","transformers","torch","pyrit","garak"]
+      "agentdojo","camel","pydantic-ai","transformers","torch","pyrit","garak"]
 print("python", sys.version.split()[0])
 display(pd.DataFrame([(p, md_.version(p)) for p in pk], columns=["package","pinned version"]).set_index("package").T)
 from horizon.llm import server_alive
@@ -260,13 +260,22 @@ for n in ["F9_hoeffding", "F10_failure_hist", "F11_conformal", "F12_loss", "F13_
 md(r"""
 ## Step 7 — Direct / jailbreak layer (not part of the Horizon math)
 
-LlamaFirewall + Prompt Guard 2 on the user prompt, Llama Guard on the output, a CSPRNG canary token in the P-LLM system
-prompt (any output containing it is blocked), role-based rules in the policy table. The Meta models are **gated** on
-Hugging Face: the code is complete and loads them lazily; until access is granted it raises a clear `GatedModelError`.
+ProtectAI's DeBERTa prompt-injection classifier on the user prompt, Qwen3Guard-Gen on the output, a CSPRNG canary
+token in the P-LLM system prompt (any output containing it is blocked), role-based rules in the policy table. Both
+models are Apache-2.0 and not gated; they replace Prompt Guard 2 and Llama Guard, whose access Meta rejected. The
+classifier detects injections, not jailbreaks, and was trained on XSTest (flagged in the results). A guard that cannot
+be loaded raises a clear `GatedModelError` and is switched off.
 `scripts/guarded_server.py` exposes the guarded model as an OpenAI-compatible endpoint for PyRIT / garak.
+
+**Red-teaming (§11, `eval/jailbreak_runner.py`).** Direct: PyRIT PAIR / TAP / Crescendo and garak `dan`,
+`promptinject`, `encoding`. Indirect: **PyRIT XPIA** plants each attack δ (optionally Base64 / ROT13 / leetspeak
+via PyRIT converters) in a document and processes it with every Horizon configuration (none · stage1 · stage2 ·
+stage1+2 · full), scored with the same canary / attacker-tool-call indicator as the other runners; **garak
+`latentinjection` / `web_injection`** measure the bare model and the guarded endpoint (a baseline: garak sends
+document and task in one message, so Stage 1/2 cannot be applied there).
 """)
 code(r"""
-display(pd.DataFrame({k: sm[k] for k in ["canary", "prompt_guard_2", "llama_guard"]}).T)
+display(pd.DataFrame({k: sm[k] for k in ["canary", "input_guard", "output_guard"] if k in sm}).T)
 """)
 
 # --------------------------------------------------------------------------- step 8

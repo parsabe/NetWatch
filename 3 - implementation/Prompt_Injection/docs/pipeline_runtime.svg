@@ -18,8 +18,8 @@
 </g>
 <g id="clust12" class="cluster">
 <title>cluster_leg</title>
-<path fill="none" stroke="#d8d6d0" d="M892,-730.79C892,-730.79 1048,-730.79 1048,-730.79 1054,-730.79 1060,-736.79 1060,-742.79 1060,-742.79 1060,-1003.06 1060,-1003.06 1060,-1009.06 1054,-1015.06 1048,-1015.06 1048,-1015.06 892,-1015.06 892,-1015.06 886,-1015.06 880,-1009.06 880,-1003.06 880,-1003.06 880,-742.79 880,-742.79 880,-736.79 886,-730.79 892,-730.79"/>
-<text xml:space="preserve" text-anchor="start" x="888" y="-1002.56" font-family="DejaVu Sans" font-weight="bold" font-size="10.00">Legend</text>
+<path fill="none" stroke="#d8d6d0" d="M912,-730.79C912,-730.79 1068,-730.79 1068,-730.79 1074,-730.79 1080,-736.79 1080,-742.79 1080,-742.79 1080,-1003.06 1080,-1003.06 1080,-1009.06 1074,-1015.06 1068,-1015.06 1068,-1015.06 912,-1015.06 912,-1015.06 906,-1015.06 900,-1009.06 900,-1003.06 900,-1003.06 900,-742.79 900,-742.79 900,-736.79 906,-730.79 912,-730.79"/>
+<text xml:space="preserve" text-anchor="start" x="908" y="-1002.56" font-family="DejaVu Sans" font-weight="bold" font-size="10.00">Legend</text>
 </g>
 <!-- s1data -->
 <g id="node1" class="node">
@@ -226,35 +226,35 @@
 <!-- user -->
 <g id="node11" class="node">
 <title>user</title>
-<path fill="#ffffff" stroke="#a8a6a0" stroke-width="1.4" d="M821.84,-843.79C821.84,-843.79 732.16,-843.79 732.16,-843.79 726.16,-843.79 720.16,-837.79 720.16,-831.79 720.16,-831.79 720.16,-819.79 720.16,-819.79 720.16,-813.79 726.16,-807.79 732.16,-807.79 732.16,-807.79 821.84,-807.79 821.84,-807.79 827.84,-807.79 833.84,-813.79 833.84,-819.79 833.84,-819.79 833.84,-831.79 833.84,-831.79 833.84,-837.79 827.84,-843.79 821.84,-843.79"/>
-<text xml:space="preserve" text-anchor="start" x="733.12" y="-826.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#1f1f1e">User prompt u</text>
-<text xml:space="preserve" text-anchor="start" x="741" y="-817.24" font-family="DejaVu Sans" font-size="9.00" fill="#1f1f1e">trusted channel</text>
+<path fill="#ffffff" stroke="#a8a6a0" stroke-width="1.4" d="M828.84,-843.79C828.84,-843.79 739.16,-843.79 739.16,-843.79 733.16,-843.79 727.16,-837.79 727.16,-831.79 727.16,-831.79 727.16,-819.79 727.16,-819.79 727.16,-813.79 733.16,-807.79 739.16,-807.79 739.16,-807.79 828.84,-807.79 828.84,-807.79 834.84,-807.79 840.84,-813.79 840.84,-819.79 840.84,-819.79 840.84,-831.79 840.84,-831.79 840.84,-837.79 834.84,-843.79 828.84,-843.79"/>
+<text xml:space="preserve" text-anchor="start" x="740.12" y="-826.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#1f1f1e">User prompt u</text>
+<text xml:space="preserve" text-anchor="start" x="748" y="-817.24" font-family="DejaVu Sans" font-size="9.00" fill="#1f1f1e">trusted channel</text>
 </g>
 <!-- fw -->
 <g id="node12" class="node">
 <title>fw</title>
-<path fill="#fbeaf0" stroke="#be185d" stroke-width="1.4" d="M851.09,-774.79C851.09,-774.79 702.91,-774.79 702.91,-774.79 696.91,-774.79 690.91,-768.79 690.91,-762.79 690.91,-762.79 690.91,-750.79 690.91,-750.79 690.91,-744.79 696.91,-738.79 702.91,-738.79 702.91,-738.79 851.09,-738.79 851.09,-738.79 857.09,-738.79 863.09,-744.79 863.09,-750.79 863.09,-750.79 863.09,-762.79 863.09,-762.79 863.09,-768.79 857.09,-774.79 851.09,-774.79"/>
-<text xml:space="preserve" text-anchor="start" x="741.75" y="-757.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#7a0f3c">Input guard</text>
-<text xml:space="preserve" text-anchor="start" x="703.88" y="-748.24" font-family="DejaVu Sans" font-size="9.00" fill="#7a0f3c">LlamaFirewall + Prompt Guard 2</text>
+<path fill="#fbeaf0" stroke="#be185d" stroke-width="1.4" d="M871.59,-774.79C871.59,-774.79 696.41,-774.79 696.41,-774.79 690.41,-774.79 684.41,-768.79 684.41,-762.79 684.41,-762.79 684.41,-750.79 684.41,-750.79 684.41,-744.79 690.41,-738.79 696.41,-738.79 696.41,-738.79 871.59,-738.79 871.59,-738.79 877.59,-738.79 883.59,-744.79 883.59,-750.79 883.59,-750.79 883.59,-762.79 883.59,-762.79 883.59,-768.79 877.59,-774.79 871.59,-774.79"/>
+<text xml:space="preserve" text-anchor="start" x="748.75" y="-757.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#7a0f3c">Input guard</text>
+<text xml:space="preserve" text-anchor="start" x="697.38" y="-748.24" font-family="DejaVu Sans" font-size="9.00" fill="#7a0f3c">DeBERTa injection classifier (ProtectAI)</text>
 </g>
 <!-- user&#45;&gt;fw -->
 <g id="edge14" class="edge">
 <title>user&#45;&gt;fw</title>
-<path fill="none" stroke="#7a7974" stroke-width="1.1" d="M777,-807.19C777,-799.98 777,-791.48 777,-783.6"/>
-<polygon fill="#7a7974" stroke="#7a7974" stroke-width="1.1" points="779.45,-783.71 777,-776.71 774.55,-783.71 779.45,-783.71"/>
+<path fill="none" stroke="#7a7974" stroke-width="1.1" d="M784,-807.19C784,-799.98 784,-791.48 784,-783.6"/>
+<polygon fill="#7a7974" stroke="#7a7974" stroke-width="1.1" points="786.45,-783.71 784,-776.71 781.55,-783.71 786.45,-783.71"/>
 </g>
 <!-- pllm -->
 <g id="node13" class="node">
 <title>pllm</title>
-<path fill="#eeedfb" stroke="#5b4fc9" stroke-width="1.4" d="M850.34,-705.79C850.34,-705.79 703.66,-705.79 703.66,-705.79 697.66,-705.79 691.66,-699.79 691.66,-693.79 691.66,-693.79 691.66,-681.79 691.66,-681.79 691.66,-675.79 697.66,-669.79 703.66,-669.79 703.66,-669.79 850.34,-669.79 850.34,-669.79 856.34,-669.79 862.34,-675.79 862.34,-681.79 862.34,-681.79 862.34,-693.79 862.34,-693.79 862.34,-699.79 856.34,-705.79 850.34,-705.79"/>
-<text xml:space="preserve" text-anchor="start" x="731.62" y="-688.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#2e2780">Privileged LLM</text>
-<text xml:space="preserve" text-anchor="start" x="704.62" y="-679.24" font-family="DejaVu Sans" font-size="9.00" fill="#2e2780">sees ONLY u → writes a program</text>
+<path fill="#eeedfb" stroke="#5b4fc9" stroke-width="1.4" d="M857.34,-705.79C857.34,-705.79 710.66,-705.79 710.66,-705.79 704.66,-705.79 698.66,-699.79 698.66,-693.79 698.66,-693.79 698.66,-681.79 698.66,-681.79 698.66,-675.79 704.66,-669.79 710.66,-669.79 710.66,-669.79 857.34,-669.79 857.34,-669.79 863.34,-669.79 869.34,-675.79 869.34,-681.79 869.34,-681.79 869.34,-693.79 869.34,-693.79 869.34,-699.79 863.34,-705.79 857.34,-705.79"/>
+<text xml:space="preserve" text-anchor="start" x="738.62" y="-688.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#2e2780">Privileged LLM</text>
+<text xml:space="preserve" text-anchor="start" x="711.62" y="-679.24" font-family="DejaVu Sans" font-size="9.00" fill="#2e2780">sees ONLY u → writes a program</text>
 </g>
 <!-- fw&#45;&gt;pllm -->
 <g id="edge15" class="edge">
 <title>fw&#45;&gt;pllm</title>
-<path fill="none" stroke="#7a7974" stroke-width="1.1" d="M777,-738.19C777,-730.98 777,-722.48 777,-714.6"/>
-<polygon fill="#7a7974" stroke="#7a7974" stroke-width="1.1" points="779.45,-714.71 777,-707.71 774.55,-714.71 779.45,-714.71"/>
+<path fill="none" stroke="#7a7974" stroke-width="1.1" d="M784,-738.19C784,-730.98 784,-722.48 784,-714.6"/>
+<polygon fill="#7a7974" stroke="#7a7974" stroke-width="1.1" points="786.45,-714.71 784,-707.71 781.55,-714.71 786.45,-714.71"/>
 </g>
 <!-- interp -->
 <g id="node14" class="node">
@@ -266,8 +266,8 @@
 <!-- pllm&#45;&gt;interp -->
 <g id="edge16" class="edge">
 <title>pllm&#45;&gt;interp</title>
-<path fill="none" stroke="#7a7974" stroke-width="1.1" d="M780.68,-669.19C782.2,-661.9 784,-653.3 785.66,-645.34"/>
-<polygon fill="#7a7974" stroke="#7a7974" stroke-width="1.1" points="788.02,-646.03 787.05,-638.67 783.22,-645.02 788.02,-646.03"/>
+<path fill="none" stroke="#7a7974" stroke-width="1.1" d="M785.84,-669.19C786.59,-661.98 787.48,-653.48 788.3,-645.6"/>
+<polygon fill="#7a7974" stroke="#7a7974" stroke-width="1.1" points="790.73,-645.92 789.02,-638.7 785.86,-645.41 790.73,-645.92"/>
 </g>
 <!-- interp&#45;&gt;qllm -->
 <g id="edge18" class="edge">
@@ -279,15 +279,15 @@
 <!-- ext -->
 <g id="node15" class="node">
 <title>ext</title>
-<path fill="#f6f5f2" stroke="#a8a6a0" stroke-width="1.4" d="M1076.71,-705.79C1076.71,-705.79 899.29,-705.79 899.29,-705.79 893.29,-705.79 887.29,-699.79 887.29,-693.79 887.29,-693.79 887.29,-681.79 887.29,-681.79 887.29,-675.79 893.29,-669.79 899.29,-669.79 899.29,-669.79 1076.71,-669.79 1076.71,-669.79 1082.71,-669.79 1088.71,-675.79 1088.71,-681.79 1088.71,-681.79 1088.71,-693.79 1088.71,-693.79 1088.71,-699.79 1082.71,-705.79 1076.71,-705.79"/>
-<text xml:space="preserve" text-anchor="start" x="946.75" y="-688.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#1f1f1e">External data</text>
-<text xml:space="preserve" text-anchor="start" x="900.25" y="-679.24" font-family="DejaVu Sans" font-size="9.00" fill="#1f1f1e">emails · web · tool outputs (untrusted)</text>
+<path fill="#f6f5f2" stroke="#a8a6a0" stroke-width="1.4" d="M1083.71,-705.79C1083.71,-705.79 906.29,-705.79 906.29,-705.79 900.29,-705.79 894.29,-699.79 894.29,-693.79 894.29,-693.79 894.29,-681.79 894.29,-681.79 894.29,-675.79 900.29,-669.79 906.29,-669.79 906.29,-669.79 1083.71,-669.79 1083.71,-669.79 1089.71,-669.79 1095.71,-675.79 1095.71,-681.79 1095.71,-681.79 1095.71,-693.79 1095.71,-693.79 1095.71,-699.79 1089.71,-705.79 1083.71,-705.79"/>
+<text xml:space="preserve" text-anchor="start" x="953.75" y="-688.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#1f1f1e">External data</text>
+<text xml:space="preserve" text-anchor="start" x="907.25" y="-679.24" font-family="DejaVu Sans" font-size="9.00" fill="#1f1f1e">emails · web · tool outputs (untrusted)</text>
 </g>
 <!-- ext&#45;&gt;interp -->
 <g id="edge17" class="edge">
 <title>ext&#45;&gt;interp</title>
-<path fill="none" stroke="#7a7974" stroke-width="1.1" d="M935.98,-669.1C909.84,-660.21 878.02,-649.39 850.86,-640.15"/>
-<polygon fill="#7a7974" stroke="#7a7974" stroke-width="1.1" points="851.96,-637.93 844.54,-638 850.38,-642.57 851.96,-637.93"/>
+<path fill="none" stroke="#7a7974" stroke-width="1.1" d="M941.13,-669.1C914.06,-660.21 881.11,-649.39 852.99,-640.15"/>
+<polygon fill="#7a7974" stroke="#7a7974" stroke-width="1.1" points="853.81,-637.84 846.4,-637.98 852.28,-642.5 853.81,-637.84"/>
 </g>
 <!-- vote -->
 <g id="node17" class="node">
@@ -428,17 +428,17 @@
 <!-- mfinal -->
 <g id="node31" class="node">
 <title>mfinal</title>
-<path fill="#e1f3ee" stroke="#0f6b50" stroke-width="1.4" d="M917.09,-118.52C917.09,-118.52 606.91,-118.52 606.91,-118.52 600.91,-118.52 594.91,-112.52 594.91,-106.52 594.91,-106.52 594.91,-81 594.91,-81 594.91,-75 600.91,-69 606.91,-69 606.91,-69 917.09,-69 917.09,-69 923.09,-69 929.09,-75 929.09,-81 929.09,-81 929.09,-106.52 929.09,-106.52 929.09,-112.52 923.09,-118.52 917.09,-118.52"/>
-<text xml:space="preserve" text-anchor="start" x="684.38" y="-103.31" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#0b4a37">Horizon risk + Sion game</text>
-<text xml:space="preserve" text-anchor="start" x="645.75" y="-94.21" font-family="DejaVu Sans" font-size="9.00" fill="#0b4a37">loss ℓ = G + a·C + h·F &#160;· &#160;Sion LP → π* (Horizon), w*</text>
-<text xml:space="preserve" text-anchor="start" x="607.88" y="-76.21" font-family="DejaVu Sans" font-size="9.00" fill="#0b4a37">V (Horizon) = min{1, Σπ q/|K| + max(E[L] + √(2ρ Var L), Σπ ℓ̄ adp)}</text>
+<path fill="#e1f3ee" stroke="#0f6b50" stroke-width="1.4" d="M918.09,-118.52C918.09,-118.52 607.91,-118.52 607.91,-118.52 601.91,-118.52 595.91,-112.52 595.91,-106.52 595.91,-106.52 595.91,-81 595.91,-81 595.91,-75 601.91,-69 607.91,-69 607.91,-69 918.09,-69 918.09,-69 924.09,-69 930.09,-75 930.09,-81 930.09,-81 930.09,-106.52 930.09,-106.52 930.09,-112.52 924.09,-118.52 918.09,-118.52"/>
+<text xml:space="preserve" text-anchor="start" x="685.38" y="-103.31" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#0b4a37">Horizon risk + Sion game</text>
+<text xml:space="preserve" text-anchor="start" x="646.75" y="-94.21" font-family="DejaVu Sans" font-size="9.00" fill="#0b4a37">loss ℓ = G + a·C + h·F &#160;· &#160;Sion LP → π* (Horizon), w*</text>
+<text xml:space="preserve" text-anchor="start" x="608.88" y="-76.21" font-family="DejaVu Sans" font-size="9.00" fill="#0b4a37">V (Horizon) = min{1, Σπ q/|K| + max(E[L] + √(2ρ Var L), Σπ ℓ̄ adp)}</text>
 </g>
 <!-- deny&#45;&gt;mfinal -->
 <g id="edge36" class="edge">
 <title>deny&#45;&gt;mfinal</title>
-<path fill="none" stroke="#0f6b50" stroke-width="1.1" stroke-dasharray="5,2" d="M1005.52,-240.39C958.68,-212.38 866.78,-157.42 810.24,-123.61"/>
-<polygon fill="#0f6b50" stroke="#0f6b50" stroke-width="1.1" points="811.54,-121.53 804.27,-120.04 809.02,-125.74 811.54,-121.53"/>
-<text xml:space="preserve" text-anchor="middle" x="970.97" y="-176.84" font-family="DejaVu Sans" font-size="9.00" fill="#52514e"> per&#45;attack G, C, F</text>
+<path fill="none" stroke="#0f6b50" stroke-width="1.1" stroke-dasharray="5,2" d="M1005.63,-240.39C958.96,-212.38 867.39,-157.42 811.06,-123.61"/>
+<polygon fill="#0f6b50" stroke="#0f6b50" stroke-width="1.1" points="812.39,-121.54 805.12,-120.04 809.86,-125.75 812.39,-121.54"/>
+<text xml:space="preserve" text-anchor="middle" x="971.35" y="-176.84" font-family="DejaVu Sans" font-size="9.00" fill="#52514e"> per&#45;attack G, C, F</text>
 </g>
 <!-- ask&#45;&gt;tool -->
 <g id="edge26" class="edge">
@@ -463,16 +463,16 @@
 <!-- ask&#45;&gt;mfinal -->
 <g id="edge37" class="edge">
 <title>ask&#45;&gt;mfinal</title>
-<path fill="none" stroke="#0f6b50" stroke-width="1.1" stroke-dasharray="5,2" d="M686.5,-240.39C691.91,-220.63 701.94,-187.92 715.25,-161.77 721.48,-149.53 729.68,-136.97 737.47,-126.08"/>
-<polygon fill="#0f6b50" stroke="#0f6b50" stroke-width="1.1" points="739.38,-127.62 741.53,-120.52 735.42,-124.73 739.38,-127.62"/>
-<text xml:space="preserve" text-anchor="middle" x="756.12" y="-176.84" font-family="DejaVu Sans" font-size="9.00" fill="#52514e"> per&#45;attack G, C, F</text>
+<path fill="none" stroke="#0f6b50" stroke-width="1.1" stroke-dasharray="5,2" d="M686.73,-240.4C692.37,-220.65 702.77,-187.95 716.25,-161.77 722.54,-149.56 730.75,-137.01 738.54,-126.11"/>
+<polygon fill="#0f6b50" stroke="#0f6b50" stroke-width="1.1" points="740.45,-127.66 742.59,-120.56 736.49,-124.77 740.45,-127.66"/>
+<text xml:space="preserve" text-anchor="middle" x="757.12" y="-176.84" font-family="DejaVu Sans" font-size="9.00" fill="#52514e"> per&#45;attack G, C, F</text>
 </g>
 <!-- og -->
 <g id="node24" class="node">
 <title>og</title>
-<path fill="#fbeaf0" stroke="#be185d" stroke-width="1.4" d="M558.21,-111.76C558.21,-111.76 395.79,-111.76 395.79,-111.76 389.79,-111.76 383.79,-105.76 383.79,-99.76 383.79,-99.76 383.79,-87.76 383.79,-87.76 383.79,-81.76 389.79,-75.76 395.79,-75.76 395.79,-75.76 558.21,-75.76 558.21,-75.76 564.21,-75.76 570.21,-81.76 570.21,-87.76 570.21,-87.76 570.21,-99.76 570.21,-99.76 570.21,-105.76 564.21,-111.76 558.21,-111.76"/>
+<path fill="#fbeaf0" stroke="#be185d" stroke-width="1.4" d="M558.96,-111.76C558.96,-111.76 395.04,-111.76 395.04,-111.76 389.04,-111.76 383.04,-105.76 383.04,-99.76 383.04,-99.76 383.04,-87.76 383.04,-87.76 383.04,-81.76 389.04,-75.76 395.04,-75.76 395.04,-75.76 558.96,-75.76 558.96,-75.76 564.96,-75.76 570.96,-81.76 570.96,-87.76 570.96,-87.76 570.96,-99.76 570.96,-99.76 570.96,-105.76 564.96,-111.76 558.96,-111.76"/>
 <text xml:space="preserve" text-anchor="start" x="436.5" y="-94.31" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#7a0f3c">Output guard</text>
-<text xml:space="preserve" text-anchor="start" x="396.75" y="-85.21" font-family="DejaVu Sans" font-size="9.00" fill="#7a0f3c">canary token check + Llama Guard</text>
+<text xml:space="preserve" text-anchor="start" x="396" y="-85.21" font-family="DejaVu Sans" font-size="9.00" fill="#7a0f3c">canary token check + Qwen3Guard</text>
 </g>
 <!-- tool&#45;&gt;og -->
 <g id="edge27" class="edge">
@@ -483,9 +483,9 @@
 <!-- tool&#45;&gt;mfinal -->
 <g id="edge38" class="edge">
 <title>tool&#45;&gt;mfinal</title>
-<path fill="none" stroke="#0f6b50" stroke-width="1.1" stroke-dasharray="5,2" d="M568.95,-161.26C575.1,-151.97 583.8,-141.15 594.25,-134.52 601.36,-130.01 608.93,-126.01 616.77,-122.47"/>
-<polygon fill="#0f6b50" stroke="#0f6b50" stroke-width="1.1" points="617.71,-124.73 623.18,-119.72 615.78,-120.23 617.71,-124.73"/>
-<text xml:space="preserve" text-anchor="middle" x="635.12" y="-137.22" font-family="DejaVu Sans" font-size="9.00" fill="#52514e"> per&#45;attack G, C, F</text>
+<path fill="none" stroke="#0f6b50" stroke-width="1.1" stroke-dasharray="5,2" d="M569.34,-161.26C575.69,-151.97 584.64,-141.15 595.25,-134.52 602.39,-130.06 609.98,-126.1 617.85,-122.58"/>
+<polygon fill="#0f6b50" stroke="#0f6b50" stroke-width="1.1" points="618.77,-124.85 624.26,-119.86 616.86,-120.34 618.77,-124.85"/>
+<text xml:space="preserve" text-anchor="middle" x="636.12" y="-137.22" font-family="DejaVu Sans" font-size="9.00" fill="#52514e"> per&#45;attack G, C, F</text>
 </g>
 <!-- ans -->
 <g id="node25" class="node">
@@ -502,29 +502,29 @@
 <!-- l1 -->
 <g id="node32" class="node">
 <title>l1</title>
-<path fill="#eeedfb" stroke="#5b4fc9" stroke-width="1.4" d="M1025.71,-986.31C1025.71,-986.31 914.29,-986.31 914.29,-986.31 908.29,-986.31 902.29,-980.31 902.29,-974.31 902.29,-974.31 902.29,-962.31 902.29,-962.31 902.29,-956.31 908.29,-950.31 914.29,-950.31 914.29,-950.31 1025.71,-950.31 1025.71,-950.31 1031.71,-950.31 1037.71,-956.31 1037.71,-962.31 1037.71,-962.31 1037.71,-974.31 1037.71,-974.31 1037.71,-980.31 1031.71,-986.31 1025.71,-986.31"/>
-<text xml:space="preserve" text-anchor="start" x="915.25" y="-965.61" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#2e2780">LLM / spotlighting</text>
+<path fill="#eeedfb" stroke="#5b4fc9" stroke-width="1.4" d="M1045.71,-986.31C1045.71,-986.31 934.29,-986.31 934.29,-986.31 928.29,-986.31 922.29,-980.31 922.29,-974.31 922.29,-974.31 922.29,-962.31 922.29,-962.31 922.29,-956.31 928.29,-950.31 934.29,-950.31 934.29,-950.31 1045.71,-950.31 1045.71,-950.31 1051.71,-950.31 1057.71,-956.31 1057.71,-962.31 1057.71,-962.31 1057.71,-974.31 1057.71,-974.31 1057.71,-980.31 1051.71,-986.31 1045.71,-986.31"/>
+<text xml:space="preserve" text-anchor="start" x="935.25" y="-965.61" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#2e2780">LLM / spotlighting</text>
 </g>
 <!-- l2 -->
 <g id="node33" class="node">
 <title>l2</title>
-<path fill="#e1f3ee" stroke="#0f6b50" stroke-width="1.4" d="M1000.59,-915.05C1000.59,-915.05 939.41,-915.05 939.41,-915.05 933.41,-915.05 927.41,-909.05 927.41,-903.05 927.41,-903.05 927.41,-891.05 927.41,-891.05 927.41,-885.05 933.41,-879.05 939.41,-879.05 939.41,-879.05 1000.59,-879.05 1000.59,-879.05 1006.59,-879.05 1012.59,-885.05 1012.59,-891.05 1012.59,-891.05 1012.59,-903.05 1012.59,-903.05 1012.59,-909.05 1006.59,-915.05 1000.59,-915.05"/>
-<text xml:space="preserve" text-anchor="start" x="940.38" y="-894.35" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#0b4a37">Math tool</text>
+<path fill="#e1f3ee" stroke="#0f6b50" stroke-width="1.4" d="M1020.59,-915.05C1020.59,-915.05 959.41,-915.05 959.41,-915.05 953.41,-915.05 947.41,-909.05 947.41,-903.05 947.41,-903.05 947.41,-891.05 947.41,-891.05 947.41,-885.05 953.41,-879.05 959.41,-879.05 959.41,-879.05 1020.59,-879.05 1020.59,-879.05 1026.59,-879.05 1032.59,-885.05 1032.59,-891.05 1032.59,-891.05 1032.59,-903.05 1032.59,-903.05 1032.59,-909.05 1026.59,-915.05 1020.59,-915.05"/>
+<text xml:space="preserve" text-anchor="start" x="960.38" y="-894.35" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#0b4a37">Math tool</text>
 </g>
 <!-- l1&#45;&gt;l2 -->
 <!-- l3 -->
 <g id="node34" class="node">
 <title>l3</title>
-<path fill="#ffffff" stroke="#a8a6a0" stroke-width="1.4" d="M1005.84,-843.79C1005.84,-843.79 934.16,-843.79 934.16,-843.79 928.16,-843.79 922.16,-837.79 922.16,-831.79 922.16,-831.79 922.16,-819.79 922.16,-819.79 922.16,-813.79 928.16,-807.79 934.16,-807.79 934.16,-807.79 1005.84,-807.79 1005.84,-807.79 1011.84,-807.79 1017.84,-813.79 1017.84,-819.79 1017.84,-819.79 1017.84,-831.79 1017.84,-831.79 1017.84,-837.79 1011.84,-843.79 1005.84,-843.79"/>
-<text xml:space="preserve" text-anchor="start" x="935.12" y="-823.09" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#1f1f1e">Code / data</text>
+<path fill="#ffffff" stroke="#a8a6a0" stroke-width="1.4" d="M1025.84,-843.79C1025.84,-843.79 954.16,-843.79 954.16,-843.79 948.16,-843.79 942.16,-837.79 942.16,-831.79 942.16,-831.79 942.16,-819.79 942.16,-819.79 942.16,-813.79 948.16,-807.79 954.16,-807.79 954.16,-807.79 1025.84,-807.79 1025.84,-807.79 1031.84,-807.79 1037.84,-813.79 1037.84,-819.79 1037.84,-819.79 1037.84,-831.79 1037.84,-831.79 1037.84,-837.79 1031.84,-843.79 1025.84,-843.79"/>
+<text xml:space="preserve" text-anchor="start" x="955.12" y="-823.09" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#1f1f1e">Code / data</text>
 </g>
 <!-- l2&#45;&gt;l3 -->
 <!-- l4 -->
 <g id="node35" class="node">
 <title>l4</title>
-<path fill="#fbeaf0" stroke="#be185d" stroke-width="1.4" d="M1039.59,-774.79C1039.59,-774.79 900.41,-774.79 900.41,-774.79 894.41,-774.79 888.41,-768.79 888.41,-762.79 888.41,-762.79 888.41,-750.79 888.41,-750.79 888.41,-744.79 894.41,-738.79 900.41,-738.79 900.41,-738.79 1039.59,-738.79 1039.59,-738.79 1045.59,-738.79 1051.59,-744.79 1051.59,-750.79 1051.59,-750.79 1051.59,-762.79 1051.59,-762.79 1051.59,-768.79 1045.59,-774.79 1039.59,-774.79"/>
-<text xml:space="preserve" text-anchor="start" x="901.38" y="-757.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#7a0f3c">Direct / jailbreak layer</text>
-<text xml:space="preserve" text-anchor="start" x="916" y="-748.24" font-family="DejaVu Sans" font-size="9.00" fill="#7a0f3c">not in the Horizon math</text>
+<path fill="#fbeaf0" stroke="#be185d" stroke-width="1.4" d="M1059.59,-774.79C1059.59,-774.79 920.41,-774.79 920.41,-774.79 914.41,-774.79 908.41,-768.79 908.41,-762.79 908.41,-762.79 908.41,-750.79 908.41,-750.79 908.41,-744.79 914.41,-738.79 920.41,-738.79 920.41,-738.79 1059.59,-738.79 1059.59,-738.79 1065.59,-738.79 1071.59,-744.79 1071.59,-750.79 1071.59,-750.79 1071.59,-762.79 1071.59,-762.79 1071.59,-768.79 1065.59,-774.79 1059.59,-774.79"/>
+<text xml:space="preserve" text-anchor="start" x="921.38" y="-757.34" font-family="DejaVu Sans" font-weight="bold" font-size="11.00" fill="#7a0f3c">Direct / jailbreak layer</text>
+<text xml:space="preserve" text-anchor="start" x="936" y="-748.24" font-family="DejaVu Sans" font-size="9.00" fill="#7a0f3c">not in the Horizon math</text>
 </g>
 <!-- l3&#45;&gt;l4 -->
 </g>

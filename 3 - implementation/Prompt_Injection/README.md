@@ -17,10 +17,12 @@ horizon/
                           risk, choice rule, McNemar, bootstrap), sion (V1 SOCP), adaptive attacker, corpus
   stage2/                 values (labels), schemas (parser, |S|), quarantine × m, vote (+Hoeffding), policy,
                           z3_check, conformal (CRC), loss, leakage, sion_lp, horizon_value, camel_adapter
-  direct/                 LlamaFirewall/Prompt Guard 2, Llama Guard, canary
+  direct/                 DeBERTa injection classifier (input), Qwen3Guard (output), canary
   pipeline.py             end-to-end AgentDojo pipeline, all ablation flags
   theory.py               theory-mode inputs for figures
-eval/                     stage1_runner, agentdojo_runner, jailbreak_runner (§11)
+eval/                     stage1_runner, agentdojo_runner, jailbreak_runner (§11: detect · PyRIT PAIR/TAP/Crescendo ·
+                          PyRIT XPIA (indirect) · garak direct + latentinjection)
+horizon/redteam/          PyRIT XPIA adapter: plant δ → process with a Horizon configuration → canary indicator
 scripts/                  serve_local.sh, openai_role_proxy.py, download_data.py, make_splits.py,
                           camel_baseline.py, smoke_test.py, guarded_server.py, make_figures.py, build_notebook.py
 tests/                    §9 unit tests (the only place slide values appear) + grep check

@@ -45,9 +45,9 @@ FAILED=()
 try() { "$@" || { echo "!! step failed: $*"; FAILED+=("$*"); }; }   # keep going; the report records what exists
 gated_ok() { PY - <<'EOF'
 from horizon.config import load_config
-from horizon.direct.guards import GatedModelError, PromptGuardInput
+from horizon.direct.guards import GatedModelError, InjectionGuardInput
 try:
-    PromptGuardInput(load_config().direct).check("hello"); print("yes")
+    InjectionGuardInput(load_config().direct).check("hello"); print("yes")
 except GatedModelError:
     print("no")
 EOF
@@ -84,8 +84,8 @@ if [ "$REPORT_ONLY" = 0 ]; then
   step "does each layer fire once? quarantine+vote, policy, Z3, canary, guards" "Qwen3-8B · Z3 · scripts/smoke_test.py";       try PY scripts/smoke_test.py "${SETS[@]}"
 
   GATED=$(gated_ok | tail -1)
-  NOGUARD=(); [ "$GATED" = yes ] || NOGUARD=(--set flags.use_firewall=false --set flags.use_output_guard=false)
-  [ "$GATED" = yes ] || echo "Meta guard models are gated → direct-layer flags switched off for this run"
+  NOGUARD=(); [ "$GATED" = yes ] || NOGUARD=(--set flags.use_firewall=false)
+  [ "$GATED" = yes ] || echo "injection classifier not available → input guard off for this run; Qwen3Guard output guard stays on"
 
   if [ "$LEVEL" = pilot ]; then
     step "small paired run: every transform τ on the same attacks + clean docs, then CP / DRO / π*" "Qwen3-8B (target) · scipy · cvxpy/Clarabel · eval/stage1_runner.py"
@@ -111,7 +111,18 @@ if [ "$REPORT_ONLY" = 0 ]; then
     done
     step "attacker LLM rewrites injections against the full pipeline" "Qwen3-8B (attacker) · AgentDojo"
     try PY eval/agentdojo_runner.py --split report --ablation full --adaptive "${NOGUARD[@]}" "${SETS[@]}"
-    if [ "$GATED" = yes ]; then step "jailbreak sets (incl. HackAPrompt) vs benign sets through the guards" "Prompt Guard 2 + Llama Guard · eval/jailbreak_runner.py"; try PY eval/jailbreak_runner.py --detect "${SETS[@]}"; fi
+    step "jailbreak sets (incl. HackAPrompt) vs benign sets through the guards" "DeBERTa injection classifier + Qwen3Guard · eval/jailbreak_runner.py"; try PY eval/jailbreak_runner.py --detect "${SETS[@]}"
+    if PY -c "import pyrit, garak" 2>/dev/null; then
+      step "PyRIT XPIA: plant attacks in documents → none · stage1 · stage2 · stage1+2 · full (paired)" "PyRIT + Qwen3-8B + Horizon · eval/jailbreak_runner.py --xpia"
+      try PY eval/jailbreak_runner.py --xpia "${SETS[@]}"
+      step "garak direct + indirect probes (latentinjection, web_injection) on the bare model and the guarded endpoint" "garak · scripts/guarded_server.py"
+      PY scripts/guarded_server.py --port 11436 "${SETS[@]}" >report/guarded_server.log 2>&1 & GS=$!
+      for _ in $(seq 1 60); do curl -s -m 2 localhost:11436 >/dev/null 2>&1 && break; sleep 2; done
+      try PY eval/jailbreak_runner.py --garak "${SETS[@]}"
+      kill "$GS" 2>/dev/null
+    else
+      echo "PyRIT / garak not installed → red-team steps skipped (re-run with --redteam)"
+    fi
     step "figures from the report-split results" "matplotlib · scripts/make_figures.py";  try PY scripts/make_figures.py --stage1-run report --out figures/results "${SETS[@]}"
   fi
 

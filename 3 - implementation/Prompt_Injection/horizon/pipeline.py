@@ -1,12 +1,12 @@
 """End-to-end Horizon pipeline as an AgentDojo pipeline (§4), with every ablation flag.
 
 user prompt u
- → [direct]   LlamaFirewall / Prompt Guard 2 on u                 (use_firewall)
+ → [direct]   injection classifier (DeBERTa) on u               (use_firewall)
  → [Stage 2]  CaMeL P-LLM sees only u → program → interpreter     (use_stage2)
               Q-LLM × m, per-run τ ~ π*, fresh κ [Stage 1]          (use_stage1, m, use_vote, use_typing)
               policy table, Z3-verified at startup                  (use_policy)
               CONFIRM → CRC threshold λ̂                             (use_conformal)
- → [direct]   Llama Guard + canary on the final output             (use_output_guard, use_canary)
+ → [direct]   Qwen3Guard + canary on the final output             (use_output_guard, use_canary)
 
 With use_stage2 = False the agent is a plain tool-calling loop; if use_stage1 is on,
 every tool output is spotlighted with τ ~ π* and a fresh κ (Stage-1-only ablation).
@@ -25,7 +25,7 @@ from agentdojo.agent_pipeline.errors import AbortAgentError
 
 from horizon.config import ROOT, Config
 from horizon.direct import canary as canary_mod
-from horizon.direct.guards import LlamaGuardOutput, PromptGuardInput
+from horizon.direct.guards import InjectionGuardInput, Qwen3GuardOutput
 from horizon.llm import LLM
 from horizon.stage1.transforms import build_variants
 from horizon.stage2.camel_adapter import EpisodeState, HorizonPolicyEngine, HorizonPrivilegedLLM, tool_signatures
@@ -64,7 +64,7 @@ def resolve_lambda(cfg: Config) -> float | None:
 class InputGuard(agent_pipeline.BasePipelineElement):
     name = "input_guard"
 
-    def __init__(self, guard: PromptGuardInput, log: list, emit=None):
+    def __init__(self, guard: InjectionGuardInput, log: list, emit=None):
         self.guard, self.log, self.emit = guard, log, emit
 
     def query(self, query, runtime, env=functions_runtime.EmptyEnv(), messages=(), extra_args={}):
@@ -81,7 +81,7 @@ class OutputGuard(agent_pipeline.BasePipelineElement):
     name = "output_guard"
     BLOCKED = "[Horizon: response withheld by the output guard]"
 
-    def __init__(self, guard: LlamaGuardOutput | None, token: str | None, log: list, emit=None):
+    def __init__(self, guard: Qwen3GuardOutput | None, token: str | None, log: list, emit=None):
         self.guard, self.token, self.log, self.emit = guard, token, log, emit
 
     def query(self, query, runtime, env=functions_runtime.EmptyEnv(), messages=(), extra_args={}):
@@ -97,7 +97,7 @@ class OutputGuard(agent_pipeline.BasePipelineElement):
         self.log.append({"layer": "output_guard", "blocked": blocked, "reason": why})
         if self.emit:
             self.emit("output_guard", blocked=blocked, reason=why, canary=bool(self.token),
-                      llama_guard=self.guard is not None)
+                      output_guard=self.guard is not None)
         if blocked:
             msg = ad_types.ChatAssistantMessage(role="assistant", tool_calls=None,
                                                 content=[ad_types.text_content_block_from_string(self.BLOCKED)])
@@ -139,7 +139,7 @@ def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, a
     token = canary_mod.new_token(cfg.direct["canary_hex_bytes"]) if f.use_canary else None
     elements: list = [agent_pipeline.InitQuery()]
     if f.use_firewall:
-        elements.insert(0, InputGuard(PromptGuardInput(cfg.direct), log, state.emit))
+        elements.insert(0, InputGuard(InjectionGuardInput(cfg.direct), log, state.emit))
     mix = resolve_mix(cfg)
     if f.use_stage2:
         q = Quarantine(LLM(cfg.models["q_llm"], cfg.models), mix, s2["parser"], s2,
@@ -162,7 +162,7 @@ def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, a
         elements = [agent_pipeline.SystemMessage(sysmsg), *elements, llm,
                     agent_pipeline.ToolsExecutionLoop([executor, llm])]
     if f.use_output_guard or f.use_canary:
-        elements.append(OutputGuard(LlamaGuardOutput(cfg.direct) if f.use_output_guard else None, token, log,
+        elements.append(OutputGuard(Qwen3GuardOutput(cfg.direct) if f.use_output_guard else None, token, log,
                                     state.emit))
     pipe = agent_pipeline.AgentPipeline(elements)
     pipe.name = ablation_name(cfg)

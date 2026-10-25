@@ -67,3 +67,22 @@ def test_every_step_names_who_does_it():
             | set(re.findall(r'\("[^"]+", "(\w+)"\)', plans)))
     assert {"guard_in", "planner", "reader", "vote", "z3", "crc"} <= used
     assert all(app.who(r) for r in used)
+
+
+def test_output_guard_parses_qwen3guard_format():
+    from horizon.direct.guards import Qwen3GuardOutput
+    g = Qwen3GuardOutput(CFG.direct)
+    assert g.parse("Safety: Unsafe\nCategories: Violent\nRefusal: No") == ("Unsafe", ["Violent"], "No")
+    assert g.verdict("Safety: Unsafe\nCategories: Violent").blocked
+    assert not g.verdict("Safety: Safe\nCategories: None\nRefusal: Yes").blocked
+    assert g.verdict("Safety: Controversial\nCategories: Jailbreak").blocked == ("Controversial" in CFG.direct["output_guard_block"])
+    assert not g.verdict("garbage").blocked and "unparsed" in g.verdict("garbage").reason
+
+
+def test_output_guard_ignored_categories():
+    from horizon.direct.guards import Qwen3GuardOutput
+    d = dict(CFG.direct, output_guard_ignore_categories=["PII"])
+    g = Qwen3GuardOutput(d)
+    assert not g.verdict("Safety: Unsafe\nCategories: PII").blocked
+    assert g.verdict("Safety: Unsafe\nCategories: PII, Violent").blocked
+    assert g.verdict("Safety: Unsafe").blocked

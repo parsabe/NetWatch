@@ -1,7 +1,7 @@
 """OpenAI-compatible chat endpoint with the direct/jailbreak layer around the local model.
 
-    user prompt → [Prompt Guard 2 via LlamaFirewall] → model (system prompt with canary)
-               → [canary check] → [Llama Guard] → reply
+    user prompt → [injection classifier (DeBERTa)] → model (system prompt with canary)
+               → [canary check] → [Qwen3Guard] → reply
 
 Target for PyRIT (PAIR/TAP/Crescendo) and garak in eval/jailbreak_runner.py. Binds to
 localhost only. Layers follow flags.use_firewall / use_output_guard / use_canary.
@@ -20,7 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from horizon.config import add_config_args, config_from_args  # noqa: E402
 from horizon.direct import canary as canary_mod  # noqa: E402
-from horizon.direct.guards import LlamaGuardOutput, PromptGuardInput  # noqa: E402
+from horizon.direct.guards import InjectionGuardInput, Qwen3GuardOutput  # noqa: E402
 from horizon.llm import LLM  # noqa: E402
 
 SYSTEM = "You are a helpful, harmless assistant."
@@ -31,8 +31,8 @@ class Guarded:
     def __init__(self, cfg):
         f = cfg.flags
         self.llm = LLM(cfg.models["p_llm"], cfg.models)
-        self.inp = PromptGuardInput(cfg.direct) if f.use_firewall else None
-        self.out = LlamaGuardOutput(cfg.direct) if f.use_output_guard else None
+        self.inp = InjectionGuardInput(cfg.direct) if f.use_firewall else None
+        self.out = Qwen3GuardOutput(cfg.direct) if f.use_output_guard else None
         self.token = canary_mod.new_token(cfg.direct["canary_hex_bytes"]) if f.use_canary else None
         self.log: list[dict] = []
 

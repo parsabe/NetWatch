@@ -1,6 +1,6 @@
 # Horizon demo — DIRECT injection / jailbreak prompts (the user is the attacker).
-# These go to the [DIRECT] layer: Prompt Guard 2 on input, a secret canary token in the system prompt,
-# Llama Guard on output. They are classic benchmark-style probes (HarmBench / JailbreakBench / Gandalf style),
+# These go to the [DIRECT] layer: an injection classifier on input, a secret canary token in the system prompt,
+# Qwen3Guard on output. They are classic benchmark-style probes (HarmBench / JailbreakBench / Gandalf style),
 # kept non-actionable on purpose.
 
 ## benign_question

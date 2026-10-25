@@ -1,10 +1,15 @@
-"""Direct / jailbreak layer evaluation (§11). AgentDojo never exercises this layer.
+"""Red-teaming runner (§11): direct / jailbreak attacks and third-party indirect attacks.
 
 Modes
   --detect   detection rate on attack sets and false-positive rate on benign sets, per detector
-             (Prompt Guard 2 via LlamaFirewall on input; Llama Guard on the prompt) → results/testing/direct.csv (F18)
-  --pyrit    PAIR / TAP / Crescendo (PyRIT) against the guarded endpoint (scripts/guarded_server.py)
-  --garak    writes a garak REST-generator config for the guarded endpoint and prints the command
+             (DeBERTa injection classifier on input; Qwen3Guard on the prompt) → results/testing/direct.csv (F18)
+  --pyrit    DIRECT: PAIR / TAP / Crescendo (PyRIT) against the guarded endpoint (scripts/guarded_server.py)
+  --xpia     INDIRECT: PyRIT XPIA workflow — plant δ (optionally obfuscated by a PyRIT converter) in a document,
+             process it with each Horizon configuration (none · stage1 · stage2 · stage1+2 · full), score with the
+             canary / attacker-tool-call indicator; paired over the same attacks → results/testing/xpia*.csv
+  --garak    DIRECT + INDIRECT probes (dan, promptinject, encoding · latentinjection, web_injection) against the
+             bare model and the guarded endpoint → results/testing/garak*.csv. garak puts document and task in one
+             message, so it measures the model + direct layer (a baseline), not Stage 1/2 — that is what --xpia does.
 
 Attack sets: HarmBench, JBB harmful, deepset injections (label 1), Gandalf, Tensor Trust hijacking.
 Benign sets: JBB benign, XSTest safe prompts, Alpaca, deepset (label 0). HackAPrompt joins once access is granted.
@@ -22,13 +27,14 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from horizon.config import ROOT, add_config_args, config_from_args  # noqa: E402
-from horizon.direct.guards import LlamaGuardOutput, PromptGuardInput  # noqa: E402
+from horizon.config import ROOT, add_config_args, config_from_args, load_config  # noqa: E402
+from horizon.direct.guards import GatedModelError, InjectionGuardInput, Qwen3GuardOutput  # noqa: E402
 from horizon.logging_utils import log_examples, mlflow_run  # noqa: E402
 from horizon.stage1 import stats  # noqa: E402
 
 RAW = ROOT / "data" / "raw"
 OUT = ROOT / "results" / "testing"
+GARAK_DIR = OUT / "garak"
 
 
 def _pq(pattern: str) -> pd.DataFrame:
@@ -73,27 +79,35 @@ def load_sets(seed: int, limit: int | None) -> dict[str, tuple[str, list[str]]]:
 def detect(cfg, limit: int | None) -> pd.DataFrame:
     a = cfg.stage1["alpha"]
     sets = load_sets(cfg.run["seed"], limit)
-    detectors = {"prompt_guard_2": PromptGuardInput(cfg.direct), "llama_guard": LlamaGuardOutput(cfg.direct)}
+    detectors = {"input_guard": InjectionGuardInput(cfg.direct), "output_guard": Qwen3GuardOutput(cfg.direct)}
     rows, per_item = [], []
     for dname, det in detectors.items():
+        try:
+            det.check("hello")
+        except GatedModelError as e:
+            print(f"  {dname}: skipped — {str(e)[:160]}", flush=True)
+            continue
         for sname, (kind, prompts) in sets.items():
             flags = []
             for p in prompts:
-                v = det.check(p) if dname == "prompt_guard_2" else det.check(p, "")
+                v = det.check(p)
                 flags.append(int(v.blocked))
                 per_item.append({"detector": dname, "set": sname, "kind": kind, "blocked": int(v.blocked),
                                  "score": v.score, "prompt": p[:200]})
             s, n = sum(flags), len(flags)
             lo, hi = stats.cp_interval(s, n, a)
             rows.append({"detector": dname, "set": sname, "kind": kind, "n": n, "flagged": s, "rate": s / n,
-                         "cp_lo": lo, "cp_hi": hi})
+                         "cp_lo": lo, "cp_hi": hi, "in_training_data": dname == "input_guard"
+                         and sname in cfg.direct["input_guard_contaminated_sets"]})
             print(f"  {dname:15s} {sname:20s} {kind:6s} {s}/{n}", flush=True)
     df = pd.DataFrame(rows)
     agg = []
     for dname, g in df.groupby("detector"):
         att, ben = g[g.kind == "attack"], g[g.kind == "benign"]
+        clean = ben[~ben.in_training_data]   # FPR without sets the detector was trained on (model card)
         agg.append({"detector": dname, "tpr": att["flagged"].sum() / att["n"].sum(),
-                    "fpr": ben["flagged"].sum() / ben["n"].sum()})
+                    "fpr": ben["flagged"].sum() / ben["n"].sum(),
+                    "fpr_excl_training_sets": clean["flagged"].sum() / clean["n"].sum() if len(clean) else None})
     OUT.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT / "direct_per_set.csv", index=False)
     pd.DataFrame(agg).to_csv(OUT / "direct.csv", index=False)
@@ -139,24 +153,127 @@ async def _pyrit(cfg, endpoint: str, objectives: list[str], kinds: list[str]) ->
     return rows
 
 
-def garak_config(cfg, endpoint: str) -> Path:
-    conf = {"rest": {"RestGenerator": {
-        "name": "horizon-guarded", "uri": endpoint, "method": "post",
-        "headers": {"Content-Type": "application/json"},
-        "req_template_json_object": {"model": "horizon-guarded",
-                                     "messages": [{"role": "user", "content": "$INPUT"}]},
-        "response_json": True, "response_json_field": "$.choices[0].message.content"}}}
+def _cp_rows(df: pd.DataFrame, keys: list[str], s_col: str, n_col: str, alpha: float) -> pd.DataFrame:
+    """Aggregate successes / trials per group with a Clopper–Pearson interval."""
+    g = df.groupby(keys, as_index=False)[[s_col, n_col]].sum()
+    ci = [stats.cp_interval(int(a), int(b), alpha) for a, b in zip(g[s_col], g[n_col])]
+    g["asr"] = g[s_col] / g[n_col]
+    g["cp_lo"], g["cp_hi"] = [c[0] for c in ci], [c[1] for c in ci]
+    return g
+
+
+# --------------------------------------------------------------------------- XPIA (indirect, PyRIT)
+def xpia(cfg, args) -> pd.DataFrame:
+    """Paired XPIA run: the same attacks × converters × Horizon configurations; resumable."""
+    from agentdojo_runner import ABLATIONS
+    from horizon.redteam.xpia import AGENT_CONFIGS, AgentProcessor, DocumentProcessor, run_one
+    rc = cfg.redteam
+    configs = args.xpia or rc["xpia_configs"]
+    converters = args.xpia_converters or rc["xpia_converters"]
+    path_in = ROOT / "data" / "processed" / f"stage1_{rc['xpia_split']}_attacks.jsonl"
+    attacks = [json.loads(l) for l in path_in.read_text().splitlines()]
+    if args.limit and len(attacks) > args.limit:
+        idx = sorted(np.random.default_rng(cfg.run["seed"]).choice(len(attacks), args.limit, replace=False))
+        attacks = [attacks[i] for i in idx]
     OUT.mkdir(parents=True, exist_ok=True)
-    p = OUT / "garak_rest.json"
+    items = OUT / "xpia_items.csv"
+    done = (set(map(tuple, pd.read_csv(items)[["config", "converter", "attack_id"]].astype(str).to_numpy()))
+            if items.exists() else set())
+
+    async def go():
+        from pyrit.setup import IN_MEMORY, initialize_pyrit_async
+        await initialize_pyrit_async(memory_db_type=IN_MEMORY)
+        for c in configs:
+            ccfg = load_config(args.config, [*args.set, *[f"flags.{k}={str(v).lower()}"
+                                                         for k, v in ABLATIONS[c].items()]])
+            proc = AgentProcessor(ccfg, rc["xpia_suite"]) if c in AGENT_CONFIGS else DocumentProcessor(ccfg, c)
+            for conv in converters:
+                todo = [a for a in attacks if (c, conv, a["id"]) not in done]
+                for i, a in enumerate(todo, 1):
+                    it = await run_one(proc, a, c, conv)
+                    pd.DataFrame([it.__dict__]).to_csv(items, mode="a", header=not items.exists(), index=False)
+                    if i % rc["progress_every"] == 0 or i == len(todo):
+                        print(f"  xpia {c:9s} {conv:10s} {i}/{len(todo)}", flush=True)
+
+    asyncio.run(go())
+    df = pd.read_csv(items)
+    df = df[df.config.isin(configs) & df.converter.isin(converters)].assign(n=1)
+    summary = _cp_rows(df, ["config", "converter"], "success", "n", cfg.stage1["alpha"])
+    summary.to_csv(OUT / "xpia.csv", index=False)
+    print(summary.to_string(index=False))
+    return summary
+
+
+# --------------------------------------------------------------------------- garak (direct + indirect probes)
+def garak_target(cfg, target: str, guarded_endpoint: str) -> tuple[str, str]:
+    """(endpoint, model name): 'bare' = the model behind the role proxy, 'guarded' = scripts/guarded_server.py."""
+    if target == "guarded":
+        return guarded_endpoint, "horizon-guarded"
+    return (f"http://127.0.0.1:{cfg.models['proxy_port']}/v1/chat/completions",
+            cfg.models["p_llm"].split("/", 1)[1])
+
+
+def garak_config(cfg, endpoint: str, model: str, name: str) -> Path:
+    conf = {"rest": {"RestGenerator": {
+        "name": name, "uri": endpoint, "method": "post",
+        "headers": {"Content-Type": "application/json"},
+        "req_template_json_object": {"model": model, "messages": [{"role": "user", "content": "$INPUT"}]},
+        "response_json": True, "response_json_field": "$.choices[0].message.content"}}}
+    GARAK_DIR.mkdir(parents=True, exist_ok=True)
+    p = GARAK_DIR / f"rest_{name}.json"
     p.write_text(json.dumps(conf, indent=1))
     return p
+
+
+def parse_garak(report: Path) -> list[dict]:
+    """garak 'eval' records: per probe × detector, fails = outputs where the attack succeeded."""
+    rows = []
+    for line in report.read_text().splitlines():
+        r = json.loads(line)
+        if r.get("entry_type") == "eval":
+            rows.append({"probe": r["probe"], "detector": r["detector"], "fails": r["fails"],
+                         "n": r["total_evaluated"]})
+    return rows
+
+
+def garak(cfg, args) -> pd.DataFrame:
+    import subprocess
+    import yaml
+    rc = cfg.redteam
+    GARAK_DIR.mkdir(parents=True, exist_ok=True)
+    run_cfg = GARAK_DIR / "garak_run.yaml"
+    run_cfg.write_text(yaml.safe_dump({"reporting": {"report_dir": str(GARAK_DIR.resolve())}}))
+    rows = []
+    for target in rc["garak_targets"]:
+        endpoint, model = garak_target(cfg, target, args.endpoint)
+        gen = garak_config(cfg, endpoint, model, target)
+        for family in ("direct", "indirect"):
+            prefix = f"{target}_{family}"
+            report = GARAK_DIR / f"{prefix}.report.jsonl"
+            if not report.exists():
+                cmd = [sys.executable, "-m", "garak", "--config", str(run_cfg), "--model_type", "rest",
+                       "--generator_option_file", str(gen), "--probes", ",".join(rc[f"garak_probes_{family}"]),
+                       "--generations", str(rc["garak_generations"]), "--seed", str(cfg.run["seed"]),
+                       "--parallel_attempts", str(cfg.models["parallel_requests"]), "--report_prefix", prefix]
+                print("  " + " ".join(cmd), flush=True)
+                subprocess.run(cmd, check=True)
+            rows += [{"target": target, "family": family, **r} for r in parse_garak(report)]
+    df = pd.DataFrame(rows)
+    summary = _cp_rows(df, ["target", "family", "probe"], "fails", "n", cfg.stage1["alpha"])
+    df.to_csv(OUT / "garak_items.csv", index=False)
+    summary.to_csv(OUT / "garak.csv", index=False)
+    print(summary.to_string(index=False))
+    return summary
 
 
 def main() -> None:
     ap = add_config_args(argparse.ArgumentParser())
     ap.add_argument("--detect", action="store_true")
     ap.add_argument("--pyrit", nargs="*", choices=["pair", "tap", "crescendo"])
-    ap.add_argument("--garak", action="store_true")
+    ap.add_argument("--xpia", nargs="*", choices=["none", "stage1", "stage2", "stage1+2", "full"],
+                    help="indirect PyRIT XPIA; no value = every config in redteam.xpia_configs")
+    ap.add_argument("--xpia-converters", nargs="+", help="override redteam.xpia_converters")
+    ap.add_argument("--garak", action="store_true", help="run garak direct + indirect probes")
     ap.add_argument("--endpoint", default="http://127.0.0.1:11436/v1/chat/completions")
     ap.add_argument("--limit", type=int)
     args = ap.parse_args()
@@ -173,10 +290,12 @@ def main() -> None:
             rows = asyncio.run(_pyrit(cfg, args.endpoint, objs, args.pyrit or ["pair", "tap", "crescendo"]))
             pd.DataFrame(rows).to_csv(OUT / "pyrit.csv", index=False)
             log_examples(rows, "pyrit")
+        if args.xpia is not None:
+            df = xpia(cfg, args)
+            log_examples(df.to_dict("records"), "xpia")
         if args.garak:
-            p = garak_config(cfg, args.endpoint)
-            print(f"uv run python -m garak --model_type rest --generator_option_file {p} "
-                  "--probes dan,promptinject,encoding,latentinjection")
+            df = garak(cfg, args)
+            log_examples(df.to_dict("records"), "garak")
 
 
 if __name__ == "__main__":

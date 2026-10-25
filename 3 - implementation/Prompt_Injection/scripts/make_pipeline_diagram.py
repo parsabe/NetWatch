@@ -60,7 +60,7 @@ def runtime() -> str:
     g += "  s1comb -> {s1choice s1sion}; {s1choice s1sion} -> s1out;\n  }\n"
     # ---------------- runtime chain -----------------
     g += n("user", "User prompt u", "trusted channel", CODE)
-    g += n("fw", "Input guard", "LlamaFirewall + Prompt Guard 2", DIRECT)
+    g += n("fw", "Input guard", "DeBERTa injection classifier (ProtectAI)", DIRECT)
     g += n("pllm", "Privileged LLM", "sees ONLY u → writes a program", LLM)
     g += n("interp", "CaMeL interpreter", "tracks data + control-flow dependencies", CODE)
     g += n("ext", "External data", "emails · web · tool outputs (untrusted)", DATA)
@@ -72,7 +72,7 @@ def runtime() -> str:
     g += n("deny", "DENY", "violation", CODE)
     g += n("ask", "CONFIRM → ask user", "only if s(x) ≥ λ̂, else DENY", CODE)
     g += n("tool", "Tool call", "AgentDojo environment", CODE)
-    g += n("og", "Output guard", "canary token check + Llama Guard", DIRECT)
+    g += n("og", "Output guard", "canary token check + Qwen3Guard", DIRECT)
     g += n("ans", "Answer", "", CODE)
     g += "  user -> fw -> pllm -> interp; ext -> interp; interp -> qllm [label=\" untrusted x\"]; qllm -> vote -> typed -> policy;\n"
     g += "  policy -> {allow deny ask}; allow -> tool; ask -> tool [label=\" approved\"]; tool -> og -> ans;\n"
@@ -171,9 +171,9 @@ def full() -> str:
     g += cluster("s1", "2 · Stage 1 — keyed spotlighting (offline, chooses π*)", "#5B4FC9", s)
     # ---------------- 3 direct layer -----------------
     dl = n("user", "User prompt u", "trusted channel · role owner / member / guest", CODE)
-    dl += n("pg", "Input guard", "LlamaFirewall + Prompt Guard 2 (86M)", DIRECT)
+    dl += n("pg", "Input guard", "DeBERTa-v3 injection classifier (ProtectAI)", DIRECT)
     dl += n("role", "Role rules", "policy.yaml: what each role may call", DIRECT)
-    dl += n("lg", "Output guard", "Llama Guard 3 (1B) · harm categories", DIRECT)
+    dl += n("lg", "Output guard", "Qwen3Guard-Gen 0.6B · Safe / Controversial / Unsafe", DIRECT)
     dl += n("can", "Canary check", "secret token leaked ⇒ block", DIRECT)
     dl += "  user -> pg -> role; lg -> can [style=invis];\n"
     g += cluster("dir", "3 · Direct injection / jailbreak layer (off-the-shelf, no training)", "#BE185D", dl)
@@ -214,8 +214,8 @@ def full() -> str:
     e += n("r1", "stage1_runner", "static · clean · adaptive · analyze", LLM)
     e += n("r2", "agentdojo_runner", "ablations none · stage1 · stage2 · stage1+2 · full<BR/>calibrate λ̂ · adaptive attacks", LLM)
     e += n("r3", "jailbreak_runner", "detection rate / FPR on every direct set", DIRECT)
-    e += n("pyrit", "PyRIT", "PAIR · TAP · Crescendo<BR/>success if judge score ≥ threshold", DIRECT)
-    e += n("garak", "garak", "probe suite via guarded_server.py (REST)", DIRECT)
+    e += n("pyrit", "PyRIT", "direct: PAIR · TAP · Crescendo (judge ≥ threshold)<BR/>indirect: XPIA plant δ → Horizon → canary", DIRECT)
+    e += n("garak", "garak", "direct: dan · promptinject · encoding<BR/>indirect: latentinjection · web_injection<BR/>bare model vs guarded_server.py", DIRECT)
     e += n("asr", "Metrics", "ASR = s/n with CP interval · utility · FPR", MATH)
     e += "  pytest -> smoke -> base -> r1 -> r2 -> r3; r3 -> {pyrit garak}; {r1 r2 r3} -> asr;\n"
     g += cluster("eval", "6 · Evaluation (§11 runners, logged to MLflow)", "#A8A6A0", e)
@@ -235,6 +235,7 @@ def full() -> str:
     g += "  role -> pllm; tool -> lg; can -> ans;\n" + n("ans", "Answer to the user", "", CODE)
     g += '  {tool deny ask} -> loss [style=dashed color="#0F6B50" label=" G, C, F per attack"]; leak -> lp [style=dashed color="#0F6B50" label=" cap"];\n'
     g += "  ddir -> r3; dsplit -> r1; dagent -> r2; vh -> asr [style=invis];\n"
+    g += '  pyrit -> ext [style=dashed color="#BE185D" label=" XPIA plants δ" constraint=false];\n'
     g += "  asr -> figs; track -> rep [style=dashed]; {r1 r2 r3} -> track [style=dashed];\n}\n"
     return g
 

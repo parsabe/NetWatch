@@ -41,9 +41,9 @@ digraph G {
   }
   subgraph cluster_dir { label=<<B>3 · Direct injection / jailbreak layer (off-the-shelf, no training)</B>> style="rounded" color="#BE185D" fontsize=13 margin=14;
   user [label=<<B>User prompt u</B><BR/><FONT POINT-SIZE="9">trusted channel · role owner / member / guest</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
-  pg [label=<<B>Input guard</B><BR/><FONT POINT-SIZE="9">LlamaFirewall + Prompt Guard 2 (86M)</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  pg [label=<<B>Input guard</B><BR/><FONT POINT-SIZE="9">DeBERTa-v3 injection classifier (ProtectAI)</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
   role [label=<<B>Role rules</B><BR/><FONT POINT-SIZE="9">policy.yaml: what each role may call</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
-  lg [label=<<B>Output guard</B><BR/><FONT POINT-SIZE="9">Llama Guard 3 (1B) · harm categories</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  lg [label=<<B>Output guard</B><BR/><FONT POINT-SIZE="9">Qwen3Guard-Gen 0.6B · Safe / Controversial / Unsafe</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
   can [label=<<B>Canary check</B><BR/><FONT POINT-SIZE="9">secret token leaked ⇒ block</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
   user -> pg -> role; lg -> can [style=invis];
   }
@@ -90,8 +90,8 @@ digraph G {
   r1 [label=<<B>stage1_runner</B><BR/><FONT POINT-SIZE="9">static · clean · adaptive · analyze</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
   r2 [label=<<B>agentdojo_runner</B><BR/><FONT POINT-SIZE="9">ablations none · stage1 · stage2 · stage1+2 · full<BR/>calibrate λ̂ · adaptive attacks</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
   r3 [label=<<B>jailbreak_runner</B><BR/><FONT POINT-SIZE="9">detection rate / FPR on every direct set</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
-  pyrit [label=<<B>PyRIT</B><BR/><FONT POINT-SIZE="9">PAIR · TAP · Crescendo<BR/>success if judge score ≥ threshold</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
-  garak [label=<<B>garak</B><BR/><FONT POINT-SIZE="9">probe suite via guarded_server.py (REST)</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  pyrit [label=<<B>PyRIT</B><BR/><FONT POINT-SIZE="9">direct: PAIR · TAP · Crescendo (judge ≥ threshold)<BR/>indirect: XPIA plant δ → Horizon → canary</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
+  garak [label=<<B>garak</B><BR/><FONT POINT-SIZE="9">direct: dan · promptinject · encoding<BR/>indirect: latentinjection · web_injection<BR/>bare model vs guarded_server.py</FONT>> fillcolor="#FBEAF0" color="#BE185D" fontcolor="#7A0F3C"];
   asr [label=<<B>Metrics</B><BR/><FONT POINT-SIZE="9">ASR = s/n with CP interval · utility · FPR</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
   pytest -> smoke -> base -> r1 -> r2 -> r3; r3 -> {pyrit garak}; {r1 r2 r3} -> asr;
   }
@@ -111,5 +111,6 @@ digraph G {
   ans [label=<<B>Answer to the user</B>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
   {tool deny ask} -> loss [style=dashed color="#0F6B50" label=" G, C, F per attack"]; leak -> lp [style=dashed color="#0F6B50" label=" cap"];
   ddir -> r3; dsplit -> r1; dagent -> r2; vh -> asr [style=invis];
+  pyrit -> ext [style=dashed color="#BE185D" label=" XPIA plants δ" constraint=false];
   asr -> figs; track -> rep [style=dashed]; {r1 r2 r3} -> track [style=dashed];
 }

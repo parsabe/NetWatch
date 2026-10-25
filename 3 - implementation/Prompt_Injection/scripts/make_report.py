@@ -53,7 +53,7 @@ SYSTEM = (
     "Sion minimax mix pi* over spotlighting variants; Stage 2 = a math-hardened CaMeL (privileged/quarantined LLMs, "
     "majority vote with a Hoeffding bound, typed values with capability labels, a Z3-verified noninterference policy, "
     "conformal risk control of user confirmations, a Sion LP over configurations and the final value V_Horizon); plus "
-    "a direct-injection/jailbreak layer (LlamaFirewall, Prompt Guard 2, Llama Guard, canary tokens).\n"
+    "a direct-injection/jailbreak layer (DeBERTa injection classifier, Qwen3Guard, canary tokens).\n"
     "Rules: use ONLY numbers that appear in the material you are given and copy them exactly; never invent results. "
     "If inputs are marked SIMULATED or 'theory mode', say clearly that the figure illustrates the math and is not an "
     "experimental result. If sample sizes are small, say so. Write plain prose without LaTeX or Markdown. "

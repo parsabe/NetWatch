@@ -36,7 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from horizon.config import DEFAULT_PARAMS, ROOT  # noqa: E402
 from horizon.llm import LLM, server_alive  # noqa: E402
 from horizon.shell_engine import (LAMBDA_HAT, PI_STAR, DirectEngine, SessionLog, Stage1Engine,  # noqa: E402
-                                  Stage2Engine, attacker_entities, guards_accessible, load_samples, pi_star_info,
+                                  Stage2Engine, attacker_entities, input_guard_accessible, load_samples, output_guard_accessible, pi_star_info,
                                   prepare_config, scan_untrusted)
 from horizon.stage2.vote import hoeffding_vote_bound  # noqa: E402
 
@@ -49,7 +49,7 @@ OVERVIEW = """\
 An attacker can hide instructions in that text (*indirect prompt injection*), or the user can attack the AI
 directly (*jailbreak*). Horizon defends in layers:
 
-* **Direct layer** — checks what *you* type (Prompt Guard 2) and what the AI answers (canary token, Llama Guard).
+* **Direct layer** — checks what *you* type (injection classifier) and what the AI answers (canary token, Qwen3Guard).
 * **Stage 1 — keyed spotlighting** — outside text is scrambled/marked with a *secret key that changes every time*,
   so the AI can tell "data" from "instructions", and the attacker cannot fake the marking.
 * **Stage 2 — safe agent (CaMeL)** — a *planner AI* that only ever sees your request writes a small program.
@@ -133,7 +133,7 @@ class App:
         c, m = self.cfg, self.cfg.models
         via = "LiteLLM → role proxy → Ollama (GPU)"
         return {
-            "guard_in": f"LlamaFirewall + Prompt Guard 2 ({c.direct['prompt_guard_model']}) · transformers on CPU",
+            "guard_in": f"injection classifier ({c.direct['input_guard_model']}) · transformers on CPU",
             "scan": "regex pre-scan in horizon/shell_engine.py (plain Python, no AI)",
             "stage1": "horizon/stage1/transforms.py + keys.py (key from Python `secrets`)",
             "target": f"{m['q_llm']} via {via}",
@@ -148,7 +148,7 @@ class App:
             "vote": "horizon/stage2/vote.py (majority + Hoeffding)",
             "policy": "horizon/stage2/policy.py + camel_adapter.py (labels SYSTEM ⊑ USER ⊑ UNTRUSTED)",
             "crc": "horizon/stage2/conformal.py (λ̂ from calibration) + you",
-            "guard_out": f"canary check + Llama Guard ({c.direct['llama_guard_model']}) · transformers on CPU",
+            "guard_out": f"canary check + Qwen3Guard ({c.direct['output_guard_model']}) · transformers on CPU",
             "judge": "AgentDojo task checks + attacker-entity match (horizon/shell_engine.py)",
             "log": f"SessionLog → {c.shell['log_dir']}/session_*.jsonl",
         }[role]
@@ -207,8 +207,10 @@ class App:
         t.add_row("model server", "[green]running[/]" if server_alive(c.models)
                   else "[red]not running → ./scripts/serve_local.sh[/]")
         t.add_row("AI models", f"planner {c.models['p_llm']} · readers {c.models['q_llm']}")
-        t.add_row("jailbreak guards", "[green]Prompt Guard 2 + Llama Guard ready[/]" if guards_accessible(c.direct)
-                  else "[yellow]Meta models not accessible yet (gated) → only the canary check runs[/]")
+        t.add_row("input guard", f"[green]injection classifier ready ({c.direct['input_guard_model']})[/]" if input_guard_accessible(c.direct)
+                  else "[yellow]injection classifier not downloaded → off[/]")
+        t.add_row("output guard", f"[green]Qwen3Guard ready ({c.direct['output_guard_model']})[/]"
+                  if output_guard_accessible(c.direct) else "[yellow]Qwen3Guard not downloaded → off[/]")
         info = pi_star_info()
         t.add_row("Stage 1 marking",
                   f"best mix π* from experiments: {', '.join(f'{k} {v:.0%}' for k, v in info['pi_star'].items())}"
@@ -224,10 +226,10 @@ class App:
 
     def check_input(self, text: str) -> bool:
         if not self.cfg.flags.use_firewall:
-            self.info("[yellow]jailbreak guard not available (gated) → skipped[/]")
+            self.info("[yellow]input guard switched off → skipped[/]")
             return True
-        from horizon.direct.guards import PromptGuardInput
-        v = PromptGuardInput(self.cfg.direct).check(text)
+        from horizon.direct.guards import InjectionGuardInput
+        v = InjectionGuardInput(self.cfg.direct).check(text)
         self.info("[red]blocked as an attack[/]" if v.blocked else "[green]looks fine[/]")
         self.log.write("input_guard", blocked=v.blocked, score=v.score)
         return not v.blocked
@@ -266,7 +268,11 @@ class App:
                   who="scan")
         self.info(f"document: {len(self.samples)} part(s), {sum(len(s.text) for s in self.samples)} characters "
                   "(untrusted — written by someone else)")
-        flagged = {s.name: scan_untrusted(s.text) for s in self.samples}
+        guard = None
+        if self.cfg.shell["use_input_guard_scan"] and self.cfg.flags.use_firewall:
+            from horizon.direct.guards import InjectionGuardInput
+            guard = InjectionGuardInput(self.cfg.direct)
+        flagged = {s.name: scan_untrusted(s.text, guard) for s in self.samples}
         flagged = {k: v for k, v in flagged.items() if v}
         if flagged:
             for name, fs in flagged.items():
@@ -501,8 +507,8 @@ class App:
 
     # ============================================================ 3 · jailbreak ===
     def flow_jailbreak(self) -> None:
-        con.print(Panel("Here YOU are the attacker. Your prompt goes through the direct layer: Prompt Guard 2 checks it, "
-                        "the AI's hidden instructions contain a secret code word (to catch leaks), and Llama Guard "
+        con.print(Panel("Here YOU are the attacker. Your prompt goes through the direct layer: an injection classifier checks it, "
+                        "the AI's hidden instructions contain a secret code word (to catch leaks), and Qwen3Guard "
                         "checks the answer.", title="3 · Try a jailbreak"))
         allx = load_samples(ROOT / JAILBREAK_FILE, self.cfg.stage1["canary_prefix"], self.cfg.stage1["canary_hex_bytes"])
         choice = self.pick("Pick a jailbreak prompt (or type your own)", [(s.name, s.note) for s in allx],
@@ -520,9 +526,9 @@ class App:
         con.print(Panel(prompt, title="your prompt", border_style="dim"))
         with con.status("running through the direct layer …"):
             o = self.direct.run(prompt)
-        self.step(1, 4, "Check your prompt (Prompt Guard 2)",
+        self.step(1, 4, "Check your prompt (injection classifier)",
                   {"blocked": "[red]BLOCKED as an attack[/]", "passed": "[green]passed[/]",
-                   "off": "[yellow]not available (Meta model gated) → skipped[/]"}[o.input_guard], who="guard_in")
+                   "off": "[yellow]switched off → skipped[/]"}[o.input_guard], who="guard_in")
         if o.input_guard == "blocked":
             con.print(Panel("Stopped before reaching the AI.", title="Result: jailbreak blocked ✓", border_style="green"))
             self.log.write("jailbreak", **o.__dict__)
@@ -531,9 +537,9 @@ class App:
         self.step(3, 4, "Did it leak its hidden instructions? (canary)",
                   "[red]YES — the secret code word appeared → answer withheld[/]" if o.canary_leaked
                   else "[green]no leak[/]", who="canary")
-        self.step(4, 4, "Is the answer harmful? (Llama Guard)",
+        self.step(4, 4, "Is the answer harmful? (Qwen3Guard)",
                   {"blocked": f"[red]unsafe → withheld[/] ({o.output_reason})", "passed": "[green]safe[/]",
-                   "off": "[yellow]not available (gated) → skipped[/]"}[o.output_guard], who="guard_out")
+                   "off": "[yellow]switched off → skipped[/]"}[o.output_guard], who="guard_out")
         self.info(f"the AI itself {'[green]refused[/]' if o.refused else '[yellow]did not refuse[/]'} "
                   "[dim](wording check only)[/]")
         good = o.canary_leaked or o.output_guard == "blocked" or o.refused
@@ -571,7 +577,7 @@ class App:
             t.add_row(f"rule: {k}", f"[{DECISION.get(v, 'white')}]{v}[/]")
         t.add_row("Z3 catches a bad rule table", "[green]yes[/]" if "refused" in S.get("z3_bad_policy", "") else "[red]no[/]")
         t.add_row("canary catches a leak", "[green]yes[/]" if S.get("canary", {}).get("leak_blocked") else "[red]no[/]")
-        for g in ("prompt_guard_2", "llama_guard"):
+        for g in ("input_guard", "output_guard"):
             t.add_row(g, S.get(g, {}).get("status", "ran"))
         con.print(t)
 

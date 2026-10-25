@@ -30,10 +30,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Direct/jailbreak layer (Meta PurpleLlama + HF models). Separate group so the core
-# install stays usable when the gated models are not yet accessible.
+# Direct/jailbreak layer (HF guard models via transformers). Separate group so the core install stays light.
 direct = [
-    "llamafirewall",
     "transformers",
     "torch",
 ]

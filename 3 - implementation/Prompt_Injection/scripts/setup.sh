@@ -64,10 +64,13 @@ PY -m ipykernel install --user --name horizon --display-name "Python (horizon)" 
 
 say "checks"
 command -v latexmk >/dev/null && command -v xelatex >/dev/null && echo "LaTeX: ok" || echo "LaTeX: MISSING (install texlive-xetex + latexmk to build the PDF report)"
-T="$HOME/.cache/huggingface/token"
-for repo in meta-llama/Llama-Prompt-Guard-2-86M meta-llama/Llama-Guard-3-1B; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $(cat "$T" 2>/dev/null)" \
-         "https://huggingface.co/$repo/resolve/main/config.json")
-  [ "$code" = 200 ] || [ "$code" = 302 ] && echo "$repo: accessible" || echo "$repo: GATED ($code) — accept the license on huggingface.co"
-done
+say "guard models (DeBERTa injection classifier + Qwen3Guard, both Apache-2.0, not gated)"
+PY - <<'EOF2'
+from huggingface_hub import snapshot_download
+from horizon.config import load_config
+d = load_config().direct
+for k in ("input_guard", "output_guard"):
+    snapshot_download(d[f"{k}_model"], revision=d[f"{k}_revision"])
+    print(d[f"{k}_model"], "ok")
+EOF2
 say "setup complete"
