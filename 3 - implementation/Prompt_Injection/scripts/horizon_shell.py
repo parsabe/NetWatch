@@ -607,7 +607,7 @@ class App:
             t.add_row(label, str(p.relative_to(ROOT)) if p.exists() else "[dim]not yet[/]")
         for sp in sorted((res / "stage1").glob("*/summary.json")):
             t.add_row(f"Stage 1 run '{sp.parent.name}'", str(sp.relative_to(ROOT)))
-        for ep in sorted((res / "stage2").glob("*/episodes.csv")):
+        for ep in sorted(p for p in (res / "stage2").glob("*/episodes.csv") if "-" not in p.parent.name):
             t.add_row(f"Stage 2 run '{ep.parent.name}'", str(ep.relative_to(ROOT)))
         t.add_row("figures", f"{len(list((ROOT / 'figures').rglob('*.png')))} images in figures/")
         t.add_row("shell sessions", f"{len(list((res / 'shell').glob('*.jsonl')))} logs in results/shell/")
@@ -632,7 +632,7 @@ class App:
     def reports_stage2(self) -> None:
         import pandas as pd
         found = False
-        for ep in sorted((ROOT / "results" / "stage2").glob("*/episodes.csv")):
+        for ep in sorted(p for p in (ROOT / "results" / "stage2").glob("*/episodes.csv") if "-" not in p.parent.name):
             found = True
             df = pd.read_csv(ep)
             att, ben = df[df["style"] != "benign"], df[df["style"] == "benign"]

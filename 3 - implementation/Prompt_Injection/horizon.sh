@@ -22,6 +22,8 @@ Horizon — defense against prompt injection (indirect: Stage 1 + Stage 2 · dir
   ./horizon.sh run pilot          + a small real Stage 1 experiment and a small agent experiment (hours)
   ./horizon.sh run full           + every experiment at full size                              (days)
   ./horizon.sh report             rewrite report/report.pdf from the results that exist (uses the report AI)
+  ./horizon.sh campaign           the big test run (≥ 5,000 tests) + process report in report/campaign/
+                                  --plan · --profile smoke|laptop|cluster · --fresh · --report-only (cluster/README.md)
   ./horizon.sh figures            redraw all figures (figures/) and the pipeline diagrams (docs/)
   ./horizon.sh notebook           rebuild and execute Horizon.ipynb
 
@@ -44,6 +46,7 @@ case "$cmd" in
   test)           exec "$UV" run --no-sync pytest -q "$@" ;;
   run)            lvl="${1:-quick}"; [ $# -gt 0 ] && shift; exec ./run_all.sh --level "$lvl" "$@" ;;
   report)         exec ./run_all.sh --report-only "$@" ;;
+  campaign)       exec ./run_campaign.sh "$@" ;;
   figures)        "$UV" run --no-sync python scripts/make_figures.py --theory "$@" && \
                   "$UV" run --no-sync python scripts/make_pipeline_diagram.py ;;
   notebook)       exec "$UV" run --no-sync python scripts/build_notebook.py --execute ;;

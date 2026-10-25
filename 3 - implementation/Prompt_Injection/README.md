@@ -46,6 +46,17 @@ project tree, every figure, result tables computed from the files, and the model
 prose are checked against the data and unmatched ones are marked red), the copied figures and CSVs,
 the model's raw analyses (`analysis/*.json`), `tests.xml` and `run_all.log`. Setup alone: `./scripts/setup.sh`.
 
+## Big test campaign (cluster or laptop)
+
+```bash
+./run_campaign.sh --plan               # phases, test counts, time estimate
+./run_campaign.sh --profile laptop     # or: sbatch cluster/horizon_campaign.sbatch (see cluster/README.md)
+```
+
+Runs every experiment in dependency order (resumable), at least `campaign.min_tests` (5,000) tests, then writes
+`report/campaign/campaign_report.pdf`: the process (phases, durations, failures with log tails) and, per defence
+configuration, how many attacks got through vs. were blocked.
+
 ## Start here: `./horizon.sh`
 
 ```bash

@@ -121,6 +121,54 @@ redteam:                     # §11 third-party attack tools (eval/jailbreak_run
   garak_probes_indirect: [latentinjection, web_injection]
   garak_generations: 5       # garak's default number of outputs per prompt
 
+campaign:                    # eval/campaign.py / ./run_campaign.sh — every experiment, resumable, then a process report
+  min_tests: 5000            # complete only when at least this many tests finished (else extra XPIA rounds)
+  profile: cluster           # cluster | laptop  (CLI: --profile)
+  topup_configs: [none, stage1]          # extra rounds re-run the same attacks with fresh keys κ (document configs)
+  topup_converters: [none]
+  max_topup_rounds: 10
+  max_retries: 2             # a failed phase is retried (after restarting the model server if it died)
+  examples_per_group: 3      # example attacks shown per result group in the report
+  seconds_per_test:          # MEASURED on the laptop (RTX 4060 8 GB, Qwen3-8B, 2 parallel slots); for the plan only
+    document: 10             # one LLM answer on a document (Stage 1 matrix / clean / XPIA none, stage1)
+    agent: 100               # one AgentDojo episode through the CaMeL agent (Stage 2, XPIA agent configs)
+    agent_plain: 12          # one AgentDojo episode with the plain tool-calling agent (ablations none, stage1)
+    guard: 3                 # one guard check (Qwen3Guard on CPU dominates; DeBERTa ≈ 0.1 s)
+    pyrit: 300               # one multi-turn PAIR / TAP / Crescendo attack (estimate)
+  profiles:
+    cluster:                 # everything at the configured sizes; several agent jobs in parallel
+      workers: 4
+      parallel_requests: 8   # Ollama slots (OLLAMA_NUM_PARALLEL); needs a large GPU
+      set: []
+      args:
+        detect: [--limit, "2000"]
+        pyrit: [--limit, "50"]
+    laptop:                  # a smaller plan (≈ 16k tests, ≈ 2 days on the RTX 4060)
+      workers: 1
+      parallel_requests: 2
+      set: [stage1.n_adaptive_targets=5, redteam.garak_generations=1]
+      args:
+        calibrate: [--attacks, important_instructions, --limit-user, "3"]
+        ablation: [--attacks, important_instructions, --limit-user, "4", --limit-injection, "4"]
+        agent_adaptive: [--limit-user, "2", --limit-injection, "2"]
+        xpia: [--limit, "100", --xpia-converters, none]
+        detect: [--limit, "200"]
+        pyrit: [--limit, "5"]
+    smoke:                   # a tiny end-to-end check of the whole machinery (≈ 2–3 h on the laptop)
+      workers: 1
+      min_tests: 0           # no target: it only checks that every phase runs
+      parallel_requests: 2
+      set: [stage1.pilot_n=5, stage1.pilot_clean=2, stage1.pilot_adaptive_targets=1, redteam.garak_generations=1,
+            "redteam.garak_probes_direct=[dan.Dan_11_0]", "redteam.garak_probes_indirect=[latentinjection.LatentWhois]"]
+      args:
+        stage1: [--pilot]
+        calibrate: [--attacks, important_instructions, --limit-user, "1", --limit-injection, "1"]
+        ablation: [--attacks, important_instructions, --limit-user, "1", --limit-injection, "1"]
+        agent_adaptive: [--limit-user, "1", --limit-injection, "1"]
+        xpia: [--limit, "2", --xpia-converters, none]
+        detect: [--limit, "3"]
+        pyrit: [--limit, "1"]
+
 splits:
   fit_fraction: 0.5          # remaining part is the report split
 

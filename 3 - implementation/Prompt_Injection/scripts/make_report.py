@@ -251,6 +251,8 @@ def collect_artifacts(cfg) -> list[Artifact]:
                              [latex_table(t, f"π* chosen on '{d.get('chosen_on')}' at ρ={d['rho']}, η={d['eta']}, "
                                              f"q={d['q']}; R̄_Q={d['R_Q']:.4g}; log|K|={d['log_K']:.4g}")]))
     for ep in sorted((res / "stage2").glob("*/episodes.csv")):
+        if "-" in ep.parent.name:                  # per-job folders of a campaign; merged into <split>/
+            continue
         df = pd.read_csv(ep)
         agg = (df.assign(kind=df["style"].where(df["style"] == "benign", "attack"))
                  .groupby(["config", "kind"]).agg(n=("utility", "size"), utility=("utility", "mean"),
@@ -288,7 +290,23 @@ def collect_artifacts(cfg) -> list[Artifact]:
                              "indicator (0 = no injection succeeded).\n" + pd.DataFrame(lines).to_string(index=False),
                              [latex_table(pd.DataFrame(lines), "CaMeL baseline output lines")]))
     for f in sorted((res / "testing").glob("*.csv")):
+        if "_items" in f.stem:                     # per-case rows; their summaries are the other CSVs
+            continue
         arts.append(Artifact(f"testing_{f.stem}", f"Testing phase — {f.stem}", csv_summary(f, cfg.report["csv_preview_rows"])))
+    camp = ROOT / "report" / "campaign"
+    if (camp / "summary.json").exists():
+        S = json.loads((camp / "summary.json").read_text())
+        proc = pd.read_csv(camp / "process.csv")
+        grp = pd.read_csv(camp / "results_by_group.csv")
+        cols = [c for c in ["area", "group", "config", "tests", "attacks", "got_through", "asr", "asr_cp_lo",
+                            "asr_cp_hi", "benign", "benign_ok", "false_alarms"] if c in grp]
+        arts.append(Artifact("campaign", "Test campaign (eval/campaign.py) — process and outcomes",
+                             "Campaign summary: " + json.dumps(S, default=str) + "\nPhases:\n"
+                             + proc.to_string(index=False) + "\nResults by group:\n" + grp[cols].to_string(index=False),
+                             [latex_table(proc[["order", "phase", "status", "duration", "tests planned", "tests done"]],
+                                          "Campaign phases in scheduling order", longtable=True),
+                              latex_table(grp[cols], "Campaign results by group (got_through = attack worked)",
+                                          "{:.3g}", longtable=True)]))
     return arts
 
 

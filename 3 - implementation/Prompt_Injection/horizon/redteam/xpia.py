@@ -37,6 +37,7 @@ CONVERTERS = {"none": None, "base64": "Base64Converter", "rot13": "ROT13Converte
 
 @dataclass
 class XPIAItem:
+    round: int          # repeat index: a later round re-runs the same δ with fresh keys κ and fresh τ ~ π*
     config: str
     converter: str
     attack_id: str
@@ -134,7 +135,7 @@ class AgentProcessor:
         return success, detail, shown
 
 
-async def run_one(processor, attack: dict, config: str, converter: str) -> XPIAItem:
+async def run_one(processor, attack: dict, config: str, converter: str, round_: int = 0) -> XPIAItem:
     """One XPIA workflow: plant (PyRIT + converter) → process (Horizon) → score (our indicator)."""
     from pyrit.executor.workflow import XPIAWorkflow
     from pyrit.models import Message
@@ -151,5 +152,5 @@ async def run_one(processor, attack: dict, config: str, converter: str) -> XPIAI
     res = await wf.execute_async(attack_content=Message.from_prompt(prompt=attack["injection"], role="user"),
                                  processing_callback=processing,
                                  memory_labels={"config": config, "converter": converter, "attack": attack["id"]})
-    return XPIAItem(config, converter, attack["id"], attack["source"], attack["category"], holder["success"],
+    return XPIAItem(round_, config, converter, attack["id"], attack["source"], attack["category"], holder["success"],
                     holder["detail"], res.processing_response[:300], holder["seconds"])

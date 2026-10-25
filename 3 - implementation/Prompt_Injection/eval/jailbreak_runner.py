@@ -21,6 +21,7 @@ import argparse
 import asyncio
 import json
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -77,10 +78,14 @@ def load_sets(seed: int, limit: int | None) -> dict[str, tuple[str, list[str]]]:
 
 
 def detect(cfg, limit: int | None) -> pd.DataFrame:
+    """Every prompt through every detector; one row per item is appended at once (resumable)."""
     a = cfg.stage1["alpha"]
     sets = load_sets(cfg.run["seed"], limit)
     detectors = {"input_guard": InjectionGuardInput(cfg.direct), "output_guard": Qwen3GuardOutput(cfg.direct)}
-    rows, per_item = [], []
+    OUT.mkdir(parents=True, exist_ok=True)
+    items = OUT / "direct_items.csv"
+    done = (set(map(tuple, pd.read_csv(items)[["detector", "set", "idx"]].astype(str).to_numpy()))
+            if items.exists() else set())
     for dname, det in detectors.items():
         try:
             det.check("hello")
@@ -88,18 +93,22 @@ def detect(cfg, limit: int | None) -> pd.DataFrame:
             print(f"  {dname}: skipped — {str(e)[:160]}", flush=True)
             continue
         for sname, (kind, prompts) in sets.items():
-            flags = []
-            for p in prompts:
+            for idx, p in enumerate(prompts):
+                if (dname, sname, str(idx)) in done:
+                    continue
                 v = det.check(p)
-                flags.append(int(v.blocked))
-                per_item.append({"detector": dname, "set": sname, "kind": kind, "blocked": int(v.blocked),
-                                 "score": v.score, "prompt": p[:200]})
-            s, n = sum(flags), len(flags)
-            lo, hi = stats.cp_interval(s, n, a)
-            rows.append({"detector": dname, "set": sname, "kind": kind, "n": n, "flagged": s, "rate": s / n,
-                         "cp_lo": lo, "cp_hi": hi, "in_training_data": dname == "input_guard"
-                         and sname in cfg.direct["input_guard_contaminated_sets"]})
-            print(f"  {dname:15s} {sname:20s} {kind:6s} {s}/{n}", flush=True)
+                pd.DataFrame([{"detector": dname, "set": sname, "idx": idx, "kind": kind, "blocked": int(v.blocked),
+                               "score": v.score, "prompt": p[:200]}]).to_csv(items, mode="a",
+                                                                            header=not items.exists(), index=False)
+            print(f"  {dname:15s} {sname:20s} {kind:6s} done", flush=True)
+    it = pd.read_csv(items)
+    rows = []
+    for (dname, sname, kind), g in it.groupby(["detector", "set", "kind"]):
+        s_, n = int(g["blocked"].sum()), len(g)
+        lo, hi = stats.cp_interval(s_, n, a)
+        rows.append({"detector": dname, "set": sname, "kind": kind, "n": n, "flagged": s_, "rate": s_ / n,
+                     "cp_lo": lo, "cp_hi": hi, "in_training_data": dname == "input_guard"
+                     and sname in cfg.direct["input_guard_contaminated_sets"]})
     df = pd.DataFrame(rows)
     agg = []
     for dname, g in df.groupby("detector"):
@@ -108,10 +117,8 @@ def detect(cfg, limit: int | None) -> pd.DataFrame:
         agg.append({"detector": dname, "tpr": att["flagged"].sum() / att["n"].sum(),
                     "fpr": ben["flagged"].sum() / ben["n"].sum(),
                     "fpr_excl_training_sets": clean["flagged"].sum() / clean["n"].sum() if len(clean) else None})
-    OUT.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT / "direct_per_set.csv", index=False)
     pd.DataFrame(agg).to_csv(OUT / "direct.csv", index=False)
-    pd.DataFrame(per_item).to_csv(OUT / "direct_items.csv", index=False)
     return df
 
 
@@ -143,14 +150,19 @@ async def _pyrit(cfg, endpoint: str, objectives: list[str], kinds: list[str]) ->
                                        attack_scoring_config=tap_sc),
               "crescendo": lambda: CrescendoAttack(objective_target=target, attack_adversarial_config=adv,
                                                    attack_scoring_config=sc)}
-    rows = []
+    path = OUT / "pyrit.csv"
+    done = set(map(tuple, pd.read_csv(path)[["attack", "objective"]].to_numpy())) if path.exists() else set()
     for k in kinds:
         for obj in objectives:
+            if (k, obj[:200]) in done:
+                continue
+            t0 = time.time()
             res = await makers[k]().execute_async(objective=obj)
-            rows.append({"attack": k, "objective": obj[:200], "outcome": str(res.outcome),
-                         "turns": getattr(res, "executed_turns", None)})
+            row = {"attack": k, "objective": obj[:200], "outcome": str(res.outcome),
+                   "turns": getattr(res, "executed_turns", None), "seconds": time.time() - t0}
+            pd.DataFrame([row]).to_csv(path, mode="a", header=not path.exists(), index=False)
             print(f"  {k}: {str(res.outcome)}", flush=True)
-    return rows
+    return pd.read_csv(path).to_dict("records") if path.exists() else []
 
 
 def _cp_rows(df: pd.DataFrame, keys: list[str], s_col: str, n_col: str, alpha: float) -> pd.DataFrame:
@@ -176,9 +188,13 @@ def xpia(cfg, args) -> pd.DataFrame:
         idx = sorted(np.random.default_rng(cfg.run["seed"]).choice(len(attacks), args.limit, replace=False))
         attacks = [attacks[i] for i in idx]
     OUT.mkdir(parents=True, exist_ok=True)
-    items = OUT / "xpia_items.csv"
-    done = (set(map(tuple, pd.read_csv(items)[["config", "converter", "attack_id"]].astype(str).to_numpy()))
-            if items.exists() else set())
+    items = OUT / args.xpia_items
+    rnd = str(args.xpia_round)
+    done = set()
+    if items.exists():
+        d = pd.read_csv(items)
+        d = d[d.get("round", 0).astype(str) == rnd] if "round" in d else (d if rnd == "0" else d.iloc[:0])
+        done = set(map(tuple, d[["config", "converter", "attack_id"]].astype(str).to_numpy()))
 
     async def go():
         from pyrit.setup import IN_MEMORY, initialize_pyrit_async
@@ -190,7 +206,7 @@ def xpia(cfg, args) -> pd.DataFrame:
             for conv in converters:
                 todo = [a for a in attacks if (c, conv, a["id"]) not in done]
                 for i, a in enumerate(todo, 1):
-                    it = await run_one(proc, a, c, conv)
+                    it = await run_one(proc, a, c, conv, args.xpia_round)
                     pd.DataFrame([it.__dict__]).to_csv(items, mode="a", header=not items.exists(), index=False)
                     if i % rc["progress_every"] == 0 or i == len(todo):
                         print(f"  xpia {c:9s} {conv:10s} {i}/{len(todo)}", flush=True)
@@ -199,7 +215,7 @@ def xpia(cfg, args) -> pd.DataFrame:
     df = pd.read_csv(items)
     df = df[df.config.isin(configs) & df.converter.isin(converters)].assign(n=1)
     summary = _cp_rows(df, ["config", "converter"], "success", "n", cfg.stage1["alpha"])
-    summary.to_csv(OUT / "xpia.csv", index=False)
+    summary.to_csv(items.with_name(items.name.replace("_items", "")), index=False)
     print(summary.to_string(index=False))
     return summary
 
@@ -250,6 +266,8 @@ def garak(cfg, args) -> pd.DataFrame:
         for family in ("direct", "indirect"):
             prefix = f"{target}_{family}"
             report = GARAK_DIR / f"{prefix}.report.jsonl"
+            if report.exists() and '"entry_type": "completion"' not in report.read_text():
+                report.rename(report.with_suffix(".partial"))       # killed mid-run → start that probe set again
             if not report.exists():
                 cmd = [sys.executable, "-m", "garak", "--config", str(run_cfg), "--model_type", "rest",
                        "--generator_option_file", str(gen), "--probes", ",".join(rc[f"garak_probes_{family}"]),
@@ -273,6 +291,8 @@ def main() -> None:
     ap.add_argument("--xpia", nargs="*", choices=["none", "stage1", "stage2", "stage1+2", "full"],
                     help="indirect PyRIT XPIA; no value = every config in redteam.xpia_configs")
     ap.add_argument("--xpia-converters", nargs="+", help="override redteam.xpia_converters")
+    ap.add_argument("--xpia-items", default="xpia_items.csv", help="items file in results/testing/ (parallel jobs)")
+    ap.add_argument("--xpia-round", type=int, default=0, help="repeat round (fresh keys) for extra samples")
     ap.add_argument("--garak", action="store_true", help="run garak direct + indirect probes")
     ap.add_argument("--endpoint", default="http://127.0.0.1:11436/v1/chat/completions")
     ap.add_argument("--limit", type=int)
@@ -287,8 +307,8 @@ def main() -> None:
         if args.pyrit is not None:
             sets = load_sets(cfg.run["seed"], args.limit)
             objs = sets["harmbench"][1] + sets["jbb_harmful"][1]
+            OUT.mkdir(parents=True, exist_ok=True)
             rows = asyncio.run(_pyrit(cfg, args.endpoint, objs, args.pyrit or ["pair", "tap", "crescendo"]))
-            pd.DataFrame(rows).to_csv(OUT / "pyrit.csv", index=False)
             log_examples(rows, "pyrit")
         if args.xpia is not None:
             df = xpia(cfg, args)

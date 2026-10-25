@@ -226,7 +226,9 @@ def full() -> str:
     o += n("diag", "Pipeline diagrams", "Graphviz → docs/", CODE)
     o += n("sh", "./horizon.sh", "menu · Stage 1 / Stage 2 / jailbreak demos<BR/>help · glossary · session logs", CODE)
     o += n("ra", "./run_all.sh", "quick · pilot · full · --report-only", CODE)
-    o += "  ra -> figs -> nb -> rep; diag -> rep; sh -> ra [style=invis];\n"
+    o += n("camp", "./run_campaign.sh", "≥ 5,000 tests · resumable · SLURM job (cluster/)<BR/>"
+           "→ report/campaign/: process + attacks through / blocked", CODE)
+    o += "  ra -> figs -> nb -> rep; diag -> rep; sh -> ra [style=invis]; camp -> rep [style=dashed];\n"
     g += cluster("out", "7 · Outputs &amp; how you use it", "#A8A6A0", o)
     # ---------------- cross-cluster flow -----------------
     g += "  litellm -> pllm [lhead=cluster_s2 style=dashed];\n"

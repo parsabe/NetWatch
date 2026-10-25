@@ -109,10 +109,26 @@ def episode_losses(state, ents: set[str], goal_fns: set[str]) -> dict:
     return {"G": G, "C": C, "F": F, "calibration": cal, "runs": runs}
 
 
+def _save(out: Path, name: str, rows: list[dict]) -> None:
+    """Append rows at once (resumable: a killed job keeps every finished episode)."""
+    if rows:
+        out.mkdir(parents=True, exist_ok=True)
+        p = out / f"{name}.csv"
+        pd.DataFrame(rows).to_csv(p, mode="a", header=not p.exists(), index=False)
+
+
+def _done_ids(out: Path, name: str, tag: str, col: str) -> set[str]:
+    p = out / f"{name}.csv"
+    if not p.exists():
+        return set()
+    df = pd.read_csv(p)
+    return set(df.loc[df["config"] == tag, col].astype(str))
+
+
 def run_episodes(cfg, split: str, attack_names: list[str], limit_user: int | None, limit_inj: int | None,
                  out: Path, tag: str) -> pd.DataFrame:
     splits = json.loads(SPLIT_FILE.read_text())
-    rows, cal_rows, run_rows = [], [], []
+    done = _done_ids(out, "episodes", tag, "attack_id")
     for s in cfg.stage2["suites"]:
         suite = get_suite(cfg.stage2["benchmark_version"], s)
         built = build_pipeline(cfg, suite)                        # Z3 proof runs here
@@ -120,37 +136,38 @@ def run_episodes(cfg, split: str, attack_names: list[str], limit_user: int | Non
         i_ids = splits["suites"][s]["injection_tasks"][:limit_inj]
         for uid in u_ids:
             ut = suite.get_user_task_by_id(uid)
-            built.state.reset()
-            t0 = time.time()
-            util, _ = suite.run_task_with_pipeline(built.pipeline, ut, injection_task=None, injections={})
-            rows.append({"config": tag, "suite": s, "user_task": uid, "injection_task": "", "style": "benign",
-                         "attack_id": f"{s}/{uid}/benign", "utility": int(util), "asr": 0, "G": 0, "C": 0, "F": 0,
-                         "alarms": built.state.alarms, "seconds": time.time() - t0})
+            if f"{s}/{uid}/benign" not in done:
+                built.state.reset()
+                t0 = time.time()
+                util, _ = suite.run_task_with_pipeline(built.pipeline, ut, injection_task=None, injections={})
+                _save(out, "episodes", [{"config": tag, "suite": s, "user_task": uid, "injection_task": "",
+                                         "style": "benign", "attack_id": f"{s}/{uid}/benign", "utility": int(util),
+                                         "asr": 0, "G": 0, "C": 0, "F": 0, "alarms": built.state.alarms,
+                                         "seconds": time.time() - t0}])
             for an in attack_names:
                 attack = load_attack(an, suite, built.pipeline)
                 for iid in i_ids:
+                    if f"{s}/{uid}/{iid}/{an}" in done:
+                        continue
                     it = suite.get_injection_task_by_id(iid)
                     built.state.reset()
                     t0 = time.time()
                     util, sec = suite.run_task_with_pipeline(built.pipeline, ut, it, attack.attack(ut, it))
                     los = episode_losses(built.state, attacker_entities(suite, ut, it), goal_functions(suite, it))
                     aid = f"{s}/{uid}/{iid}/{an}"
-                    rows.append({"config": tag, "suite": s, "user_task": uid, "injection_task": iid, "style": an,
-                                 "attack_id": aid, "utility": int(util), "asr": int(sec), "G": los["G"],
-                                 "C": los["C"], "F": los["F"], "alarms": built.state.alarms,
-                                 "seconds": time.time() - t0})
-                    cal_rows += [{**c, "attack_id": aid} for c in los["calibration"]]
-                    for k, r in enumerate(los["runs"]):
-                        run_rows += [{"attack_id": f"{aid}#{k}", "run": j, "success": x} for j, x in enumerate(r)]
+                    _save(out, "calibration", [{**c, "attack_id": aid} for c in los["calibration"]])
+                    _save(out, "runs", [{"attack_id": f"{aid}#{k}", "run": j, "success": x}
+                                        for k, r in enumerate(los["runs"]) for j, x in enumerate(r)])
+                    _save(out, "episodes", [{"config": tag, "suite": s, "user_task": uid, "injection_task": iid,
+                                             "style": an, "attack_id": aid, "utility": int(util), "asr": int(sec),
+                                             "G": los["G"], "C": los["C"], "F": los["F"],
+                                             "alarms": built.state.alarms, "seconds": time.time() - t0}])
                     print(f"  {aid}: utility={int(util)} asr={int(sec)} G={los['G']} C={los['C']} F={los['F']}",
                           flush=True)
-    df = pd.DataFrame(rows)
-    out.mkdir(parents=True, exist_ok=True)
-    for name, data in [("episodes", df), ("calibration", pd.DataFrame(cal_rows)), ("runs", pd.DataFrame(run_rows))]:
-        p = out / f"{name}.csv"
-        if len(data):
-            data.to_csv(p, mode="a", header=not p.exists(), index=False)
-    return df
+    p = out / "episodes.csv"
+    df = pd.read_csv(p) if p.exists() else pd.DataFrame(columns=["config", "style", "utility", "asr", "G", "C", "F",
+                                                                  "seconds"])
+    return df[df["config"] == tag]
 
 
 def adaptive(cfg, split: str, limit_user: int | None, limit_inj: int | None, out: Path, tag: str) -> pd.DataFrame:
@@ -159,7 +176,12 @@ def adaptive(cfg, split: str, limit_user: int | None, limit_inj: int | None, out
     splits = json.loads(SPLIT_FILE.read_text())
     attacker = LLM(cfg.models["attacker"], cfg.models, temperature=cfg.models["attacker_temperature"])
     budget = cfg.stage1["attack_budget"]
-    rows = []
+    p = out / "adaptive_trace.csv"
+    done = set()
+    if p.exists():
+        d = pd.read_csv(p)
+        d = d[d["config"] == tag]
+        done = set(d["suite"] + "/" + d["user_task"] + "/" + d["injection_task"])
     for s in cfg.stage2["suites"]:
         suite = get_suite(cfg.stage2["benchmark_version"], s)
         built = build_pipeline(cfg, suite)
@@ -167,6 +189,9 @@ def adaptive(cfg, split: str, limit_user: int | None, limit_inj: int | None, out
         for uid in splits["suites"][s][split][:limit_user]:
             ut = suite.get_user_task_by_id(uid)
             for iid in splits["suites"][s]["injection_tasks"][:limit_inj]:
+                if f"{s}/{uid}/{iid}" in done:
+                    continue
+                rows = []
                 it = suite.get_injection_task_by_id(iid)
                 inj = seed_attack.attack(ut, it)
                 hist = [{"role": "system", "content": (
@@ -194,12 +219,10 @@ def adaptive(cfg, split: str, limit_user: int | None, limit_inj: int | None, out
                     if sec:
                         first = q
                         break
+                _save(out, "adaptive_trace", rows)                    # whole target at once (resumable)
                 print(f"  adaptive {s}/{uid}/{iid}: first success at query {first}", flush=True)
-    df = pd.DataFrame(rows)
-    out.mkdir(parents=True, exist_ok=True)
-    p = out / "adaptive_trace.csv"
-    df.to_csv(p, mode="a", header=not p.exists(), index=False)
-    return df
+    df = pd.read_csv(p) if p.exists() else pd.DataFrame(columns=["config", "success"])
+    return df[df["config"] == tag]
 
 
 def main() -> None:
@@ -212,6 +235,8 @@ def main() -> None:
     ap.add_argument("--adaptive", action="store_true")
     ap.add_argument("--limit-user", type=int)
     ap.add_argument("--limit-injection", type=int)
+    ap.add_argument("--separate-out", action="store_true",
+                    help="write to results/stage2/<split>-<ablation>[-adaptive]/ so parallel jobs never share a file")
     args = ap.parse_args()
     cfg = config_from_args(args)
     if args.make_splits or not SPLIT_FILE.exists():
@@ -225,6 +250,8 @@ def main() -> None:
     cfg = load_config(args.config, overrides)
     tag = f"{args.ablation}|m={cfg.flags.m}|{cfg.stage2['parser']}|{cfg.stage2['policy']}"
     out = ROOT / "results" / "stage2" / args.split
+    if args.separate_out and not args.calibrate:
+        out = out.with_name(f"{args.split}-{args.ablation}" + ("-adaptive" if args.adaptive else ""))
     attacks = args.attacks or cfg.stage2["attacks"]
     with mlflow_run(cfg, f"agentdojo-{args.split}-{args.ablation}", {"stage": "2", "ablation": args.ablation}):
         import mlflow

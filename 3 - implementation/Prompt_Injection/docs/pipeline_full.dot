@@ -102,7 +102,8 @@ digraph G {
   diag [label=<<B>Pipeline diagrams</B><BR/><FONT POINT-SIZE="9">Graphviz → docs/</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
   sh [label=<<B>./horizon.sh</B><BR/><FONT POINT-SIZE="9">menu · Stage 1 / Stage 2 / jailbreak demos<BR/>help · glossary · session logs</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
   ra [label=<<B>./run_all.sh</B><BR/><FONT POINT-SIZE="9">quick · pilot · full · --report-only</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
-  ra -> figs -> nb -> rep; diag -> rep; sh -> ra [style=invis];
+  camp [label=<<B>./run_campaign.sh</B><BR/><FONT POINT-SIZE="9">≥ 5,000 tests · resumable · SLURM job (cluster/)<BR/>→ report/campaign/: process + attacks through / blocked</FONT>> fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  ra -> figs -> nb -> rep; diag -> rep; sh -> ra [style=invis]; camp -> rep [style=dashed];
   }
   litellm -> pllm [lhead=cluster_s2 style=dashed];
   dsplit -> t [label=" fit / report docs"]; dagent -> ext;
