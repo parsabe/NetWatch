@@ -1,0 +1,18 @@
+order,phase,what,status,start,end,duration,tests planned,tests done
+1,stage1_fit,Stage 1 on the fit split,paused,2026-10-26T08:16:52,2026-10-26T08:16:47,23 h 44 min,9200,740
+2,detect,Guards · detection and false alarms,failed,2026-10-26T08:24:58,2026-10-26T08:34:03,0 h 17 min,14176,1832
+3,ablation_none,AgentDojo · defence 'none',paused,2026-10-26T08:16:37,,23 h 45 min,2471,182
+4,xpia_none,PyRIT XPIA · 'none',failed,2026-10-26T08:49:51,2026-10-26T09:06:31,0 h 49 min,2000,6
+5,calibrate,Calibrate λ̂ (conformal risk control),pending,,,,1220,0
+6,stage1_report,Stage 1 on the report split,pending,,,,9200,0
+7,ablation_stage1,AgentDojo · defence 'stage1',pending,,,,2471,0
+8,xpia_stage1,PyRIT XPIA · 'stage1',pending,,,,2000,0
+9,ablation_stage2,AgentDojo · defence 'stage2',pending,,,,2471,0
+10,ablation_stage1+2,AgentDojo · defence 'stage1+2',pending,,,,2471,0
+11,ablation_full,AgentDojo · defence 'full',pending,,,,2471,0
+12,xpia_stage2,PyRIT XPIA · 'stage2',pending,,,,2000,0
+13,xpia_stage1+2,PyRIT XPIA · 'stage1+2',pending,,,,2000,0
+14,xpia_full,PyRIT XPIA · 'full',pending,,,,2000,0
+15,pyrit,"PyRIT · PAIR, TAP, Crescendo jailbreaks",failed,2026-10-26T08:38:14,2026-10-26T08:39:45,0 h 05 min,300,200
+16,garak,garak · direct + indirect probes,failed,2026-10-26T08:54:06,2026-10-26T09:00:26,0 h 20 min,?,0
+17,agent_adaptive,AgentDojo · adaptive attacker vs. full Horizon,pending,,,,405,0

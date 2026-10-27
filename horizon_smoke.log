@@ -1,0 +1,46 @@
+==== job 1418092.mmaster02 on mgpunode002.cluster at Di 27. Okt 21:54:30 CET 2026
+==== 1. GPU + driver (nvidia-smi)
+name, memory.total [MiB], driver_version
+Quadro RTX 5000, 16384 MiB, 595.71.05
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
+==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)
+torch 2.14.1+cu130 · built for CUDA 13.0 · CUDA usable: True
+guards run on: Quadro RTX 5000
+==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)
+ollama + proxy up
+NAME        ID              SIZE      PROCESSOR    CONTEXT    RUNNER      UNTIL              
+qwen3:8b    500a1f067a9f    7.7 GB    100% GPU     16384      llamacpp    4 minutes from now    
+OK: qwen3:8b runs fully on the GPU
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage.csv
+==== 5. campaign
+[21:54:45] campaign profile=smoke workers=1 planned=525 min_tests=0
+[21:54:45] start phase=autotune tests_planned=None
+[22:01:40] finish phase=autotune status=ok minutes=6.9
+[22:01:47] start phase=stage1_fit tests_planned=170
+[22:11:07] finish phase=stage1_fit status=failed minutes=9.3
+[22:11:07] retry phase=stage1_fit attempt=1 max=2
+[22:11:12] start phase=stage1_fit tests_planned=170
+[22:11:17] finish phase=stage1_fit status=failed minutes=0.1
+[22:11:17] retry phase=stage1_fit attempt=2 max=2
+[22:11:22] start phase=stage1_fit tests_planned=170
+[22:11:27] finish phase=stage1_fit status=failed minutes=0.1
+[22:11:32] start phase=detect tests_planned=60
+[22:11:37] finish phase=detect status=failed minutes=0.1
+[22:11:37] retry phase=detect attempt=1 max=2
+[22:11:42] start phase=detect tests_planned=60
+[22:11:47] finish phase=detect status=failed minutes=0.1
+[22:11:47] retry phase=detect attempt=2 max=2
+[22:11:52] start phase=detect tests_planned=60
+[22:11:57] finish phase=detect status=failed minutes=0.1
+[22:12:02] start phase=ablation_none tests_planned=6
+[22:12:07] finish phase=ablation_none status=failed minutes=0.1
+[22:12:07] retry phase=ablation_none attempt=1 max=2
+[22:12:12] start phase=ablation_none tests_planned=6
+[22:12:17] finish phase=ablation_none status=failed minutes=0.1
+[22:12:17] retry phase=ablation_none attempt=2 max=2
+[22:12:22] start phase=ablation_none tests_planned=6
+[22:12:27] finish phase=ablation_none status=failed minutes=0.1
+[22:12:32] start phase=xpia_none tests_planned=2
+[22:12:37] finish phase=xpia_none status=failed minutes=0.1
+[22:12:37] retry phase=xpia_none attempt=1 max=2
+[22:12:42] start phase=xpia_none tests_planned=2

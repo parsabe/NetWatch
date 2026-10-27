@@ -305,9 +305,9 @@ Therefore, $\mathrm{Trace}(\mathcal{P}(\sigma_1))\big|_{\mathrm{ControlActions}}
 % ============================================================
 
 \begin{theorem}[Conformal Escalation Risk Bound]
-Let $\mathcal{D}_{\mathrm{cal}} = \{(X_i, Y_i)\}_{i=1}^n$ be a calibration set of $n$ exchangeable query pairs, and let $L(\lambda) \in [0, 1]$ be a loss function that is non-increasing in the escalation threshold $\lambda$. If the threshold $\hat{\lambda}$ is selected according to:
+Let $\mathcal{D}_{\mathrm{cal}} = \{(X_i, Y_i)\}_{i=1}^n$ be a calibration set of $n$ exchangeable query pairs, and let $L(\lambda) \in [0, 1]$ be a loss function that is non-increasing in the escalation threshold $\lambda$. Write $\hat{L}_k(\lambda) = \frac{1}{k}\sum_{i=1}^{k} L_i(\lambda)$ for the empirical calibration loss of the first $k$ pairs (the hat-$L$ notation keeps it apart from the Stage~1 attack-success bounds $\bar{\mathcal{R}}_\tau$ and $\bar{\mathcal{R}}_Q$). If the threshold $\hat{\lambda}$ is selected according to:
 \begin{equation}
-    \hat{\lambda} = \inf\left\{ \lambda \in [0, 1] : \frac{1}{n+1}\sum_{i=1}^n L_i(\lambda) + \frac{1}{n+1} \le \alpha_{\mathrm{user}} \right\}
+    \hat{\lambda} = \inf\left\{ \lambda \in [0, 1] : \frac{n}{n+1}\,\hat{L}_n(\lambda) + \frac{1}{n+1} \le \alpha_{\mathrm{user}} \right\}
 \end{equation}
 then the expected test loss under the deployed threshold satisfies:
 \begin{equation}
@@ -316,22 +316,22 @@ then the expected test loss under the deployed threshold satisfies:
 \end{theorem}
 
 \begin{proof}
-Let $(X_{n+1}, Y_{n+1})$ denote a new test request drawn exchangeably from the same data-generating distribution. Define the augmented empirical risk:
+Let $(X_{n+1}, Y_{n+1})$ denote a new test request drawn exchangeably from the same data-generating distribution. The augmented empirical loss over all $n+1$ pairs is:
 \begin{equation}
-    \hat{R}_{n+1}(\lambda) = \frac{1}{n+1} \sum_{i=1}^{n+1} L_i(\lambda)
+    \hat{L}_{n+1}(\lambda) = \frac{1}{n+1} \sum_{i=1}^{n+1} L_i(\lambda)
 \end{equation}
 Because the maximum loss is bounded by $B_{\max} = 1$, we observe:
 \begin{equation}
-    \hat{R}_{n+1}(\lambda) = \frac{1}{n+1}\sum_{i=1}^n L_i(\lambda) + \frac{L_{n+1}(\lambda)}{n+1} \le \frac{1}{n+1}\sum_{i=1}^n L_i(\lambda) + \frac{1}{n+1}
+    \hat{L}_{n+1}(\lambda) = \frac{n}{n+1}\,\hat{L}_n(\lambda) + \frac{L_{n+1}(\lambda)}{n+1} \le \frac{n}{n+1}\,\hat{L}_n(\lambda) + \frac{1}{n+1}
 \end{equation}
 By the calibration condition, for any $\lambda \ge \hat{\lambda}$, the right-hand bound does not exceed $\alpha_{\mathrm{user}}$.
 Taking expectations over the exchangeable random variables $(X_1, Y_1), \dots, (X_{n+1}, Y_{n+1})$:
 \begin{equation}
-    \mathbb{E}\big[\hat{R}_{n+1}(\hat{\lambda})\big] = \frac{1}{n+1}\sum_{i=1}^{n+1}\mathbb{E}\big[L_i(\hat{\lambda})\big] = \mathbb{E}\big[L_{n+1}(\hat{\lambda})\big]
+    \mathbb{E}\big[\hat{L}_{n+1}(\hat{\lambda})\big] = \frac{1}{n+1}\sum_{i=1}^{n+1}\mathbb{E}\big[L_i(\hat{\lambda})\big] = \mathbb{E}\big[L_{n+1}(\hat{\lambda})\big]
 \end{equation}
 where equality holds by the permutation symmetry (exchangeability) of the $(n+1)$ data points. Therefore:
 \begin{equation}
-    \mathbb{E}\big[L_{\mathrm{test}}(\hat{\lambda})\big] = \mathbb{E}\big[\hat{R}_{n+1}(\hat{\lambda})\big] \le \alpha_{\mathrm{user}}
+    \mathbb{E}\big[L_{\mathrm{test}}(\hat{\lambda})\big] = \mathbb{E}\big[\hat{L}_{n+1}(\hat{\lambda})\big] \le \alpha_{\mathrm{user}}
 \end{equation}
 This guarantees distribution-free, finite-sample statistical control over false-positive tool executions.
 \end{proof}

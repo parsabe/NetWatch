@@ -1,0 +1,16 @@
+{
+  "F1_forging": "Union bound on forging the per-request key; key spaces in log-space (|Σ|! via lgamma). Formula: $P_{forge}\\leq q/|\\mathcal{K}_\\tau|$",
+  "F2_static_asr": "Bars: p̂_τ; whiskers: two-sided CP interval; triangles: one-sided CP upper bound p̄_τ. Formula: $\\bar p_\\tau=\\mathrm{Beta}^{-1}(1-\\alpha;\\,s+1,\\,n-s)$",
+  "F3_dro": "Closed-form χ²-DRO worst case of a binary success rate, applied to p̄_τ. Formula: $g_\\rho(p)=p+\\sqrt{2\\rho\\,p(1-p)}$  for  $\\rho\\leq\\frac{1-p}{2p}$, else 1",
+  "F5_combined_risk": "Main curves per q; right: stacked decomposition at three ρ values (bars grouped by ρ). Formula: $\\bar{\\mathcal{R}}_\\tau(\\rho)=\\min\\{1,\\,q/|\\mathcal{K}_\\tau|+\\max(g_\\rho(\\bar p_\\tau),\\bar p^{adp}_\\tau)\\}$",
+  "F6_risk_utility": "Each point is one defense; shaded bands are the feasible regions for each η. Formula: $\\tau^\\star=\\arg\\min_\\tau\\bar{\\mathcal{R}}_\\tau(\\rho)\\ \\ \\mathrm{s.t.}\\ U_\\tau\\geq U_{none}-\\eta$",
+  "F7_v1": "SOCP solution per (ρ, η); right: composition of π* as ρ increases. Formula: $V_1=\\min_{\\pi\\in\\Pi_\\eta}\\min\\{1,\\sum_\\tau\\pi_\\tau\\frac{q}{|\\mathcal{K}_\\tau|}+\\max(\\mathbb{E}_P[L_\\pi]+\\sqrt{2\\rho\\mathrm{Var}_P(L_\\pi)},\\sum_\\tau\\pi_\\tau\\bar p^{adp}_\\tau)\\}$",
+  "F8_mcnemar": "Paired comparison on the same attacks; small p = the two variants fail on different attacks. Formula: exact McNemar: $b\\sim\\mathrm{Bin}(b+c,\\frac{1}{2})$",
+  "F9_hoeffding": "Bound assumes independent runs with per-attack failure < ½; runs on the same text are correlated, so the empirical rate is shown alongside. Formula: $P(\\mathrm{vote\\ fooled})\\leq\\exp(-2m(\\frac{1}{2}-\\bar{\\mathcal{R}}_Q)^2)$, $\\bar{\\mathcal{R}}_Q<\\frac{1}{2}$",
+  "F10_failure_hist": "Histogram of per-attack failure rates over independent keys. Formula: $p(x)=\\frac{1}{R}\\sum_{r}A_r(x)$, Hoeffding needs $p(x)<\\frac{1}{2}$",
+  "F11_conformal": "Ask user iff s(x) ≥ λ, otherwise DENY. Calibrated on one half, realized risk on the other. Formula: $\\hat\\lambda=\\inf\\{\\lambda:\\frac{n}{n+1}\\hat L_n(\\lambda)+\\frac{B}{n+1}\\leq\\alpha_{user}\\}$, $L_i=a\\,\\mathbb{1}[\\mathrm{dang}_i\\wedge s_i\\geq\\lambda]$",
+  "F12_loss": "Stacked mean loss components; triangles: p̄_G + a p̄_C + h p̄_F. Formula: $\\ell_\\theta(x)=G_\\theta(x)+a\\,C_\\theta(x)+h\\,F_\\theta(x)$",
+  "F13_sion_lp": "ℓ̄[k,θ] = CP upper bound of the loss of style k under θ; Π: utility ≥ U_min, per-config leakage cap. Formula: $\\min_{\\pi\\in\\Pi}\\max_{w\\in\\mathcal{W}}\\ \\pi^\\top\\bar\\ell\\,w$",
+  "F14_v_horizon": "E-term = CP bounds p̄_G + a p̄_C + h p̄_F; Var from per-attack losses (pending author confirmation). ℓ̄^adp equals the static bound until Stage-2 adaptive runs exist. Formula: $V_{H}=\\min_{\\pi\\in\\Pi}\\min\\{1,\\sum_\\theta\\pi_\\theta\\frac{q}{|\\mathcal{K}_\\theta|}+\\max(\\mathbb{E}_P[L_\\pi]+\\sqrt{2\\rho\\mathrm{Var}_P(L_\\pi)},\\sum_\\theta\\pi_\\theta\\bar\\ell^{adp}_\\theta)\\}$",
+  "F15_leakage": "Representative schemas (email, date, bool). side-channel leakage term is a placeholder (not measured). Formula: $\\mathrm{leak}(\\theta)=\\sum_{outputs}\\log_2|S|+L_{side}$"
+}

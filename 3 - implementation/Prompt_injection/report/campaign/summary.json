@@ -1,0 +1,31 @@
+{
+ "status": "paused (time limit / Ctrl-C) \u2014 run the same command again to continue",
+ "profile": "cluster",
+ "started": "2026-10-26T08:16:37",
+ "finished": "2026-10-27T08:01:40",
+ "total_tests": 2960,
+ "min_tests": 5000,
+ "target_met": false,
+ "attacks": 2957,
+ "attacks_got_through": 653,
+ "topup_rounds": 0,
+ "phases": {
+  "stage1_fit": "paused",
+  "detect": "failed",
+  "ablation_none": "paused",
+  "xpia_none": "failed",
+  "calibrate": "pending",
+  "stage1_report": "pending",
+  "ablation_stage1": "pending",
+  "xpia_stage1": "pending",
+  "ablation_stage2": "pending",
+  "ablation_stage1+2": "pending",
+  "ablation_full": "pending",
+  "xpia_stage2": "pending",
+  "xpia_stage1+2": "pending",
+  "xpia_full": "pending",
+  "pyrit": "failed",
+  "garak": "failed",
+  "agent_adaptive": "pending"
+ }
+}

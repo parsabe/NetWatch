@@ -1,0 +1,17 @@
+==== job 1418111.mmaster02 on mgpunode002.cluster at Di 27. Okt 22:15:34 CET 2026
+==== 1. GPU + driver (nvidia-smi)
+name, memory.total [MiB], driver_version
+Quadro RTX 5000, 16384 MiB, 595.71.05
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
+==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)
+torch 2.14.1+cu130 · built for CUDA 13.0 · CUDA usable: True
+guards run on: Quadro RTX 5000
+==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)
+ollama + proxy up
+NAME        ID              SIZE      PROCESSOR    CONTEXT    RUNNER      UNTIL              
+qwen3:8b    500a1f067a9f    7.7 GB    100% GPU     16384      llamacpp    4 minutes from now    
+OK: qwen3:8b runs fully on the GPU
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage.csv
+==== 5. campaign
+[22:15:49] campaign profile=smoke workers=1 planned=525 min_tests=0
+[22:15:50] start phase=autotune tests_planned=None

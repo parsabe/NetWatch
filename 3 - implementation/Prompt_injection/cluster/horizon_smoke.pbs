@@ -1,0 +1,28 @@
+#PBS -N horizon-smoke
+#PBS -q teachingq
+#PBS -l select=1:ncpus=16:mem=64gb:ngpus=1
+#PBS -l walltime=03:00:00
+#PBS -l place=pack
+#PBS -r n
+#PBS -j oe
+#PBS -o horizon_smoke.log
+# Smoke test of the WHOLE campaign machinery at tiny size (profile smoke, ≈ 1–3 h), before a big run:
+#   qsub cluster/horizon_smoke.pbs        → Telegram message + horizon_smoke_live.log + ~/0_smoke/report/campaign/
+# It runs in a copy (~/0_smoke) so its results never mix with the real campaign's results/.
+set -uo pipefail
+SRC="${PBS_O_WORKDIR:-$(dirname "$0")/..}"
+DST="$HOME/0_smoke"
+mkdir -p "$DST"
+rsync -a --delete --exclude .venv --exclude results --exclude report --exclude mlartifacts --exclude 'horizon*.log' \
+      --exclude data/raw --exclude config/autotuned.yaml "$SRC/" "$DST/"
+ln -sfn "$SRC/.venv" "$DST/.venv"
+ln -sfn "$SRC/data/raw" "$DST/data/raw"
+rm -rf "$DST/results" "$DST/report"
+cd "$DST"
+PBS_O_WORKDIR="$DST" PROFILE=smoke WALLTIME_H=3 PARALLEL=2 NO_RESUBMIT=1 bash cluster/horizon_campaign.pbs
+rc=$?
+# Settings that made a failed phase pass here (repair ladder) go home, so lanes A and B start with them.
+[ -f config/repairs.yaml ] && [ "$rc" -eq 0 ] && cp config/repairs.yaml "$SRC/config/repairs.yaml"
+UV="$HOME/.local/bin/uv"
+"$UV" run --no-sync python -m horizon.messages smoke "$rc" report/campaign/summary.json >/dev/null 2>&1 || true
+exit "$rc"

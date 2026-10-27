@@ -331,11 +331,23 @@ Untrusted data is mathematically barred from selecting target tools or executing
 \subsubsection{6. Conformal Risk Control on Confirmation Thresholds}
 When $\mathrm{Policy}$ outputs \textbf{CONFIRM}, human approval is solicited before tool execution. To guard against human habituation and false approvals, Horizon applies Conformal Risk Control (CRC) \cite{angelopoulos2024crc}.
 
-Let $\lambda \in [0, 1]$ parameterize the threshold for escalating to user confirmation. Given user mistake loss function $\mathcal{L}_{\mathrm{user}}$, CRC calibrates $\hat{\lambda}$ on calibration data such that:
+Let $\lambda \in [0, 1]$ parameterize the threshold for escalating to user confirmation: a CONFIRM-routed call whose reader agreement score is $s \ge \lambda$ is shown to the user, otherwise it is denied. For the $i$-th of $n$ calibration calls with score $s_i$, the loss is
+\begin{equation}
+    L_i(\lambda) = a \cdot \mathbb{1}\big[\text{dangerous}_i \wedge s_i \ge \lambda\big] \in [0, B], \qquad B = \sup_i L_i = a,
+\end{equation}
+i.e.\ a dangerous call is put in front of the user, who wrongly approves it with probability $a$. $L_i(\lambda)$ is non-increasing in $\lambda$. The \emph{empirical calibration loss} is
+\begin{equation}
+    \hat{L}_n(\lambda) = \frac{1}{n}\sum_{i=1}^{n} L_i(\lambda),
+\end{equation}
+written with a hat-$L$ so that it is not confused with the Stage~1 attack-success bounds $\bar{\mathcal{R}}_\tau$ and $\bar{\mathcal{R}}_Q$. CRC selects the smallest threshold whose inflated empirical loss stays within the budget:
+\begin{equation}
+    \hat{\lambda} = \inf\left\{ \lambda \in [0, 1] : \frac{n}{n+1}\,\hat{L}_n(\lambda) + \frac{B}{n+1} \le \alpha_{\mathrm{user}} \right\}.
+\end{equation}
+With $B = 1$ this is exactly the rule proven in Appendix~\ref{app:proof_conformal}; since no loss exceeds $a$, $B = a$ is equally valid and less conservative. For a new call drawn exchangeably with the calibration calls, the user mistake loss $\mathcal{L}_{\mathrm{user}} = L_{n+1}$ then satisfies:
 \begin{equation}
     \mathbb{E}\left[\mathcal{L}_{\mathrm{user}}(\hat{\lambda})\right] \le \alpha_{\mathrm{user}}
 \end{equation}
-bounding the expected probability that a deceptive injection slips past human review to a rigorous confidence budget (e.g., $\alpha_{\mathrm{user}} = 1\%$).
+bounding the expected probability that a deceptive injection slips past human review to a rigorous confidence budget (e.g., $\alpha_{\mathrm{user}} = 1\%$). In the experiments, $\hat{\lambda}$ is computed separately for every attack style and the largest value is deployed, so the bound holds for each style, not only on average.
 
 \subsubsection{7. The Final Horizon Formula}
 A complete Horizon configuration is defined as the tuple:

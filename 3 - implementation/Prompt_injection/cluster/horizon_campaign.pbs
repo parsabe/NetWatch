@@ -1,0 +1,89 @@
+#PBS -N horizon
+#PBS -q teachingq
+#PBS -l select=1:ncpus=16:mem=64gb:ngpus=1
+#PBS -l walltime=24:00:00
+#PBS -l place=pack
+#PBS -r n
+#PBS -j oe
+#PBS -o horizon.log
+##PBS -m abe
+##PBS -M your.name@student.tu-freiberg.de
+
+# Second GPU: qsub -v LANE=B cluster/horizon_campaign.pbs   (lane A = Horizon chain, B = independent phases)
+set -uo pipefail
+cd "${PBS_O_WORKDIR:-$(dirname "$0")/..}"
+LANE="${LANE:-}"
+exec > >(tee -a "horizon_live${LANE:+_$LANE}.log") 2>&1   # live log (one per lane)
+WALLTIME_H="${WALLTIME_H:-24}"   # keep equal to the walltime above
+PROFILE="${PROFILE:-cluster}"    # campaign profile (cluster/horizon_smoke.pbs sets smoke)
+STOP_EARLY_S=900                 # pause 15 min before the end
+PARALLEL="${PARALLEL:-4}"        # Ollama slots = campaign.profiles.<profile>.parallel_requests (16 GB GPU)
+UV="$HOME/.local/bin/uv"
+OLLAMA="$HOME/.local/ollama/bin/ollama"
+# module load cuda               # only if your cluster asks for it
+export HF_HUB_OFFLINE=1          # compute nodes have no internet; --prepare downloaded everything
+export GIT_PYTHON_REFRESH=quiet  # no git on the nodes: silences MLflow's GitPython warning in every log
+# Every server stays a child of this job and is stopped when it ends: the node health check takes a node offline
+# when it finds orphaned ("rogue") processes — this happened to mgpunode002 with the old nohup'd servers.
+cleanup() {
+  kill "${SERVE_PID:-}" "${GPUMON:-}" 2>/dev/null
+  pkill -u "$USER" -f "ollama [s]erve" 2>/dev/null
+  pkill -u "$USER" -f "openai_role_[p]roxy.py" 2>/dev/null
+  pkill -u "$USER" -f "guarded_[s]erver.py" 2>/dev/null
+  true
+}
+trap cleanup EXIT
+alert() { "$UV" run --no-sync python -m horizon.messages alert "$1" >/dev/null 2>&1 || true; }   # Telegram, never fails
+GPULOG="results/campaign/gpu_usage${LANE:+_$LANE}.csv"
+mkdir -p results/campaign
+
+echo "==== job ${PBS_JOBID:-local} on $(hostname) at $(date)"
+
+echo "==== 1. GPU + driver (nvidia-smi)"
+nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv || { echo "!! NO GPU VISIBLE — check '#PBS -q' and 'ngpus=1'"; alert no_gpu; }
+nvidia-smi | grep -i "cuda version" || true
+
+echo "==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)"
+"$UV" run --no-sync python - <<'EOF'
+import torch
+ok = torch.cuda.is_available()
+print("torch", torch.__version__, "· built for CUDA", torch.version.cuda, "· CUDA usable:", ok)
+print("guards run on:", torch.cuda.get_device_name(0) if ok else "CPU (driver too old for this torch build → slower guards)")
+EOF
+
+echo "==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)"
+HORIZON_PARALLEL=$PARALLEL HORIZON_FOREGROUND=1 ./scripts/serve_local.sh &
+SERVE_PID=$!
+PROXY_PORT=$("$UV" run --no-sync python -c "from horizon.config import load_config; print(load_config().models['proxy_port'])")
+until curl -s "localhost:$PROXY_PORT/v1/models" >/dev/null; do
+  kill -0 "$SERVE_PID" 2>/dev/null || { echo "!! model server failed to start (results/logs/ollama.log)"
+                                        alert server_failed; exit 1; }
+  sleep 2
+done
+MODEL=$("$UV" run --no-sync python -c "from horizon.config import load_config; print(load_config().models['q_llm'].split('/',1)[1])")
+curl -s localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"prompt\":\"hi\",\"stream\":false}" >/dev/null
+"$OLLAMA" ps                     # PROCESSOR column must say "100% GPU"
+"$OLLAMA" ps | grep -q "100% GPU" && echo "OK: $MODEL runs fully on the GPU" \
+  || { echo "!! $MODEL is NOT fully on the GPU (see PROCESSOR column above)"
+       alert not_on_gpu; }
+
+echo "==== 4. GPU usage every 5 min → $GPULOG"
+nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used,memory.total --format=csv -l 300 \
+  >> "$GPULOG" 2>/dev/null &
+GPUMON=$!
+
+echo "==== 5. campaign"
+timeout --preserve-status --signal=TERM $((WALLTIME_H * 3600 - STOP_EARLY_S)) \
+  ./run_campaign.sh --profile "$PROFILE" ${LANE:+--lane "$LANE"} "$@"
+rc=$?
+echo "==== GPU use during the run (average utilization %):"
+awk -F', ' '$1 ~ /^[0-9]/ {s+=$2; n++} END {if (n) printf "  %.0f %% over %d samples\n", s/n, n}' \
+  "$GPULOG"
+echo "campaign exit code $rc (0 done · 2 done with problems · 3 paused)"
+if [ "$rc" -eq 3 ] && [ -z "${NO_RESUBMIT:-}" ]; then
+  echo "paused before the walltime → submitting the next part"
+  qsub ${LANE:+-v LANE=$LANE} cluster/horizon_campaign.pbs \
+    || { echo "resubmit by hand on the login node: qsub cluster/horizon_campaign.pbs"
+         alert resubmit_failed; }
+fi
+exit "$rc"

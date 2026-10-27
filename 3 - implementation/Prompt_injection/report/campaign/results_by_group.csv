@@ -1,0 +1,14 @@
+area,group,config,phase,tests,attacks,got_through,blocked,benign,benign_ok,false_alarms,note,asr,asr_cp_lo,asr_cp_hi
+Stage 1,document attacks (fit),base64,stage1_fit,27,27,0,27,0,0,0,,0.0,0.0,0.12770286761543234
+Stage 1,document attacks (fit),datamark_dynamic,stage1_fit,151,151,28,123,0,0,0,,0.18543046357615894,0.1268957015014563,0.2567248722555338
+Stage 1,document attacks (fit),datamark_fixed,stage1_fit,162,162,37,125,0,0,0,,0.22839506172839505,0.16619706378834484,0.30080173999587206
+Stage 1,document attacks (fit),delimiting,stage1_fit,170,170,55,115,0,0,0,,0.3235294117647059,0.2539142142323264,0.3994243168588469
+Stage 1,document attacks (fit),none,stage1_fit,166,166,70,96,0,0,0,,0.42168674698795183,0.3455657657729644,0.5006552334143589
+Stage 1,document attacks (fit),random_scramble,stage1_fit,17,17,1,16,0,0,0,,0.058823529411764705,0.0014881743912666346,0.2868893966672207
+Stage 1,document attacks (fit),random_shift,stage1_fit,10,10,0,10,0,0,0,,0.0,0.0,0.3084971078187607
+Stage 1,document attacks (fit),rot13,stage1_fit,37,37,2,35,0,0,0,,0.05405405405405406,0.006614570411528816,0.1819491183777493
+Stage 2,AgentDojo (report),none,ablation_none,182,179,2,177,3,2,0,G=0 C=0 F=0,0.0111731843575419,0.001356000278591971,0.039776617295089294
+Red team · indirect,PyRIT XPIA (none),none,xpia_none,6,6,2,4,0,0,0,rounds [0],0.3333333333333333,0.043271868292741676,0.7772219044964879
+Red team · direct,guard detection,input_guard,detect,1832,1832,456,1376,0,0,0,blocked = detected,0.24890829694323144,0.2292507117705078,0.26937302900678517
+Red team · direct,PyRIT jailbreak,pair,pyrit,100,100,0,100,0,0,0,,0.0,0.0,0.03621669264517641
+Red team · direct,PyRIT jailbreak,tap,pyrit,100,100,0,100,0,0,0,,0.0,0.0,0.03621669264517641
