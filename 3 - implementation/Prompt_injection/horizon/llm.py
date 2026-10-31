@@ -15,6 +15,10 @@ from pathlib import Path
 from horizon.config import ROOT
 
 _THINK = re.compile(r"<think>.*?</think>", re.DOTALL)
+# Ollama aborts a generation that loops ("prediction aborted, token repeat limit reached", HTTP 500). That is a property
+# of the PROMPT, not a network hiccup: at temperature 0 the identical request loops again, so retrying it unchanged (what
+# this client did) fails every time, and five days of cluster time went into retrying the same phase.
+_DEGENERATE = re.compile(r"token repeat limit|prediction aborted|repeat limit reached", re.IGNORECASE)
 
 
 class LLM:
@@ -26,6 +30,7 @@ class LLM:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.calls = 0
         self.cache_hits = 0
+        self.degenerate = 0          # generations Ollama aborted for looping even after the retries below
 
     def _api_base(self) -> str | None:
         """Ollama models use api_base; openai/<id> models use openai_api_base when set (e.g. colibri)."""
@@ -58,19 +63,32 @@ class LLM:
         if self.model.startswith(("openai/", "hosted_vllm/")) and key is None:
             key = "local"
         last = None
-        for attempt in range(3):
+        loops = 0
+        attempts = int(self.cfg.get("llm_attempts", 4))
+        cap = int(self.cfg["max_tokens"])
+        for attempt in range(attempts):
+            params = {"temperature": self.temperature, "max_tokens": cap}
+            if loops:                       # break the loop: sample, penalise repeats (→ Ollama repeat_penalty), stop sooner
+                params.update(temperature=min(1.0, max(self.temperature, 0.2 + 0.2 * loops)),
+                              frequency_penalty=1.0 + 0.15 * loops, max_tokens=max(128, cap // (1 + loops)))
             try:
                 r = litellm.completion(model=self.model, messages=msgs,
-                                       temperature=self.temperature,
-                                       max_tokens=self.cfg["max_tokens"],
                                        api_base=self._api_base() if self_hosted else None,
-                                       api_key=key, timeout=self.cfg["request_timeout_s"], **extra)
+                                       api_key=key, timeout=self.cfg["request_timeout_s"], **{**extra, **params})
                 out = r.choices[0].message.content or ""
                 break
-            except Exception as e:  # network hiccups / server warm-up
+            except Exception as e:  # network hiccups / server warm-up / a looping generation
                 last = e
+                if _DEGENERATE.search(str(e)):
+                    loops += 1          # a different sample is not a server hiccup: no sleep
+                    continue
                 time.sleep(2 ** attempt)
         else:
+            if loops and self.cfg.get("degenerate_policy", "empty") == "empty":
+                # Every sample looped. The model produced nothing usable: an empty answer (no canary, no tool call, no
+                # value) is the faithful record. It is counted (self.degenerate), never cached, and never kills a phase.
+                self.degenerate += 1
+                return ""
             raise RuntimeError(f"LLM call failed after retries: {last}")
         out = _THINK.sub("", out).strip()
         self.calls += 1

@@ -29,7 +29,7 @@ import signal
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -59,7 +59,7 @@ TAIL_LINES = 12
 GUARDED_PORT = 11436
 ABLATIONS = ["none", "stage1", "stage2", "stage1+2", "full"]
 DOC_XPIA, AGENT_XPIA = ["none", "stage1"], ["stage2", "stage1+2", "full"]
-EXIT_OK, EXIT_INCOMPLETE, EXIT_PAUSED = 0, 2, 3
+EXIT_OK, EXIT_INCOMPLETE, EXIT_PAUSED, EXIT_BUDGET = 0, 2, 3, 4
 
 
 # =============================================================================== plan
@@ -75,6 +75,8 @@ class Phase:
     work: int | None            # model calls / episodes behind them (time estimate)
     guarded: bool = False       # needs scripts/guarded_server.py
     exclusive: bool = False     # runs alone (other model / GPU-heavy search): nothing else starts meanwhile
+    wants: list[str] = field(default_factory=list)   # SOFT dependencies: wait for them to finish, never skipped by their failure
+    planned_min: int | None = None   # tests that are certain (default: planned); garak plans an upper bound only
 
 
 def _arg(args: list[str], flag: str, default=None):
@@ -97,6 +99,7 @@ def profile_of(cfg, name: str) -> dict:
     prof = cfg.campaign["profiles"][name]
     return {"workers": prof["workers"], "parallel_requests": prof["parallel_requests"], "set": list(prof["set"]),
             "args": dict(prof.get("args") or {}), "min_tests": prof.get("min_tests", cfg.campaign["min_tests"]),
+            "max_tests": prof.get("max_tests", cfg.campaign.get("max_tests")),
             "skip": list(prof.get("skip") or [])}
 
 
@@ -120,7 +123,9 @@ def build_plan(cfg, prof: dict, extra_set: list[str]) -> list[Phase]:
                           [*PY, "eval/autotune.py", *sets], [], "document", None,
                           at.get("n_max", 0) * n_c + at.get("model_n", 0) * len(at.get("models", [])),
                           exclusive=True))
-    for split, needs in (("fit", ["autotune"] if tune else []), ("report", ["stage1_fit"])):
+    # autotune only searches for upgrades: stage1_fit WANTS it (runs after it) but must not die with it. Before, one
+    # failed autotune skipped stage1_fit and, through it, 12 of 19 phases (calibrate, every ablation, xpia, ...).
+    for split, needs in (("fit", []), ("report", ["stage1_fit"])):
         n_att = _lines(ROOT / "data" / "processed" / f"stage1_{split}_attacks.jsonl")
         n_cl = _lines(ROOT / "data" / "processed" / f"stage1_{split}_clean.jsonl")
         tg = min(s1["n_adaptive_targets"], n_att)
@@ -132,7 +137,8 @@ def build_plan(cfg, prof: dict, extra_set: list[str]) -> list[Phase]:
                           "each attack document through every marking τ (+ clean documents for utility, + the "
                           "adaptive attacker)" + (" → chooses π*" if split == "fit" else " → evaluated at the fit π*"),
                           [*PY, "eval/stage1_runner.py", "--split", split, "--static", "--clean", "--adaptive",
-                           "--analyze", *sa, *sets], needs, "document", planned, work))
+                           "--analyze", *sa, *sets], needs, "document", planned, work,
+                          wants=["autotune"] if (tune and split == "fit") else []))
 
     alt = cfg.models.get("alt_victim")
     if alt and "stage1_altmodel" not in prof.get("skip", []):
@@ -220,10 +226,13 @@ def build_plan(cfg, prof: dict, extra_set: list[str]) -> list[Phase]:
                       "multi-turn attacker LLM against the guarded endpoint",
                       [*PY, "eval/jailbreak_runner.py", "--pyrit", *pa, *sets], [], "pyrit",
                       n_obj * 3 if n_obj else None, n_obj * 3 if n_obj else None, guarded=True))
+    n_probes = (len(rc["garak_probes_direct"]) + len(rc["garak_probes_indirect"])) * len(rc["garak_targets"])
+    garak_max = n_probes * int(rc["garak_prompt_cap"]) * int(rc["garak_generations"])    # upper bound: a probe may have fewer prompts
     plan.append(Phase("garak", "garak · direct + indirect probes",
-                      "dan, promptinject, encoding · latentinjection, web_injection on the bare model and the "
-                      "guarded endpoint", [*PY, "eval/jailbreak_runner.py", "--garak", *A.get("garak", []), *sets],
-                      [], "garak", None, None, guarded=True))
+                      f"{n_probes // len(rc['garak_targets'])} named probes (≤ {rc['garak_prompt_cap']} prompts × "
+                      f"{rc['garak_generations']} outputs each) on the bare model and the guarded endpoint",
+                      [*PY, "eval/jailbreak_runner.py", "--garak", *A.get("garak", []), *sets],
+                      [], "garak", garak_max, garak_max, guarded=True, planned_min=0))
     return plan
 
 
@@ -240,6 +249,28 @@ def estimate_hours(p: Phase, cfg, prof: dict) -> float | None:
     return p.work * sec / par / HOUR
 
 
+def budget(plan: list[Phase]) -> tuple[int, int]:
+    """(tests that are certain, most tests the plan can produce). garak can only give an upper bound."""
+    firm = sum((p.planned if p.planned_min is None else p.planned_min) or 0 for p in plan)
+    upper = sum(p.planned or 0 for p in plan)
+    return firm, upper
+
+
+def budget_problems(plan: list[Phase], prof: dict) -> list[str]:
+    """Why this plan breaks the profile's test budget (empty list = fine). A bounded profile has min_tests AND
+    max_tests; the campaign refuses to start outside them rather than discover it five days later."""
+    firm, upper = budget(plan)
+    lo, hi = prof["min_tests"], prof.get("max_tests")
+    out = []
+    if firm < lo:
+        out.append(f"the plan guarantees only {firm:,} tests, below min_tests = {lo:,}")
+    if hi is not None and upper > hi:
+        out.append(f"the plan can produce {upper:,} tests, above max_tests = {hi:,}")
+    if any(p.planned is None for p in plan):
+        out.append("phases with an unknown size: " + ", ".join(p.name for p in plan if p.planned is None))
+    return out if hi is not None else [x for x in out if not x.startswith("the plan can")]
+
+
 def print_plan(plan: list[Phase], cfg, prof: dict, name: str) -> None:
     rows = []
     for p in sorted(plan, key=lambda x: ORDER.index(x.name)):
@@ -250,8 +281,14 @@ def print_plan(plan: list[Phase], cfg, prof: dict, name: str) -> None:
     print(df.to_string(index=False))
     tot = sum(p.planned or 0 for p in plan)
     hrs = [estimate_hours(p, cfg, prof) for p in plan]
-    print(f"\nprofile '{name}': ≥ {tot:,} planned tests (garak counted after the run) · target "
-          f"{cfg.campaign['min_tests']:,}")
+    firm, upper = budget(plan)
+    hi = prof.get("max_tests")
+    print(f"\nprofile '{name}': {firm:,} certain tests, at most {upper:,} (garak: upper bound) · allowed range "
+          f"{prof['min_tests']:,}–{f'{hi:,}' if hi else 'unbounded'}")
+    for msg in budget_problems(plan, prof):
+        print(f"  !! BUDGET VIOLATED: {msg}")
+    if not budget_problems(plan, prof):
+        print("  budget OK")
     h = sum(x for x in hrs if x)
     print(f"est_hours = per-test time measured on the laptop (campaign.seconds_per_test) × tests ÷ "
           f"{prof['parallel_requests']} parallel slots for document phases; a cluster GPU is faster per test.")
@@ -341,6 +378,9 @@ def start_guarded(prof: dict, extra_set: list[str]) -> subprocess.Popen:
                             stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
     import urllib.request
     for _ in range(HOUR // POLL_S):
+        if proc.poll() is not None:                              # it died while loading the guards: say why, now
+            raise RuntimeError("guarded endpoint exited during start-up (code %s):\n%s" % (
+                proc.returncode, tail(LOGS / "guarded_server.log", 25)))
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{GUARDED_PORT}", timeout=POLL_S)
         except OSError as e:
@@ -351,6 +391,23 @@ def start_guarded(prof: dict, extra_set: list[str]) -> subprocess.Popen:
         time.sleep(POLL_S)
     ledger("start_server", what="guarded endpoint", port=GUARDED_PORT)
     return proc
+
+
+def init_tracking(cfg) -> None:
+    """Create the MLflow database + experiment ONCE, before any worker starts. Four workers opening a brand-new SQLite
+    database in the same second raced each other's schema migration ("duplicate column name: step"), which killed the
+    first Stage 1 / detect attempts. Never fatal: horizon/logging_utils.py has fallbacks."""
+    try:
+        import mlflow
+        db = (ROOT / cfg.run["tracking_uri"]).resolve()
+        db.parent.mkdir(parents=True, exist_ok=True)
+        mlflow.set_tracking_uri(f"sqlite:///{db}")
+        if mlflow.get_experiment_by_name(cfg.run["experiment_name"]) is None:
+            mlflow.create_experiment(cfg.run["experiment_name"],
+                                     artifact_location=(ROOT / cfg.run["artifact_dir"]).resolve().as_uri())
+        ledger("mlflow_ready", db=str(db.relative_to(ROOT)) if db.is_relative_to(ROOT) else str(db))
+    except Exception as e:
+        ledger("mlflow_init_failed", error=f"{type(e).__name__}: {str(e)[:160]}")
 
 
 def stop(proc: subprocess.Popen | None) -> None:
@@ -491,6 +548,9 @@ def run_phases(plan: list[Phase], prof: dict, st: dict, extra_set: list[str], cf
                     alone.add(n)
                 if (p.exclusive or solo) and running:
                     continue                                     # waits until it can have the GPU alone
+                soft = {d: dep_status(st, d, mine, lanes) for d in p.wants if d in by}
+                if any(s in (None, "pending", "running") for s in soft.values()):
+                    continue                                     # a wanted phase is still to run: wait, then go on
                 stat = {d: dep_status(st, d, mine, lanes) for d in p.needs}
                 if any(s in ("failed", "skipped") for s in stat.values()):
                     todo.remove(n)
@@ -503,7 +563,15 @@ def run_phases(plan: list[Phase], prof: dict, st: dict, extra_set: list[str], cf
                 if p.kind != "guard":
                     ensure_model_server(cfg, prof)               # restarts Ollama if it died meanwhile
                 if p.guarded and guarded is None:
-                    guarded = start_guarded(prof, extra_set)
+                    try:
+                        guarded = start_guarded(prof, extra_set)
+                    except Exception as e:                       # e.g. a guard model that cannot load
+                        todo.remove(n)
+                        st["phases"][n].update(status="failed", error_tail=str(e)[-1500:], returncode=-1,
+                                               end=datetime.now().isoformat(timespec="seconds"))
+                        ledger("finish", phase=n, status="failed", minutes=0.0)
+                        save_state(st)
+                        continue
                 log = (LOGS / f"{n}.log").open("a")
                 argv = [*p.argv, *[x for kv in fix for x in ("--set", kv)]]
                 log.write(f"\n===== {datetime.now().isoformat(timespec='seconds')}  {' '.join(argv)}\n")
@@ -664,6 +732,10 @@ def tally(cfg) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
                              g["outcome"].astype(str).str.contains("SUCCESS").sum(), alpha=a))
     ga = _read(RES / "testing" / "garak_items.csv")
     if len(ga):
+        # garak scores every output with several detectors (one row each): a TEST is an output, so take the most
+        # sensitive detector per probe — n = outputs evaluated, fails = outputs that ANY detector flagged at most as
+        # often as the strictest one did (a lower bound on "got through"). Summing detectors counted each output 2–3×.
+        ga = ga.groupby(["target", "family", "probe"], as_index=False).agg(n=("n", "max"), fails=("fails", "max"))
         for (tgt, fam), g in ga.groupby(["target", "family"]):
             rows.append(_row("Red team · " + fam, "garak probes", tgt, "garak", g["n"].sum(), g["fails"].sum(),
                              alpha=a, note=", ".join(sorted({p.split('.')[0] for p in g["probe"]}))))
@@ -719,6 +791,7 @@ def write_report(cfg, plan: list[Phase], st: dict, status: str) -> Path:
     df, ex = tally(cfg)
     total = total_tests(df)
     target = cfg.campaign["min_tests"]
+    cap = cfg.campaign.get("max_tests")
     df.to_csv(OUTDIR / "results_by_group.csv", index=False)
     by = {p.name: p for p in plan}
     proc = []
@@ -736,7 +809,8 @@ def write_report(cfg, plan: list[Phase], st: dict, status: str) -> Path:
     att = df[df["attacks"] > 0] if len(df) else df
     summary = {"status": status, "profile": st.get("profile"), "started": st.get("started"),
                "finished": datetime.now().isoformat(timespec="seconds"), "total_tests": total, "min_tests": target,
-               "target_met": total >= target, "attacks": int(att["attacks"].sum()) if len(att) else 0,
+               "max_tests": cap, "target_met": total >= target and (cap is None or total <= cap),
+               "attacks": int(att["attacks"].sum()) if len(att) else 0,
                "attacks_got_through": int(att["got_through"].sum()) if len(att) else 0,
                "topup_rounds": st.get("topup_rounds", 0),
                "phases": {r["phase"]: r["status"] for r in proc}}
@@ -745,7 +819,8 @@ def write_report(cfg, plan: list[Phase], st: dict, status: str) -> Path:
     # ---------- narrative (plain words, computed from the files) ----------
     lines = [f"Status: **{status}** · profile `{st.get('profile')}` · started {st.get('started')} · "
              f"report written {summary['finished']}.",
-             f"**{total:,} tests** finished (target {target:,}: {'met' if total >= target else 'NOT met'}). "
+             f"**{total:,} tests** finished (allowed range {target:,}–{f'{cap:,}' if cap else 'unbounded'}: "
+             f"{'met' if total >= target and (cap is None or total <= cap) else 'NOT met'}). "
              f"Of {summary['attacks']:,} attack tests, {summary['attacks_got_through']:,} got through and "
              f"{summary['attacks'] - summary['attacks_got_through']:,} were blocked or ignored "
              "(all areas and configurations pooled — see the tables for each one)."]
@@ -829,6 +904,7 @@ def main() -> int:
     ap.add_argument("--fresh", action="store_true", help="archive results/{stage1,stage2,testing,campaign} first")
     ap.add_argument("--workers", type=int, help="override the profile's parallel phases")
     ap.add_argument("--min-tests", type=int, help="override campaign.min_tests")
+    ap.add_argument("--ignore-budget", action="store_true", help="start even if the plan is outside min/max_tests")
     ap.add_argument("--set", action="append", default=[], help="any params.yaml value, e.g. models.q_llm=…")
     ap.add_argument("--lane", choices=["A", "B"], help="run one lane of campaign.lanes (two GPUs, two jobs)")
     args = ap.parse_args()
@@ -843,11 +919,18 @@ def main() -> int:
         prof["workers"] = args.workers
     min_tests = args.min_tests if args.min_tests is not None else prof["min_tests"]
     cfg = load_config(None, [*prof["set"], f"models.parallel_requests={prof['parallel_requests']}", *args.set,
-                             f"campaign.min_tests={min_tests}"])
+                             f"campaign.min_tests={min_tests}",
+                             f"campaign.max_tests={prof['max_tests'] if prof.get('max_tests') is not None else 'null'}"])
     plan = build_plan(cfg, prof, args.set)
     if args.plan:
         print_plan(plan, cfg, prof, name)
         return EXIT_OK
+    if prof.get("max_tests") is not None and not args.report_only and not args.ignore_budget:
+        bad = budget_problems(plan, prof)
+        if bad:                                          # bounded profile: never start a run outside its budget
+            print("BUDGET VIOLATED — not starting:\n  " + "\n  ".join(bad) +
+                  "\n(print the plan with --plan; --ignore-budget overrides)", file=sys.stderr)
+            return EXIT_BUDGET
     if args.report_only:
         write_report(cfg, plan, st, "report only")
         return EXIT_OK
@@ -876,11 +959,16 @@ def main() -> int:
         st["notified"].append("methods")
         save_state(st)
     ensure_model_server(cfg, prof)
+    init_tracking(cfg)
     run_phases(plan, prof, st, args.set, cfg)
     # ---- top-up: fresh-key XPIA rounds until min_tests ------------------------------------------------------
     merge_outputs()
     rc = cfg.campaign
+    hi = prof.get("max_tests")
+    # one top-up round re-runs the xpia_none attacks (one converter) under each topup config: its size is known
+    round_size = (next((p.planned for p in plan if p.name == "xpia_none"), None) or 0) * len(rc["topup_configs"])
     while (not STOP["flag"] and args.lane in (None, "A") and total_tests(tally(cfg)[0]) < rc["min_tests"]
+           and (hi is None or total_tests(tally(cfg)[0]) + round_size <= hi)       # never push a bounded run over its cap
            and st.get("topup_rounds", 0) < rc["max_topup_rounds"]
            and all(st["phases"].get(n, {}).get("status") == "ok" for n in ("xpia_none", "xpia_stage1"))):
         r = st.get("topup_rounds", 0) + 1
@@ -901,8 +989,9 @@ def main() -> int:
     total = total_tests(tally(cfg)[0])
     view = merged_state(st, cfg)
     all_ok = all(view["phases"].get(p.name, {}).get("status") == "ok" for p in plan)
+    in_budget = total >= rc["min_tests"] and (hi is None or total <= hi)
     status = ("paused (time limit / Ctrl-C) — run the same command again to continue" if STOP["flag"] else
-              "complete" if all_ok and total >= rc["min_tests"] else "finished with problems")
+              "complete" if all_ok and in_budget else "finished with problems")
     write_report(cfg, plan, st, status)
     if STOP["flag"]:
         notify(messages.paused(total, args.lane))

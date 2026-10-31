@@ -97,5 +97,6 @@ def test_garak_rest_config_has_timeout_and_path(tmp_path, monkeypatch):
     p = J.garak_config(cfg, "http://127.0.0.1:1/v1/chat/completions", "m", "bare")
     gen = json.loads(p.read_text())["rest"]["RestGenerator"]
     assert gen["uri"].endswith("/v1/chat/completions")
-    assert gen["request_timeout"] == cfg.models["request_timeout_s"]
+    assert gen["request_timeout"] == cfg.redteam["garak_request_timeout_s"]
+    assert gen["req_template_json_object"]["max_tokens"] == cfg.models["max_tokens"]   # garak sends none by itself
     assert "request_timeout" in garak_rest.RestGenerator.DEFAULT_PARAMS

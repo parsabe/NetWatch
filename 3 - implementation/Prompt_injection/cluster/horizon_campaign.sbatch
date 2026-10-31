@@ -21,7 +21,7 @@ export HF_HUB_OFFLINE=1         # compute nodes usually have no internet: everyt
 # export HF_HOME=/scratch/$USER/hf  OLLAMA_MODELS=/scratch/$USER/ollama   # if --prepare used shared scratch
 
 nvidia-smi --query-gpu=name,memory.total --format=csv || true
-./run_campaign.sh --profile cluster "$@" &
+./run_campaign.sh --profile "${PROFILE:-bounded}" "$@" &
 PID=$!
 trap 'kill -TERM "$PID" 2>/dev/null' TERM
 wait "$PID"; rc=$?

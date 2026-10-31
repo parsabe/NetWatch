@@ -56,13 +56,24 @@ _LOCK = threading.Lock()
 
 
 def _parallel(cfg, jobs, fn, label: str) -> None:
-    """Run fn(job) over a thread pool sized to the server's parallel slots; rows are written under a lock."""
+    """Run fn(job) over a thread pool sized to the server's parallel slots; rows are written under a lock.
+
+    A failing job no longer aborts the others: every job that can finish does (its row is already saved, so a re-run
+    only repeats the missing ones) and the phase reports the failures at the end."""
+    errors = []
     with ThreadPoolExecutor(max_workers=cfg.models["parallel_requests"]) as ex:
-        futures = [ex.submit(fn, j) for j in jobs]
+        futures = {ex.submit(fn, j): j for j in jobs}
         for i, fut in enumerate(as_completed(futures), 1):
-            fut.result()
+            try:
+                fut.result()
+            except Exception as e:
+                errors.append(e)
+                print(f"  {label}: job failed ({type(e).__name__}: {str(e)[:160]})", flush=True)
             if i % len(cfg.stage1["variants"]) == 0 or i == len(jobs):
                 print(f"  {label} {i}/{len(jobs)}", flush=True)
+    if errors:
+        raise RuntimeError(f"{label}: {len(errors)} of {len(jobs)} jobs failed (first: {errors[0]}); the others are "
+                           "saved — run the phase again to repeat only the missing ones")
 
 
 def run_static(cfg, out: Path, attacks: list[dict], variants: dict, victim: LLM) -> None:
@@ -173,12 +184,32 @@ def analyze(cfg, out: Path, split: str, variants: dict) -> dict:
     src = m.drop_duplicates("attack_id").set_index("attack_id").loc[piv.index]
     rho_info = stats.estimate_rho({s_: g["category"].value_counts().to_dict() for s_, g in src.groupby("source")})
     summary["rho_hat"] = rho_info
-    mean_bound = (np.array([p_bar[t] for t in names]) if s1.get("v1_mean_bound", "empirical") == "cp" else None)
-    have_all = not (np.isnan(U.to_numpy()).any() or any(math.isnan(v) for v in p_adp.values()))
-    if not have_all:
-        summary["note"] = "risk/V1 skipped: needs clean utility and adaptive results for every variant"
+    # ---- starved or incomplete data: degrade, say so, never skip ---------------------------------------------------
+    # Before: ONE variant without adaptive results or clean utility made the whole analysis return early, so
+    # results/stage1/pi_star.json was never written and every phase that needs π* failed. Now an incomplete variant is
+    # handled explicitly and listed under summary["degraded"].
+    degraded: list[str] = []
+    if n < 2 or "none" not in names or math.isnan(float(U["none"])):
+        summary["note"] = ("risk/V1 skipped: needs ≥ 2 attacks seen under every variant and a clean utility for 'none' "
+                           f"(attacks: {n}, clean utility of 'none': {U.get('none', float('nan'))})")
         save_json(summary, out / "summary.json")
         return summary
+    no_u = [t for t in names if math.isnan(float(U[t]))]
+    if no_u:                                             # a variant with unknown utility cannot satisfy U ≥ U_none − η
+        keep = [i for i, t in enumerate(names) if t not in no_u]
+        degraded.append("no clean-utility data → dropped from the game: " + ", ".join(no_u))
+        names, A, logk, U = [names[i] for i in keep], A[:, keep], logk[keep], U.iloc[keep]
+    no_adp = [t for t in names if math.isnan(p_adp[t])]
+    for t in no_adp:                                     # no adaptive attacks run → the static bound stands in (optimistic)
+        p_adp[t] = p_bar[t]
+        per_variant[t]["p_adp_bar"], per_variant[t]["p_adp_is_static_proxy"] = p_bar[t], True
+    if no_adp:
+        degraded.append("no adaptive-attacker results → static Clopper–Pearson bound used as p̄_adp (OPTIMISTIC, an "
+                        "adaptive attacker is at least as strong): " + ", ".join(no_adp))
+    if degraded:
+        summary["degraded"] = degraded
+        print("  [analysis degraded] " + " | ".join(degraded), flush=True)
+    mean_bound = (np.array([p_bar[t] for t in names]) if s1.get("v1_mean_bound", "empirical") == "cp" else None)
     padp = np.array([p_adp[t] for t in names])
     Uv = U.to_numpy()
     u_none = float(U["none"])
@@ -214,6 +245,10 @@ def analyze(cfg, out: Path, split: str, variants: dict) -> dict:
         if ps.exists():
             d = json.loads(ps.read_text())
             w = np.array([d["pi_star"].get(t, 0.0) for t in names])
+            if 0.0 < w.sum() < 1.0 - 1e-9:               # a variant of π* has no data on this split: renormalise, say so
+                summary.setdefault("degraded", []).append(
+                    f"π* mass {1 - w.sum():.3f} on variants without data on this split was renormalised away")
+            w = w / w.sum() if w.sum() > 0 else np.eye(len(names))[names.index("none")]
             rho0 = d.get("rho", rho0)                    # evaluate at the fit-split choices, ρ included
             risks0 = {t: stats.combined_risk(q0, logk[i], p_bar[t], p_adp[t], rho0).total for i, t in enumerate(names)}
             ev = evaluate_v1_objective(A, w, q0, logk, padp, rho0, mean_bound)
@@ -265,7 +300,8 @@ def main() -> None:
         for f in ["matrix.csv", "clean.csv", "adaptive_eval.csv"]:
             if (out / f).exists():
                 log_examples(pd.read_csv(out / f).to_dict("records"), f.replace(".csv", ""))
-        mlflow.log_metrics({"llm_calls": victim.calls + attacker.calls, "cache_hits": victim.cache_hits})
+        mlflow.log_metrics({"llm_calls": victim.calls + attacker.calls, "cache_hits": victim.cache_hits,
+                            "looping_generations_dropped": victim.degenerate + attacker.degenerate})
 
 
 if __name__ == "__main__":

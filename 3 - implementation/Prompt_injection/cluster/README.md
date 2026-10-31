@@ -85,13 +85,14 @@ rsync -av <user>@<cluster>:~/horizon/report/campaign/ report/campaign/
 
 | profile | tests | meant for |
 |---|---|---|
+| `bounded` (default) | 2 702 certain, ≤ 3 038 (hard range 2 000–4 000) | the real run: every phase explicitly sized, the campaign refuses to start outside the range |
 | `smoke` | ≈ 400 | check that every phase runs (≈ 3 h on the laptop) |
 | `laptop` | ≈ 16 000 | the RTX 4060 laptop (≈ 2 days) |
 | `cluster` | ≈ 57 000 (+ garak) | everything at full size; 4 phases side by side |
 
 `./run_campaign.sh --plan --profile <name>` prints the exact numbers and a time estimate from the speed
-measured on the laptop. If fewer than `campaign.min_tests` (5 000) tests finish, extra XPIA rounds (same
-attacks, fresh secret keys) run until the target is reached; the report says so.
+measured on the laptop. If fewer than the profile's `min_tests` finish, extra XPIA rounds (same attacks, fresh
+secret keys) run until the target is reached, never above `max_tests`; the report says so.
 
 The cluster profile assumes a large GPU (`parallel_requests: 8`). On a smaller GPU lower it, e.g.
 `./run_campaign.sh --set models.parallel_requests=4 --workers 2`.

@@ -163,8 +163,16 @@ def _evaluate(cfg, variants: dict, attacks: list[dict], clean: list[dict], victi
         with _LOCK:
             pd.DataFrame([row]).to_csv(path, mode="a", header=not path.exists(), index=False)
 
-    with ThreadPoolExecutor(max_workers=cfg.models["parallel_requests"]) as ex:
-        list(ex.map(one, jobs))
+    errors = []
+    with ThreadPoolExecutor(max_workers=cfg.models["parallel_requests"]) as ex:    # one failing job must not stop the rest
+        for fut in [ex.submit(one, j) for j in jobs]:
+            try:
+                fut.result()
+            except Exception as e:
+                errors.append(e)
+                print(f"[autotune] job failed ({type(e).__name__}: {str(e)[:160]})", flush=True)
+    if errors:
+        raise RuntimeError(f"{len(errors)} of {len(jobs)} autotune jobs failed (first: {errors[0]}); finished ones are saved")
 
 
 def _score(cfg, variants: dict, attack_ids: list[str], clean_ids: list[str], model_tag: str) -> pd.DataFrame:

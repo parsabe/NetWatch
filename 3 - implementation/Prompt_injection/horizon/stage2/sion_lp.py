@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 import numpy as np
 from scipy.optimize import linprog
 
+from horizon.stage2.starvation import informativeness_note, relax_utility_floor
+
 
 @dataclass
 class LPResult:
@@ -24,6 +26,7 @@ class LPResult:
     value: float | None
     pi: dict[str, float] = field(default_factory=dict)
     w: dict[str, float] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)      # everything the robust solver changed or flagged
 
 
 def solve_sion_lp(loss_bar: np.ndarray, styles: list[str], configs: list[str],
@@ -48,3 +51,39 @@ def solve_sion_lp(loss_bar: np.ndarray, styles: list[str], configs: list[str],
     duals = -np.asarray(res.ineqlin.marginals[:K])
     w = duals / duals.sum() if duals.sum() > 0 else np.full(K, 1.0 / K)
     return LPResult("optimal", float(res.x[-1]), dict(zip(configs, pi.tolist())), dict(zip(styles, w.tolist())))
+
+
+def solve_sion_lp_robust(loss_bar: np.ndarray, styles: list[str], configs: list[str],
+                         utility: np.ndarray, U_min: float, leakage: np.ndarray,
+                         leakage_cap_bits: float) -> LPResult:
+    """`solve_sion_lp` for measured (small, possibly incomplete) data: never crashes, never silently changes the game.
+
+    * configurations / styles with a non-finite bound or utility are dropped (listed in `notes`);
+    * a utility floor above the best admissible utility is relaxed to it (listed) instead of "Π infeasible";
+    * a result whose bounds are all ≈ 1 is flagged as uninformative.
+    The LP itself (and therefore its validity) is unchanged: it is `solve_sion_lp` on the cleaned inputs.
+    """
+    L = np.asarray(loss_bar, float)
+    u = np.asarray(utility, float)
+    leak = np.asarray(leakage, float)
+    notes: list[str] = []
+    if L.ndim != 2 or L.size == 0:
+        return LPResult("no data", None, notes=["empty loss-bound matrix"])
+    cols = np.isfinite(L).all(axis=0) & np.isfinite(u)
+    if not cols.all():
+        notes.append("configurations without a complete loss bound or utility dropped: " +
+                     ", ".join(configs[j] for j in np.nonzero(~cols)[0]))
+    rows = np.isfinite(L[:, cols]).all(axis=1) if cols.any() else np.zeros(L.shape[0], bool)
+    if not cols.any() or not rows.any():
+        return LPResult("no usable data", None, notes=[*notes, "no configuration / style left after cleaning"])
+    L2 = L[np.ix_(rows, cols)]
+    cfg2 = [c for c, k in zip(configs, cols) if k]
+    sty2 = [s for s, k in zip(styles, rows) if k]
+    floor, n2 = relax_utility_floor(u[cols], U_min, leak[cols], leakage_cap_bits)
+    notes += n2
+    if floor is None:
+        return LPResult("infeasible", None, notes=notes)
+    res = solve_sion_lp(L2, sty2, cfg2, u[cols], floor, leak[cols], leakage_cap_bits)
+    flag = informativeness_note(L2)
+    res.notes = [*notes, *([flag] if flag else [])]
+    return res

@@ -53,7 +53,8 @@ the model's raw analyses (`analysis/*.json`), `tests.xml` and `run_all.log`. Set
 ./run_campaign.sh --profile laptop     # or: sbatch cluster/horizon_campaign.sbatch (see cluster/README.md)
 ```
 
-Runs every experiment in dependency order (resumable), at least `campaign.min_tests` (5,000) tests, then writes
+Runs every experiment in dependency order (resumable). The default profile `bounded` is sized to 2,000–4,000 tests
+in total (`--plan` prints the sum; the campaign refuses to start outside that range), then writes
 `report/campaign/campaign_report.pdf`: the process (phases, durations, failures with log tails) and, per defence
 configuration, how many attacks got through vs. were blocked.
 

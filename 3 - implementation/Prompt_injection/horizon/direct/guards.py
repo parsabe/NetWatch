@@ -10,7 +10,14 @@ Both load lazily and raise GatedModelError with instructions if a model cannot b
 from __future__ import annotations
 
 import re
+import threading
 from dataclasses import dataclass
+
+# transformers builds its lazy `from transformers import AutoModel…` attributes on first access and that is NOT
+# thread-safe: the guarded endpoint's first two concurrent requests crashed with "cannot import name
+# 'AutoModelForSequenceClassification'" (guarded_server.log), the handler thread died and the client saw a dropped
+# connection. One lock for every guard load, and `preload()` loads before the first request.
+_LOAD_LOCK = threading.RLock()
 
 
 class GatedModelError(RuntimeError):
@@ -52,18 +59,23 @@ class InjectionGuardInput:
         self._model = self._tok = None
 
     def _load(self):
-        if self._model is not None:
-            return
-        mid, rev = self.cfg["input_guard_model"], self.cfg["input_guard_revision"]
-        try:
-            from transformers import AutoModelForSequenceClassification, AutoTokenizer
-            self._tok = AutoTokenizer.from_pretrained(mid, revision=rev)
-            self._model = AutoModelForSequenceClassification.from_pretrained(mid, revision=rev).to(
-                _device(self.cfg["device"], self.cfg.get("min_free_gpu_gb", 0))).eval()
-            self._pos = next(int(k) for k, v in self._model.config.id2label.items()
-                             if v == self.cfg["input_guard_positive_label"])
-        except Exception as e:
-            raise _gated(mid, e) from e
+        with _LOAD_LOCK:
+            if self._model is not None:
+                return
+            mid, rev = self.cfg["input_guard_model"], self.cfg["input_guard_revision"]
+            try:
+                from transformers import AutoModelForSequenceClassification, AutoTokenizer
+                self._tok = AutoTokenizer.from_pretrained(mid, revision=rev)
+                model = AutoModelForSequenceClassification.from_pretrained(mid, revision=rev).to(
+                    _device(self.cfg["device"], self.cfg.get("min_free_gpu_gb", 0))).eval()
+                self._pos = next(int(k) for k, v in model.config.id2label.items()
+                                 if v == self.cfg["input_guard_positive_label"])
+                self._model = model                          # published last: other threads see a complete guard
+            except Exception as e:
+                raise _gated(mid, e) from e
+
+    def preload(self) -> None:
+        self._load()
 
     def score(self, text: str) -> float:
         self._load()
@@ -99,18 +111,23 @@ class Qwen3GuardOutput:
         self._model = self._tok = None
 
     def _load(self):
-        if self._model is not None:
-            return
-        mid, rev = self.cfg["output_guard_model"], self.cfg["output_guard_revision"]
-        try:
-            import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            self._tok = AutoTokenizer.from_pretrained(mid, revision=rev)
-            dev = _device(self.cfg["device"], self.cfg.get("min_free_gpu_gb", 0))
-            self._model = AutoModelForCausalLM.from_pretrained(
-                mid, revision=rev, dtype=torch.bfloat16 if dev == "cuda" else torch.float32).to(dev)
-        except Exception as e:
-            raise _gated(mid, e) from e
+        with _LOAD_LOCK:
+            if self._model is not None:
+                return
+            mid, rev = self.cfg["output_guard_model"], self.cfg["output_guard_revision"]
+            try:
+                import torch
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+                self._tok = AutoTokenizer.from_pretrained(mid, revision=rev)
+                dev = _device(self.cfg["device"], self.cfg.get("min_free_gpu_gb", 0))
+                model = AutoModelForCausalLM.from_pretrained(
+                    mid, revision=rev, dtype=torch.bfloat16 if dev == "cuda" else torch.float32).to(dev)
+                self._model = model
+            except Exception as e:
+                raise _gated(mid, e) from e
+
+    def preload(self) -> None:
+        self._load()
 
     def parse(self, text: str) -> tuple[str | None, list[str], str | None]:
         label = self.SAFETY.search(text)

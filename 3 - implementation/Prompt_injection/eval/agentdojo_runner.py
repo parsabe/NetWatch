@@ -34,7 +34,7 @@ from horizon.logging_utils import log_examples, mlflow_run, save_json  # noqa: E
 from horizon.pipeline import LAMBDA_HAT, build_pipeline  # noqa: E402
 from horizon.redteam.agentdojo_attacks import attacker_entities  # noqa: E402,F401  (also registers value_tamper)
 from horizon.stage1 import stats  # noqa: E402
-from horizon.stage2.conformal import calibrate_lambda, calibrate_lambda_groups  # noqa: E402
+from horizon.stage2.conformal import calibrate_lambda, calibrate_lambda_groups, guarantee_note  # noqa: E402
 
 SPLIT_FILE = ROOT / "data" / "splits" / "agentdojo.json"
 ABLATIONS = {
@@ -136,15 +136,19 @@ def run_episodes(cfg, split: str, attack_names: list[str], limit_user: int | Non
                     t0 = time.time()
                     util, sec = suite.run_task_with_pipeline(built.pipeline, ut, it, attack.attack(ut, it))
                     los = episode_losses(built.state, attacker_entities(suite, ut, it), goal_functions(suite, it))
+                    # Without Stage 2 there is no policy engine, hence no events: G would be 0 for EVERY episode and a
+                    # configuration that lets 9 % of the attacks through would look loss-free to the Sion game.
+                    # With no policy in the way, an attack that succeeded is by definition a bypass: G = 1.
+                    G = los["G"] if cfg.flags.use_stage2 else int(sec)
                     aid = f"{s}/{uid}/{iid}/{an}"
                     _save(out, "calibration", [{**c, "attack_id": aid} for c in los["calibration"]])
                     _save(out, "runs", [{"attack_id": f"{aid}#{k}", "run": j, "success": x}
                                         for k, r in enumerate(los["runs"]) for j, x in enumerate(r)])
                     _save(out, "episodes", [{"config": tag, "suite": s, "user_task": uid, "injection_task": iid,
                                              "style": an, "attack_id": aid, "utility": int(util), "asr": int(sec),
-                                             "G": los["G"], "C": los["C"], "F": los["F"],
+                                             "G": G, "C": los["C"], "F": los["F"],
                                              "alarms": built.state.alarms, "seconds": time.time() - t0}])
-                    print(f"  {aid}: utility={int(util)} asr={int(sec)} G={los['G']} C={los['C']} F={los['F']}",
+                    print(f"  {aid}: utility={int(util)} asr={int(sec)} G={G} C={los['C']} F={los['F']}",
                           flush=True)
     p = out / "episodes.csv"
     df = pd.read_csv(p) if p.exists() else pd.DataFrame(columns=["config", "style", "utility", "asr", "G", "C", "F",
@@ -257,24 +261,33 @@ def main() -> None:
         mlflow.log_metrics(metrics)
         print(json.dumps(metrics, indent=1))
         if args.calibrate:
-            cal = pd.read_csv(out / "calibration.csv") if (out / "calibration.csv").exists() else pd.DataFrame()
-            if cal.empty:
-                print("no CONFIRM events recorded — nothing to calibrate")
-                return
+            # ALWAYS write lambda_hat.json, even from an empty calibration set. Returning without it (the old
+            # behaviour when no CONFIRM event was recorded) made the phase "ok" and then crashed every later Stage 2
+            # phase with FileNotFoundError. No data → status "no_data", λ̂ = +inf (fail-closed: never ask, DENY).
+            cal = pd.read_csv(out / "calibration.csv") if (out / "calibration.csv").exists() else pd.DataFrame(
+                {"score": [], "dangerous": [], "attack_id": []})
             s2 = cfg.stage2
             a_ = s2["user_mistake_rate"]
             B = a_ if s2.get("crc_loss_bound", "one") == "a" else 1.0
-            res = calibrate_lambda(cal["score"], cal["dangerous"].astype(bool), a_, s2["alpha_user"],
-                                   cfg.lambda_grid(), B)
-            out_json = {"lambda_hat": res.lambda_hat, "n": res.n, "alpha_user": s2["alpha_user"], "a": a_,
-                        "loss_bound_B": B, "lambda_hat_pooled": res.lambda_hat, "chosen_on": "calibration"}
-            if s2.get("crc_group_by") == "style":            # guarantee per attack style: λ̂ = max over styles
-                g = calibrate_lambda_groups(cal["score"], cal["dangerous"].astype(bool),
-                                            cal["attack_id"].astype(str).str.split("/").str[-1], a_,
-                                            s2["alpha_user"], cfg.lambda_grid(), B, s2["crc_min_group"])
-                out_json.update(lambda_hat=g["lambda_hat"], per_style=g["per_group"], grouped_by="style")
+            dang = cal["dangerous"].astype(bool)
+            res = calibrate_lambda(cal["score"], dang, a_, s2["alpha_user"], cfg.lambda_grid(), B)
+            out_json = {"lambda_hat": res.lambda_hat, "n": res.n, "n_dangerous": res.n_dangerous,
+                        "status": res.status, "n_needed": res.n_needed, "alpha_user": s2["alpha_user"], "a": a_,
+                        "loss_bound_B": B, "lambda_hat_pooled": res.lambda_hat, "chosen_on": "calibration",
+                        "guarantee_note": guarantee_note(a_, s2["alpha_user"])}
+            if s2.get("crc_group_by") == "style" and res.n:   # guarantee per attack style: λ̂ = max over styles
+                g = calibrate_lambda_groups(cal["score"], dang, cal["attack_id"].astype(str).str.split("/").str[-1],
+                                            a_, s2["alpha_user"], cfg.lambda_grid(), B, s2["crc_min_group"])
+                out_json.update(lambda_hat=g["lambda_hat"], per_style=g["per_group"], grouped_by="style",
+                                small_groups=g["small_groups"], min_group=g["min_group"])
             save_json(out_json, LAMBDA_HAT)
-            print(f"λ̂ = {out_json['lambda_hat']} (pooled {res.lambda_hat}, n = {res.n}, B = {B})")
+            print(f"λ̂ = {out_json['lambda_hat']} (pooled {res.lambda_hat}, status {res.status}, n = {res.n} of which "
+                  f"{res.n_dangerous} dangerous, need ≥ {res.n_needed}, B = {B})")
+            if out_json["guarantee_note"]:
+                print(f"  note: {out_json['guarantee_note']}")
+            if res.status in ("no_data", "infeasible_data"):
+                print("  WARNING: too little calibration data to certify a threshold → every CONFIRM is DENIED "
+                      "(fail-closed). Raise the calibrate phase size (campaign.profiles.<p>.args.calibrate).")
 
 
 if __name__ == "__main__":

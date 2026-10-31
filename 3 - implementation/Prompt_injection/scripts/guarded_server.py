@@ -6,6 +6,11 @@
 Target for PyRIT (PAIR/TAP/Crescendo) and garak in eval/jailbreak_runner.py. Binds to
 localhost only. Layers follow flags.use_firewall / use_output_guard / use_canary.
 
+Never drops a connection: the handler used to have no error handling, so one failed request (the guard's lazy import
+racing in two threads, or a looping generation that Ollama aborted) killed its thread and garak/PyRIT saw "Remote end
+closed connection without response" — which garak does not survive (five runs died at the same prompt). Every request
+now gets a valid chat completion; failures are counted and shown at GET /stats, and the runners check that count.
+
     uv run python scripts/guarded_server.py --port 11436
 """
 from __future__ import annotations
@@ -13,7 +18,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import threading
 import time
+import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -35,6 +42,17 @@ class Guarded:
         self.out = Qwen3GuardOutput(cfg.direct) if f.use_output_guard else None
         self.token = canary_mod.new_token(cfg.direct["canary_hex_bytes"]) if f.use_canary else None
         self.log: list[dict] = []
+        self.stats = {"requests": 0, "errors": 0, "input_blocked": 0, "output_blocked": 0, "canary_leaks": 0}
+        self._lock = threading.Lock()
+        # load the guards NOW, in this one thread, before the first request (see horizon/direct/guards.py)
+        for guard in (self.inp, self.out):
+            if guard is not None:
+                guard.preload()
+
+    def count(self, **inc: int) -> None:
+        with self._lock:
+            for k, v in inc.items():
+                self.stats[k] += v
 
     def reply(self, messages: list[dict]) -> tuple[str, dict]:
         user = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
@@ -54,25 +72,50 @@ class Guarded:
         return text, info
 
 
+def completion(model: str, text: str) -> bytes:
+    return json.dumps({"id": f"hzn-{time.time_ns()}", "object": "chat.completion", "created": int(time.time()),
+                       "model": model,
+                       "choices": [{"index": 0, "finish_reason": "stop",
+                                    "message": {"role": "assistant", "content": text}}],
+                       "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}).encode()
+
+
 def make_handler(g: Guarded):
     class H(BaseHTTPRequestHandler):
+        def _send(self, status: int, data: bytes) -> None:
+            try:
+                self.send_response(status)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+            except (BrokenPipeError, ConnectionResetError):          # the client gave up (its own timeout)
+                pass
+
+        def do_GET(self):
+            self._send(200, json.dumps(g.stats).encode())            # GET /stats (the runners check "errors")
+
         def do_POST(self):
-            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
-            msgs = [{"role": m["role"], "content": m["content"] if isinstance(m["content"], str)
-                     else " ".join(p.get("text", "") for p in m["content"])} for m in body.get("messages", [])]
-            text, info = g.reply(msgs)
-            g.log.append(info)
-            out = {"id": f"hzn-{time.time_ns()}", "object": "chat.completion", "created": int(time.time()),
-                   "model": body.get("model", "horizon-guarded"),
-                   "choices": [{"index": 0, "finish_reason": "stop",
-                                "message": {"role": "assistant", "content": text}}],
-                   "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
-            data = json.dumps(out).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
+            model = "horizon-guarded"
+            try:
+                body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+                model = body.get("model", model)
+                msgs = [{"role": m["role"], "content": m["content"] if isinstance(m["content"], str)
+                         else " ".join(p.get("text", "") for p in m["content"])} for m in body.get("messages", [])]
+            except Exception as e:                                   # not a chat request: tell the client, politely
+                self._send(400, json.dumps({"error": {"message": f"bad request: {e}"[:200]}}).encode())
+                return
+            g.count(requests=1)
+            try:
+                text, info = g.reply(msgs)
+                g.log.append(info)
+                g.count(input_blocked=int(info["input_blocked"]), output_blocked=int(info["output_blocked"]),
+                        canary_leaks=int(info["canary_leak"]))
+            except Exception:                                        # guard / model / network failure
+                g.count(errors=1)
+                traceback.print_exc()
+                text = ""                                            # an empty answer: nothing got through
+            self._send(200, completion(model, text))
 
         def log_message(self, *a):
             pass

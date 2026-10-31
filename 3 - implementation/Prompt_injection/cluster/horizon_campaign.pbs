@@ -15,7 +15,7 @@ cd "${PBS_O_WORKDIR:-$(dirname "$0")/..}"
 LANE="${LANE:-}"
 exec > >(tee -a "horizon_live${LANE:+_$LANE}.log") 2>&1   # live log (one per lane)
 WALLTIME_H="${WALLTIME_H:-24}"   # keep equal to the walltime above
-PROFILE="${PROFILE:-cluster}"    # campaign profile (cluster/horizon_smoke.pbs sets smoke)
+PROFILE="${PROFILE:-bounded}"    # campaign profile: bounded = 2,000-4,000 tests (cluster/horizon_smoke.pbs sets smoke)
 STOP_EARLY_S=900                 # pause 15 min before the end
 PARALLEL="${PARALLEL:-4}"        # Ollama slots = campaign.profiles.<profile>.parallel_requests (16 GB GPU)
 UV="$HOME/.local/bin/uv"

@@ -30,10 +30,11 @@ from horizon.stage1 import stats  # noqa: E402
 from horizon.stage1.sion import solve_v1  # noqa: E402
 from horizon.stage1.transforms import build_variants  # noqa: E402
 from horizon.stage2 import schemas  # noqa: E402
-from horizon.stage2.horizon_value import solve_v_horizon  # noqa: E402
+from horizon.stage2.empirical import build_stage2_inputs  # noqa: E402
+from horizon.stage2.horizon_value import solve_v_horizon_robust  # noqa: E402
 from horizon.stage2.leakage import SIDE_CHANNEL_FLAG, config_leakage  # noqa: E402
 from horizon.stage2.loss import bernstein_loss_bound, cp_loss_bound, per_attack_loss  # noqa: E402
-from horizon.stage2.sion_lp import solve_sion_lp  # noqa: E402
+from horizon.stage2.sion_lp import solve_sion_lp_robust  # noqa: E402
 from horizon.stage2.vote import (chernoff_vote_bound, empirical_vote_fooling, exact_vote_fooling,  # noqa: E402
                                  hoeffding_vote_bound, mixture_vote_fooling, run_correlation)
 
@@ -45,6 +46,7 @@ OUT = ROOT / "figures"
 LEFT, FOOT_Y, FORMULA_Y = 0.012, -0.025, 1.04   # figure-fraction layout positions
 TICK_ROT = 65
 CAPTIONS: dict[str, str] = {}
+DATA_NOTES: list[str] = []          # what the small-sample safeguards changed (written next to the figures)
 RUNS: dict[str, str | None] = {"stage1": None, "stage2": None}   # results sub-folders (default: run.split)
 
 plt.rcParams.update({
@@ -382,21 +384,22 @@ def stage1_handoff(cfg, inp):
     return out.R_Q, out.log_K, True
 
 
+def _read_or_none(p: Path):
+    try:
+        return pd.read_csv(p) if p.exists() and p.stat().st_size else None
+    except pd.errors.EmptyDataError:
+        return None
+
+
 def stage2_inputs(cfg, R_Q):
     d = ROOT / "results" / "stage2" / (RUNS["stage2"] or cfg.run["split"])
     if (d / "episodes.csv").exists():
-        ep = pd.read_csv(d / "episodes.csv")
-        configs = list(dict.fromkeys(ep["config"]))
-        piv = {c: ep.pivot_table(index="attack_id", columns="config", values=c)[configs] for c in "GCF"}
-        styles = list(dict.fromkeys(ep["style"]))
-        sty = ep.drop_duplicates("attack_id").set_index("attack_id").loc[piv["G"].index, "style"]
-        cal = pd.read_csv(d / "calibration.csv")
-        runs = pd.read_csv(d / "runs.csv").pivot_table(index="attack_id", columns="run", values="success").to_numpy()
-        util = ep.groupby("config")["utility"].mean().reindex(configs).to_numpy()
-        return theory.Stage2Inputs([tuple(c.split("|")) for c in configs], styles,
-                                   sty.map({s: i for i, s in enumerate(styles)}).to_numpy(),
-                                   piv["G"].to_numpy(), piv["C"].to_numpy(), piv["F"].to_numpy(), util, runs,
-                                   cal["score"].to_numpy(), cal["dangerous"].to_numpy().astype(bool), False)
+        inp, notes = build_stage2_inputs(pd.read_csv(d / "episodes.csv"), _read_or_none(d / "calibration.csv"),
+                                         _read_or_none(d / "runs.csv"), cfg.stage2.get("sion_min_cell", 20))
+        for n in notes:
+            print(f"  [stage 2 data] {n}", flush=True)
+        DATA_NOTES.extend(notes)
+        return inp
     return theory.stage2_theory(cfg, R_Q)
 
 
@@ -575,15 +578,19 @@ def f13_lp(cfg, s2, simulated):
     names = [ckey(c) for c in s2.configs]
     leak = leakage_bits(cfg, s2)
     lv = np.array([leak[parser_of(c)] for c in s2.configs])
-    r = solve_sion_lp(lbar, s2.styles, names, s2.utility, cfg.stage2["U_min"], lv, cfg.stage2["leakage_cap_bits"])
+    r = solve_sion_lp_robust(lbar, s2.styles, names, s2.utility, cfg.stage2["U_min"], lv,
+                             cfg.stage2["leakage_cap_bits"])
+    for n in r.notes:
+        print(f"  [F13] {n}", flush=True)
+    DATA_NOTES.extend(f"F13: {n}" for n in r.notes)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4), gridspec_kw={"width_ratios": [3, 1]})
     if r.value is None:
-        ax1.text(0.5, 0.5, "Π infeasible (no config meets utility ≥ U_min and leakage ≤ cap)", ha="center",
+        ax1.text(0.5, 0.5, f"no game value: {r.status}", ha="center",
                  transform=ax1.transAxes, color=INK2)
     else:
-        ax1.bar(np.arange(len(names)), [r.pi[n] for n in names], color=SERIES[0])
+        ax1.bar(np.arange(len(names)), [r.pi.get(n, 0.0) for n in names], color=SERIES[0])   # dropped configs: 0
         ax1.set_xticks(np.arange(len(names)), names, rotation=75, ha="right", fontsize=6)
-        ax2.bar(np.arange(len(s2.styles)), [r.w[s] for s in s2.styles], color=SERIES[1])
+        ax2.bar(np.arange(len(s2.styles)), [r.w.get(s, 0.0) for s in s2.styles], color=SERIES[1])
         ax2.set_xticks(np.arange(len(s2.styles)), s2.styles, rotation=45, ha="right", fontsize=7)
         ax1.annotate(f"game value = {r.value:.4f}", (LEFT, 0.92), xycoords="axes fraction", fontsize=9)
     ax1.set_ylabel(r"$\pi^\star_{Horizon}$ (probability)")
@@ -592,7 +599,8 @@ def f13_lp(cfg, s2, simulated):
                  x=LEFT, ha="left")
     df = pd.DataFrame([{"kind": "pi", "name": k, "value": v} for k, v in r.pi.items()] +
                       [{"kind": "w", "name": k, "value": v} for k, v in r.w.items()] +
-                      [{"kind": "game_value", "name": "", "value": r.value}])
+                      [{"kind": "game_value", "name": "", "value": r.value}] +
+                      [{"kind": "note", "name": n, "value": np.nan} for n in r.notes])
     save(fig, "F13_sion_lp", df, r"$\min_{\pi\in\Pi}\max_{w\in\mathcal{W}}\ \pi^\top\bar\ell\,w$",
          "ℓ̄[k,θ] = CP upper bound of the loss of style k under θ; Π: utility ≥ U_min, per-config leakage cap.",
          footer_of(cfg, U_min=cfg.stage2["U_min"], cap_bits=cfg.stage2["leakage_cap_bits"]))
@@ -616,8 +624,8 @@ def f14_v_horizon(cfg, s2, log_K, simulated):
     s2c = cfg.stage2
 
     def solve(rho, cap, umin):
-        return solve_v_horizon(L, names, mean_cp, adp, q, logk, rho, s2.utility, umin, lv, cap,
-                               cfg.stage1["solver"]).value
+        return solve_v_horizon_robust(L, names, mean_cp, adp, q, logk, rho, s2.utility, umin, lv, cap,
+                                      cfg.stage1["solver"]).value
 
     rows = []
     fig, axes = plt.subplots(1, 3, figsize=(12, 3.8), sharey=True)
@@ -743,17 +751,29 @@ def main() -> None:
     f7_v1(cfg, inp)
     f8_mcnemar(cfg, inp)
     R_Q, log_K, sim_handoff = stage1_handoff(cfg, inp)
-    s2 = stage2_inputs(cfg, R_Q) if mode == "results" else theory.stage2_theory(cfg, R_Q)
-    sim = s2.simulated
-    f9_hoeffding(cfg, s2, R_Q, sim)
-    f10_failure_hist(cfg, s2, sim)
-    f11_conformal(cfg, s2, sim)
-    f12_loss(cfg, s2, sim)
-    f13_lp(cfg, s2, sim)
-    f14_v_horizon(cfg, s2, log_K, sim)
-    f15_leakage(cfg, s2, sim)
+    try:
+        s2 = stage2_inputs(cfg, R_Q) if mode == "results" else theory.stage2_theory(cfg, R_Q)
+    except Exception as e:                      # no / unusable Stage 2 data: say why, keep every other figure
+        print(f"  Stage 2 figures skipped: {type(e).__name__}: {e}", flush=True)
+        s2 = None
+    if s2 is not None:
+        sim = s2.simulated
+        # one starved figure must not abort the others (an empty calibration set, a single configuration, ...)
+        for name, fn, fargs in (("F9", f9_hoeffding, (cfg, s2, R_Q, sim)), ("F10", f10_failure_hist, (cfg, s2, sim)),
+                               ("F11", f11_conformal, (cfg, s2, sim)), ("F12", f12_loss, (cfg, s2, sim)),
+                               ("F13", f13_lp, (cfg, s2, sim)), ("F14", f14_v_horizon, (cfg, s2, log_K, sim)),
+                               ("F15", f15_leakage, (cfg, s2, sim))):
+            try:
+                fn(*fargs)
+            except Exception as e:
+                plt.close("all")
+                msg = f"{name} skipped: {type(e).__name__}: {e}"
+                print(f"  {msg}", flush=True)
+                DATA_NOTES.append(msg)
     f16_f18(cfg)
     (OUT / "captions.json").write_text(json.dumps(CAPTIONS, indent=2, ensure_ascii=False))
+    if DATA_NOTES:                              # what the small-sample safeguards changed or skipped
+        (OUT / "data_notes.txt").write_text("\n".join(dict.fromkeys(DATA_NOTES)) + "\n")
     print(f"wrote {len(CAPTIONS)} figures")
 
 

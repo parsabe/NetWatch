@@ -26,15 +26,81 @@ def sandbox(tmp_path, monkeypatch):
     return res
 
 
-def test_both_profiles_plan_at_least_min_tests():
+def test_every_profile_plans_at_least_min_tests():
     for name in CFG.campaign["profiles"]:
         prof = C.profile_of(CFG, name)
         cfg = load_config(None, prof["set"])
         plan = C.build_plan(cfg, prof, [])
-        assert {p.name for p in plan} == set(C.ORDER)
+        assert {p.name for p in plan} == set(C.ORDER) - set(prof["skip"]), name
         assert sum(p.planned or 0 for p in plan) >= prof["min_tests"], name
         for p in plan:                                   # dependencies exist and come earlier in ORDER
             assert all(C.ORDER.index(d) < C.ORDER.index(p.name) for d in p.needs), p.name
+            assert all(C.ORDER.index(d) < C.ORDER.index(p.name) for d in p.wants), p.name
+
+
+def bounded_plan(extra_set=()):
+    prof = C.profile_of(CFG, "bounded")
+    cfg = load_config(None, [*prof["set"], *extra_set])
+    return C.build_plan(cfg, prof, []), prof
+
+
+def test_bounded_profile_stays_between_2000_and_4000_tests():
+    """THE budget: 2,000 ≤ certain tests and at most 4,000 in all, every phase sized, and nothing left unknown."""
+    plan, prof = bounded_plan()
+    firm, upper = C.budget(plan)
+    assert prof["min_tests"] == 2000 and prof["max_tests"] == 4000
+    assert 2000 <= firm <= upper <= 4000, (firm, upper)
+    assert all(p.planned is not None for p in plan), [p.name for p in plan if p.planned is None]
+    assert C.budget_problems(plan, prof) == []
+
+
+def test_budget_is_enforced_when_a_setting_blows_it_up():
+    for extra in (["redteam.garak_prompt_cap=500"],            # garak at its old size
+                  ["stage1.pilot_n=500", "stage1.pilot_clean=150"]):
+        plan, prof = bounded_plan(extra)
+        assert any("above max_tests" in m for m in C.budget_problems(plan, prof)), extra
+
+
+def test_bounded_profile_skips_autotune_and_no_phase_depends_on_it():
+    plan, _ = bounded_plan()
+    names = {p.name for p in plan}
+    assert "autotune" not in names and "stage1_altmodel" not in names
+    assert all("autotune" not in p.needs for p in plan)
+
+
+def test_failed_autotune_does_not_skip_stage1_fit(sandbox):
+    """The cascade that sank the real campaign: autotune failed → stage1_fit skipped → 12 more phases skipped."""
+    ok, bad = [sys.executable, "-c", "pass"], [sys.executable, "-c", "raise SystemExit(1)"]
+    plan = [C.Phase("autotune", "", "", bad, [], "document", None, None, exclusive=True),
+            C.Phase("stage1_fit", "", "", ok, [], "document", 1, 1, wants=["autotune"]),
+            C.Phase("calibrate", "", "", ok, ["stage1_fit"], "agent", 1, 1)]
+    st = {"phases": {}}
+    C.run_phases(plan, {"workers": 2, "set": []}, st, [], load_config(None, ["campaign.max_retries=0"]))
+    s = {k: v["status"] for k, v in st["phases"].items()}
+    assert s == {"autotune": "failed", "stage1_fit": "ok", "calibrate": "ok"}
+
+
+def test_stage1_fit_waits_for_autotune_to_finish(sandbox, tmp_path):
+    log = tmp_path / "events"
+    def job(name):
+        return [sys.executable, "-c", f"import time; open({str(log)!r},'a').write('{name}+\\n'); time.sleep(0.4); "
+                                      f"open({str(log)!r},'a').write('{name}-\\n')"]
+    plan = [C.Phase("autotune", "", "", job("autotune"), [], "document", None, None),
+            C.Phase("stage1_fit", "", "", job("stage1_fit"), [], "document", 1, 1, wants=["autotune"])]
+    st = {"phases": {}}
+    C.run_phases(plan, {"workers": 2, "set": []}, st, [], CFG)
+    assert log.read_text().split() == ["autotune+", "autotune-", "stage1_fit+", "stage1_fit-"]
+
+
+def test_garak_tests_are_counted_once_per_output_not_once_per_detector(sandbox):
+    t = sandbox / "testing"
+    t.mkdir(parents=True)
+    pd.DataFrame([{"target": "bare", "family": "direct", "probe": "dan.Dan_11_0", "detector": "dan.DAN", "fails": 3, "n": 10},
+                  {"target": "bare", "family": "direct", "probe": "dan.Dan_11_0", "detector": "mitigation.Prefixes",
+                   "fails": 5, "n": 10}]).to_csv(t / "garak_items.csv", index=False)
+    df, _ = C.tally(CFG)
+    g = df[df["phase"] == "garak"].iloc[0]
+    assert (g["tests"], g["got_through"]) == (10, 5)         # 10 outputs, flagged by the strictest detector
 
 
 def test_scheduler_runs_in_order_and_skips_dependents_of_failures(sandbox):

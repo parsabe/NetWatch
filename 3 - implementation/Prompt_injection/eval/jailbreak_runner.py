@@ -165,12 +165,21 @@ async def _pyrit(cfg, endpoint: str, objectives: list[str], kinds: list[str]) ->
             if (k, obj[:200]) in done:
                 continue
             t0 = time.time()
-            res = await makers[k]().execute_async(objective=obj)
-            if "SUCCESS" not in str(res.outcome) and getattr(res, "last_score", None) is None:
-                # PAIR / TAP swallow per-node errors (endpoint down, 404, timeout) and report FAILURE without a
-                # single score: that is a broken run, not a blocked jailbreak — do not record it
-                raise RuntimeError(f"{k}: no response was scored ({getattr(res, 'outcome_reason', '')}) — "
-                                   "is the model / guarded endpoint reachable?")
+            res, last = None, None
+            for attempt in range(1 + int(cfg.redteam.get("pyrit_retries", 2))):    # one hiccup must not cost the phase
+                try:
+                    res = await makers[k]().execute_async(objective=obj)
+                    if "SUCCESS" not in str(res.outcome) and getattr(res, "last_score", None) is None:
+                        # PAIR / TAP swallow per-node errors (endpoint down, 404, timeout) and report FAILURE without a
+                        # single score: that is a broken run, not a blocked jailbreak — do not record it
+                        raise RuntimeError(f"{k}: no response was scored ({getattr(res, 'outcome_reason', '')}) — "
+                                           "is the model / guarded endpoint reachable?")
+                    break
+                except Exception as e:
+                    last, res = e, None
+                    print(f"  {k}: attempt {attempt + 1} failed ({type(e).__name__}: {str(e)[:160]})", flush=True)
+            if res is None:
+                raise last
             row = {"attack": k, "objective": obj[:200], "outcome": str(res.outcome),
                    "turns": getattr(res, "executed_turns", None), "seconds": time.time() - t0}
             pd.DataFrame([row]).to_csv(path, mode="a", header=not path.exists(), index=False)
@@ -219,7 +228,17 @@ def xpia(cfg, args) -> pd.DataFrame:
             for conv in converters:
                 todo = [a for a in attacks if (c, conv, a["id"]) not in done]
                 for i, a in enumerate(todo, 1):
-                    it = await run_one(proc, a, c, conv, args.xpia_round)
+                    it, last = None, None
+                    for attempt in range(1 + int(rc.get("xpia_retries", 2))):
+                        try:
+                            it = await run_one(proc, a, c, conv, args.xpia_round)
+                            break
+                        except Exception as e:                                   # the phase keeps every finished item
+                            last = e
+                            print(f"  xpia {c}/{conv}/{a['id']}: attempt {attempt + 1} failed "
+                                  f"({type(e).__name__}: {str(e)[:160]})", flush=True)
+                    if it is None:
+                        raise last
                     pd.DataFrame([it.__dict__]).to_csv(items, mode="a", header=not items.exists(), index=False)
                     if i % rc["progress_every"] == 0 or i == len(todo):
                         print(f"  xpia {c:9s} {conv:10s} {i}/{len(todo)}", flush=True)
@@ -243,12 +262,16 @@ def garak_target(cfg, target: str, guarded_endpoint: str) -> tuple[str, str]:
 
 
 def garak_config(cfg, endpoint: str, model: str, name: str) -> Path:
+    # max_tokens: garak sends none by default, so a looping generation ran for 10+ minutes and 100 KB until Ollama
+    # aborted it. request_timeout: the old value (the models' 3600 s after repairs) hid hangs; with a token cap an
+    # answer arrives in well under garak_request_timeout_s.
     conf = {"rest": {"RestGenerator": {
         "name": name, "uri": endpoint, "method": "post",
         "headers": {"Content-Type": "application/json"},
-        "req_template_json_object": {"model": model, "messages": [{"role": "user", "content": "$INPUT"}]},
+        "req_template_json_object": {"model": model, "max_tokens": int(cfg.models["max_tokens"]),
+                                     "messages": [{"role": "user", "content": "$INPUT"}]},
         "response_json": True, "response_json_field": "$.choices[0].message.content",
-        "request_timeout": cfg.models["request_timeout_s"]}}}     # garak's default (20 s) is too short under load
+        "request_timeout": int(cfg.redteam.get("garak_request_timeout_s", 300))}}}
     GARAK_DIR.mkdir(parents=True, exist_ok=True)
     p = GARAK_DIR / f"rest_{name}.json"
     p.write_text(json.dumps(conf, indent=1))
@@ -266,35 +289,80 @@ def parse_garak(report: Path) -> list[dict]:
     return rows
 
 
+def _garak_finished(report: Path) -> bool:
+    return report.exists() and '"entry_type": "completion"' in report.read_text()
+
+
+def _guarded_error_rate(endpoint: str) -> tuple[int, int]:
+    """(errors, requests) the guarded endpoint counted (GET /stats); (0, 0) for the bare model or if unreachable."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen(endpoint.replace("/v1/chat/completions", "/stats"), timeout=10) as r:
+            d = json.loads(r.read())
+        return int(d.get("errors", 0)), int(d.get("requests", 0))
+    except Exception:
+        return 0, 0
+
+
 def garak(cfg, args) -> pd.DataFrame:
+    """garak, ONE PROBE PER SUBPROCESS, each capped at redteam.garak_prompt_cap prompts × garak_generations outputs.
+
+    Before: one subprocess ran whole modules (`dan,promptinject,encoding` = ~23 probes × 256 prompts × 5 outputs, i.e.
+    tens of thousands of requests, planned as "None") and any failure renamed the report to .partial and started over
+    — five runs in a row died at the same prompt and kept nothing. Now a finished probe is never run again, a probe that
+    crashes is retried alone, and the phase fails (exit 1) only after every other probe has been given its chance.
+    """
     import subprocess
     import yaml
     rc = cfg.redteam
     GARAK_DIR.mkdir(parents=True, exist_ok=True)
     run_cfg = GARAK_DIR / "garak_run.yaml"
-    run_cfg.write_text(yaml.safe_dump({"reporting": {"report_dir": str(GARAK_DIR.resolve())}}))
-    rows = []
+    run_cfg.write_text(yaml.safe_dump({"reporting": {"report_dir": str(GARAK_DIR.resolve())},
+                                       "run": {"soft_probe_prompt_cap": int(rc["garak_prompt_cap"])}}))
+    rows, failed = [], []
     for target in rc["garak_targets"]:
         endpoint, model = garak_target(cfg, target, args.endpoint)
         gen = garak_config(cfg, endpoint, model, target)
         for family in ("direct", "indirect"):
-            prefix = f"{target}_{family}"
-            report = GARAK_DIR / f"{prefix}.report.jsonl"
-            if report.exists() and '"entry_type": "completion"' not in report.read_text():
-                report.rename(report.with_suffix(".partial"))       # killed mid-run → start that probe set again
-            if not report.exists():
-                cmd = [sys.executable, "-m", "garak", "--config", str(run_cfg), "--model_type", "rest",
-                       "--generator_option_file", str(gen), "--probes", ",".join(rc[f"garak_probes_{family}"]),
-                       "--generations", str(rc["garak_generations"]), "--seed", str(cfg.run["seed"]),
-                       "--parallel_attempts", str(cfg.models["parallel_requests"]), "--report_prefix", prefix]
-                print("  " + " ".join(cmd), flush=True)
-                subprocess.run(cmd, check=True)
-            rows += [{"target": target, "family": family, **r} for r in parse_garak(report)]
+            for probe in rc[f"garak_probes_{family}"]:
+                prefix = f"{target}_{family}_{probe.replace('.', '-')}"
+                report = GARAK_DIR / f"{prefix}.report.jsonl"
+                if report.exists() and not _garak_finished(report):
+                    report.rename(report.with_suffix(".partial"))        # killed mid-probe → run that probe again
+                for attempt in range(1 + int(rc.get("garak_probe_retries", 1))):
+                    if _garak_finished(report):
+                        break
+                    cmd = [sys.executable, "-m", "garak", "--config", str(run_cfg), "--model_type", "rest",
+                           "--generator_option_file", str(gen), "--probes", probe,
+                           "--generations", str(rc["garak_generations"]), "--seed", str(cfg.run["seed"]),
+                           "--parallel_attempts", str(cfg.models["parallel_requests"]), "--report_prefix", prefix]
+                    print("  " + " ".join(cmd), flush=True)
+                    t0 = time.time()
+                    r = subprocess.run(cmd)
+                    print(f"  garak {target}/{probe}: exit {r.returncode} after {time.time() - t0:.0f} s"
+                          f"{' (retrying)' if r.returncode and attempt < rc.get('garak_probe_retries', 1) else ''}",
+                          flush=True)
+                    if report.exists() and not _garak_finished(report):
+                        report.rename(report.with_suffix(".partial"))
+                if _garak_finished(report):
+                    rows += [{"target": target, "family": family, **x} for x in parse_garak(report)]
+                else:
+                    failed.append(f"{target}/{probe}")
+        if target == "guarded":
+            errs, reqs = _guarded_error_rate(endpoint)
+            if reqs and errs / reqs > rc.get("max_upstream_error_rate", 0.02):
+                failed.append(f"guarded endpoint: {errs} of {reqs} requests hit an upstream error "
+                              f"(> {rc.get('max_upstream_error_rate', 0.02):.0%}): empty answers would read as 'blocked'")
     df = pd.DataFrame(rows)
-    summary = _cp_rows(df, ["target", "family", "probe"], "fails", "n", cfg.stage1["alpha"])
-    df.to_csv(OUT / "garak_items.csv", index=False)
-    summary.to_csv(OUT / "garak.csv", index=False)
-    print(summary.to_string(index=False))
+    if len(df):
+        summary = _cp_rows(df, ["target", "family", "probe"], "fails", "n", cfg.stage1["alpha"])
+        df.to_csv(OUT / "garak_items.csv", index=False)
+        summary.to_csv(OUT / "garak.csv", index=False)
+        print(summary.to_string(index=False))
+    else:
+        summary = pd.DataFrame()
+    if failed:
+        raise RuntimeError("garak: probes without a result: " + "; ".join(failed))
     return summary
 
 

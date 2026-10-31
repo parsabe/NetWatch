@@ -45,16 +45,20 @@ def solve_v1(A: np.ndarray, names: list[str], U: np.ndarray, u_none: float, eta:
     """
     A = np.asarray(A, dtype=float)
     n, T = A.shape
+    if n == 0:                                            # nothing observed: no estimate, no game
+        return SionResult("no data", None, None)
     f = forging_vector(q, log_key_spaces)
     mu = A.mean(axis=0)
     Ac = A - mu[None, :]
     mb = mu if mean_bound is None else np.asarray(mean_bound, dtype=float)
+    # the variance of the per-attack loss needs ≥ 2 attacks; with fewer the DRO term is just the mean bound
+    scale = math.sqrt(2.0 * rho / n) if n >= 2 else 0.0
 
     pi = cp.Variable(T, nonneg=True)
     t = cp.Variable()
     cons = [cp.sum(pi) == 1,
             U @ pi >= u_none - eta,
-            t >= mb @ pi + math.sqrt(2.0 * rho / n) * cp.norm(Ac @ pi, 2),
+            t >= mb @ pi + scale * cp.norm(Ac @ pi, 2),
             t >= p_adp @ pi]
     prob = cp.Problem(cp.Minimize(f @ pi + t), cons)
     try:
@@ -68,7 +72,7 @@ def solve_v1(A: np.ndarray, names: list[str], U: np.ndarray, u_none: float, eta:
     w = w / w.sum()
     L = A @ w
     mean_term = float(mb @ w)
-    var_term = float(np.mean((L - L.mean()) ** 2))
+    var_term = float(np.mean((L - L.mean()) ** 2)) if n >= 2 else 0.0
     dro_term = mean_term + math.sqrt(2.0 * rho * var_term)
     adp_term = float(p_adp @ w)
     forge_term = float(f @ w)
@@ -90,7 +94,7 @@ def evaluate_v1_objective(A: np.ndarray, pi: np.ndarray, q: float, log_key_space
     w = np.asarray(pi, dtype=float)
     L = A @ w
     mean_term = float(L.mean()) if mean_bound is None else float(np.asarray(mean_bound, dtype=float) @ w)
-    var_term = float(np.mean((L - L.mean()) ** 2))
+    var_term = float(np.mean((L - L.mean()) ** 2)) if len(L) >= 2 else 0.0
     dro_term = mean_term + math.sqrt(2.0 * rho * var_term)
     adp_term = float(np.asarray(p_adp) @ w)
     forge_term = float(forging_vector(q, log_key_spaces) @ w)
