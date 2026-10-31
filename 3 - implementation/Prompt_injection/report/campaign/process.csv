@@ -1,0 +1,18 @@
+order,phase,what,status,start,end,duration,tests planned,tests done
+1,stage1_fit,Stage 1 on the fit split,ok,2026-10-31T17:26:05,2026-10-31T17:47:30,0 h 21 min,560,560
+2,detect,Guards · detection and false alarms,not started,,,,500,0
+3,ablation_none,AgentDojo · defence 'none',not started,,,,120,0
+4,xpia_none,PyRIT XPIA · 'none',not started,,,,50,0
+5,calibrate,Calibrate λ̂ (conformal risk control),failed,2026-10-31T18:42:02,2026-10-31T18:42:12,0 h 03 min,160,10
+6,stage1_report,Stage 1 on the report split,ok,2026-10-31T17:47:36,2026-10-31T18:27:12,0 h 39 min,560,560
+7,ablation_stage1,AgentDojo · defence 'stage1',ok,2026-10-31T17:47:36,2026-10-31T18:41:57,0 h 54 min,120,120
+8,xpia_stage1,PyRIT XPIA · 'stage1',ok,2026-10-31T17:47:36,2026-10-31T17:57:26,0 h 09 min,50,50
+9,ablation_stage2,AgentDojo · defence 'stage2',skipped,,,,120,0
+10,ablation_stage1+2,AgentDojo · defence 'stage1+2',skipped,,,,120,0
+11,ablation_full,AgentDojo · defence 'full',skipped,,,,120,0
+12,xpia_stage2,PyRIT XPIA · 'stage2',skipped,,,,50,0
+13,xpia_stage1+2,PyRIT XPIA · 'stage1+2',skipped,,,,50,0
+14,xpia_full,PyRIT XPIA · 'full',skipped,,,,50,0
+15,pyrit,"PyRIT · PAIR, TAP, Crescendo jailbreaks",not started,,,,60,0
+16,garak,garak · direct + indirect probes,not started,,,,336,0
+17,agent_adaptive,AgentDojo · adaptive attacker vs. full Horizon,skipped,,,,12,0

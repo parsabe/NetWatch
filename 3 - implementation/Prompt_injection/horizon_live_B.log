@@ -88,3 +88,29 @@ report: report/campaign/campaign_report.pdf (.md, CSV tables)
 ==== GPU use during the run (average utilization %):
   89 % over 337 samples
 campaign exit code 2 (0 done · 2 done with problems · 3 paused)
+==== job 1419108.mmaster02 on mgpunode003.cluster at Sa 31. Okt 18:42:39 CET 2026
+==== 1. GPU + driver (nvidia-smi)
+name, memory.total [MiB], driver_version
+Quadro RTX 5000, 16384 MiB, 595.71.05
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
+==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)
+torch 2.14.1+cu130 · built for CUDA 13.0 · CUDA usable: True
+guards run on: Quadro RTX 5000
+==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)
+ollama + proxy up
+NAME        ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL              
+qwen3:8b    500a1f067a9f    10 GB    100% GPU     16384      llamacpp    4 minutes from now    
+OK: qwen3:8b runs fully on the GPU
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage_B.csv
+==== 5. campaign
+[18:42:53] campaign profile=bounded workers=4 planned=3038 min_tests=2000
+[18:42:55] mlflow_ready db=results/mlflow_laneB.db
+[18:42:55] start phase=detect tests_planned=500
+[18:42:55] start phase=ablation_none tests_planned=120
+[18:42:55] start phase=xpia_none tests_planned=50
+[19:42:57] start_server what=guarded endpoint port=11436
+[19:42:57] start phase=pyrit tests_planned=60
+[19:42:57] finish phase=detect status=ok minutes=60.0
+[19:42:57] finish phase=ablation_none status=ok minutes=60.0
+[19:42:57] finish phase=xpia_none status=ok minutes=60.0
+[19:43:02] start phase=garak tests_planned=336
