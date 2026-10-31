@@ -1,0 +1,90 @@
+==== job 1418118.mmaster02 on mgpunode002.cluster at Mi 28. Okt 00:09:54 CET 2026
+==== 1. GPU + driver (nvidia-smi)
+name, memory.total [MiB], driver_version
+Quadro RTX 5000, 16384 MiB, 595.71.05
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
+==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)
+torch 2.14.1+cu130 · built for CUDA 13.0 · CUDA usable: True
+guards run on: Quadro RTX 5000
+==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)
+ollama + proxy up
+NAME        ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL              
+qwen3:8b    500a1f067a9f    10 GB    100% GPU     16384      llamacpp    4 minutes from now    
+OK: qwen3:8b runs fully on the GPU
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage_B.csv
+==== 5. campaign
+[00:10:08] campaign profile=cluster workers=4 planned=64281 min_tests=5000
+[00:10:08] start phase=detect tests_planned=14176
+[00:10:08] start phase=ablation_none tests_planned=2876
+[00:10:08] start phase=xpia_none tests_planned=2000
+[00:10:13] start_server what=guarded endpoint port=11436
+[00:10:13] start phase=pyrit tests_planned=300
+[00:10:13] finish phase=detect status=failed minutes=0.1
+[00:10:13] retry phase=detect attempt=1 max=2
+[00:10:19] start phase=detect tests_planned=14176
+[00:11:49] finish phase=xpia_none status=failed minutes=1.7
+[00:11:49] retry phase=xpia_none attempt=1 max=2
+[00:11:54] start phase=xpia_none tests_planned=2000
+[02:05:21] finish phase=detect status=ok minutes=115.0
+[02:05:21] repair_kept phase=detect set=['models.request_timeout_s=1800', 'direct.device=cpu']
+[02:05:26] start phase=garak tests_planned=None
+[04:35:08] finish phase=garak status=failed minutes=149.7
+[04:35:08] retry phase=garak attempt=1 max=2
+[04:35:13] start phase=garak tests_planned=None
+[04:38:28] finish phase=xpia_none status=ok minutes=266.6
+[04:38:28] repair_kept phase=xpia_none set=['models.request_timeout_s=1800', 'direct.device=cpu']
+[07:16:45] finish phase=garak status=failed minutes=161.5
+[07:16:45] retry phase=garak attempt=2 max=2
+[10:41:22] finish phase=pyrit status=failed minutes=631.1
+[10:41:22] retry phase=pyrit attempt=1 max=2
+[10:41:27] start phase=pyrit tests_planned=300
+[14:19:44] finish phase=pyrit status=failed minutes=218.3
+[14:19:44] retry phase=pyrit attempt=2 max=2
+[15:46:20] finish phase=ablation_none status=ok minutes=936.2
+[15:46:25] start phase=pyrit tests_planned=300
+stop requested → pausing the campaign cleanly
+[23:55:09] pause phase=pyrit
+[23:55:09] report total_tests=20694 status=paused (time limit / Ctrl-C) — run the same command again to continue path=report/campaign/campaign_report.md
+
+campaign exit code 3  (0 complete · 2 finished with problems · 3 paused → run again)
+report: report/campaign/campaign_report.pdf (.md, CSV tables)
+==== GPU use during the run (average utilization %):
+  89 % over 285 samples
+campaign exit code 3 (0 done · 2 done with problems · 3 paused)
+paused before the walltime → submitting the next part
+1418592.mmaster02
+==== job 1418592.mmaster02 on mgpunode003.cluster at Sa 31. Okt 04:25:13 CET 2026
+==== 1. GPU + driver (nvidia-smi)
+name, memory.total [MiB], driver_version
+Quadro RTX 5000, 16384 MiB, 595.71.05
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
+==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)
+torch 2.14.1+cu130 · built for CUDA 13.0 · CUDA usable: True
+guards run on: Quadro RTX 5000
+==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)
+ollama + proxy up
+NAME        ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL              
+qwen3:8b    500a1f067a9f    10 GB    100% GPU     16384      llamacpp    4 minutes from now    
+OK: qwen3:8b runs fully on the GPU
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage_B.csv
+==== 5. campaign
+[04:25:30] campaign profile=cluster workers=4 planned=64281 min_tests=5000
+[04:25:35] start_server what=guarded endpoint port=11436
+[04:25:35] start phase=pyrit tests_planned=300
+[04:25:35] start phase=garak tests_planned=None
+[06:06:41] finish phase=garak status=failed minutes=101.1
+[06:06:41] retry phase=garak attempt=1 max=2
+[06:06:46] start phase=garak tests_planned=None
+[07:32:47] finish phase=pyrit status=ok minutes=187.2
+[07:53:23] finish phase=garak status=failed minutes=106.6
+[07:53:23] retry phase=garak attempt=2 max=2
+[07:53:28] start phase=garak tests_planned=None
+[08:40:28] finish phase=garak status=failed minutes=47.0
+[08:40:33] skip phase=stage1_altmodel reason=needs stage1_fit
+[08:40:39] report total_tests=20710 status=finished with problems path=report/campaign/campaign_report.md
+
+campaign exit code 2  (0 complete · 2 finished with problems · 3 paused → run again)
+report: report/campaign/campaign_report.pdf (.md, CSV tables)
+==== GPU use during the run (average utilization %):
+  89 % over 337 samples
+campaign exit code 2 (0 done · 2 done with problems · 3 paused)

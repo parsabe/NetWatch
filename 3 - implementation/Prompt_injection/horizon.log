@@ -1,4 +1,4 @@
-==== job 1418001.mmaster02 on mgpunode003.cluster at Di 27. Okt 18:21:02 CET 2026
+==== job 1418592.mmaster02 on mgpunode003.cluster at Sa 31. Okt 04:25:13 CET 2026
 ==== 1. GPU + driver (nvidia-smi)
 name, memory.total [MiB], driver_version
 Quadro RTX 5000, 16384 MiB, 595.71.05
@@ -11,10 +11,25 @@ ollama + proxy up
 NAME        ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL              
 qwen3:8b    500a1f067a9f    10 GB    100% GPU     16384      llamacpp    4 minutes from now    
 OK: qwen3:8b runs fully on the GPU
-==== 4. GPU usage every 5 min → results/campaign/gpu_usage.csv
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage_B.csv
 ==== 5. campaign
-[18:21:36] campaign profile=cluster workers=4 planned=56856 min_tests=5000
-[18:21:36] start phase=stage1_fit tests_planned=9200
-[18:21:36] start phase=detect tests_planned=14176
-[18:21:36] start phase=ablation_none tests_planned=2471
-[18:21:36] start phase=xpia_none tests_planned=2000
+[04:25:30] campaign profile=cluster workers=4 planned=64281 min_tests=5000
+[04:25:35] start_server what=guarded endpoint port=11436
+[04:25:35] start phase=pyrit tests_planned=300
+[04:25:35] start phase=garak tests_planned=None
+[06:06:41] finish phase=garak status=failed minutes=101.1
+[06:06:41] retry phase=garak attempt=1 max=2
+[06:06:46] start phase=garak tests_planned=None
+[07:32:47] finish phase=pyrit status=ok minutes=187.2
+[07:53:23] finish phase=garak status=failed minutes=106.6
+[07:53:23] retry phase=garak attempt=2 max=2
+[07:53:28] start phase=garak tests_planned=None
+[08:40:28] finish phase=garak status=failed minutes=47.0
+[08:40:33] skip phase=stage1_altmodel reason=needs stage1_fit
+[08:40:39] report total_tests=20710 status=finished with problems path=report/campaign/campaign_report.md
+
+campaign exit code 2  (0 complete · 2 finished with problems · 3 paused → run again)
+report: report/campaign/campaign_report.pdf (.md, CSV tables)
+==== GPU use during the run (average utilization %):
+  89 % over 337 samples
+campaign exit code 2 (0 done · 2 done with problems · 3 paused)

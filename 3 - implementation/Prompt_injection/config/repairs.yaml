@@ -1,0 +1,7 @@
+# written by eval/campaign.py: settings that made a failed phase pass (delete to undo)
+detect:
+- models.request_timeout_s=1800
+- direct.device=cpu
+xpia_none:
+- models.request_timeout_s=1800
+- direct.device=cpu

@@ -1,0 +1,43 @@
+==== job 1418117.mmaster02 on mgpunode003.cluster at Mi 28. Okt 00:09:48 CET 2026
+==== 1. GPU + driver (nvidia-smi)
+name, memory.total [MiB], driver_version
+Quadro RTX 5000, 16384 MiB, 595.71.05
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
+==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)
+torch 2.14.1+cu130 · built for CUDA 13.0 · CUDA usable: True
+guards run on: Quadro RTX 5000
+==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)
+ollama + proxy up
+NAME        ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL              
+qwen3:8b    500a1f067a9f    10 GB    100% GPU     16384      llamacpp    4 minutes from now    
+OK: qwen3:8b runs fully on the GPU
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage_A.csv
+==== 5. campaign
+[00:10:03] campaign profile=cluster workers=4 planned=64281 min_tests=5000
+[00:10:03] start phase=autotune tests_planned=None
+[02:11:09] finish phase=autotune status=failed minutes=121.1
+[02:11:09] retry phase=autotune attempt=1 max=2
+[02:11:14] start phase=autotune tests_planned=None
+[02:29:10] finish phase=autotune status=failed minutes=17.9
+[02:29:10] retry phase=autotune attempt=2 max=2
+[02:29:15] start phase=autotune tests_planned=None
+[02:29:50] finish phase=autotune status=failed minutes=0.6
+[02:29:55] skip phase=stage1_fit reason=needs autotune
+[02:29:55] skip phase=calibrate reason=needs stage1_fit
+[02:29:55] skip phase=stage1_report reason=needs stage1_fit
+[02:29:55] skip phase=ablation_stage1 reason=needs stage1_fit
+[02:29:55] skip phase=xpia_stage1 reason=needs stage1_fit
+[02:29:55] skip phase=ablation_stage2 reason=needs calibrate
+[02:29:55] skip phase=ablation_stage1+2 reason=needs stage1_fit, calibrate
+[02:29:55] skip phase=ablation_full reason=needs stage1_fit, calibrate
+[02:29:55] skip phase=xpia_stage2 reason=needs stage1_fit, calibrate
+[02:29:55] skip phase=xpia_stage1+2 reason=needs stage1_fit, calibrate
+[02:29:55] skip phase=xpia_full reason=needs stage1_fit, calibrate
+[02:29:55] skip phase=agent_adaptive reason=needs stage1_fit, calibrate
+[02:30:00] report total_tests=17485 status=finished with problems path=report/campaign/campaign_report.md
+
+campaign exit code 2  (0 complete · 2 finished with problems · 3 paused → run again)
+report: report/campaign/campaign_report.pdf (.md, CSV tables)
+==== GPU use during the run (average utilization %):
+  90 % over 28 samples
+campaign exit code 2 (0 done · 2 done with problems · 3 paused)

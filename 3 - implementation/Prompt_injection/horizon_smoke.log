@@ -1,4 +1,4 @@
-==== job 1418111.mmaster02 on mgpunode002.cluster at Di 27. Okt 22:15:34 CET 2026
+==== job 1418116.mmaster02 on mgpunode002.cluster at Di 27. Okt 22:27:02 CET 2026
 ==== 1. GPU + driver (nvidia-smi)
 name, memory.total [MiB], driver_version
 Quadro RTX 5000, 16384 MiB, 595.71.05
@@ -13,5 +13,50 @@ qwen3:8b    500a1f067a9f    7.7 GB    100% GPU     16384      llamacpp    4 minu
 OK: qwen3:8b runs fully on the GPU
 ==== 4. GPU usage every 5 min → results/campaign/gpu_usage.csv
 ==== 5. campaign
-[22:15:49] campaign profile=smoke workers=1 planned=525 min_tests=0
-[22:15:50] start phase=autotune tests_planned=None
+[22:27:16] campaign profile=smoke workers=1 planned=525 min_tests=0
+[22:27:16] start phase=autotune tests_planned=None
+[22:34:17] finish phase=autotune status=ok minutes=7.0
+[22:34:23] start phase=stage1_fit tests_planned=170
+[22:44:08] finish phase=stage1_fit status=ok minutes=9.8
+[22:44:13] start phase=detect tests_planned=60
+[22:44:53] finish phase=detect status=ok minutes=0.7
+[22:44:58] start phase=ablation_none tests_planned=6
+[22:45:43] finish phase=ablation_none status=ok minutes=0.8
+[22:45:48] start phase=xpia_none tests_planned=2
+[22:46:13] finish phase=xpia_none status=ok minutes=0.4
+[22:46:18] start phase=calibrate tests_planned=6
+[22:48:58] finish phase=calibrate status=ok minutes=2.7
+[22:49:03] start phase=stage1_report tests_planned=170
+[22:56:28] finish phase=stage1_report status=ok minutes=7.4
+[22:56:34] start phase=ablation_stage1 tests_planned=6
+[22:57:24] finish phase=ablation_stage1 status=ok minutes=0.8
+[22:57:29] start phase=xpia_stage1 tests_planned=2
+[22:57:49] finish phase=xpia_stage1 status=ok minutes=0.3
+[22:57:54] start phase=ablation_stage2 tests_planned=6
+[23:01:14] finish phase=ablation_stage2 status=ok minutes=3.3
+[23:01:19] start phase=ablation_stage1+2 tests_planned=6
+[23:02:59] finish phase=ablation_stage1+2 status=ok minutes=1.7
+[23:03:04] start phase=ablation_full tests_planned=6
+[23:04:24] finish phase=ablation_full status=ok minutes=1.3
+[23:04:29] start phase=xpia_stage2 tests_planned=2
+[23:04:54] finish phase=xpia_stage2 status=ok minutes=0.4
+[23:04:59] start phase=xpia_stage1+2 tests_planned=2
+[23:05:19] finish phase=xpia_stage1+2 status=ok minutes=0.3
+[23:05:24] start phase=xpia_full tests_planned=2
+[23:07:04] finish phase=xpia_full status=ok minutes=1.7
+[23:07:14] start_server what=guarded endpoint port=11436
+[23:07:14] start phase=pyrit tests_planned=6
+[23:33:55] finish phase=pyrit status=ok minutes=26.7
+[23:34:00] start phase=garak tests_planned=None
+[00:03:25] finish phase=garak status=ok minutes=29.4
+[00:03:30] start phase=agent_adaptive tests_planned=3
+[00:05:45] finish phase=agent_adaptive status=ok minutes=2.3
+[00:05:50] start phase=stage1_altmodel tests_planned=70
+[00:09:30] finish phase=stage1_altmodel status=ok minutes=3.7
+[00:09:36] report total_tests=865 status=complete path=report/campaign/campaign_report.md
+
+campaign exit code 0  (0 complete · 2 finished with problems · 3 paused → run again)
+report: report/campaign/campaign_report.pdf (.md, CSV tables)
+==== GPU use during the run (average utilization %):
+  85 % over 21 samples
+campaign exit code 0 (0 done · 2 done with problems · 3 paused)
