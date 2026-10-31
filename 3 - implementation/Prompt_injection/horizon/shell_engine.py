@@ -451,7 +451,7 @@ class DirectEngine:
 
     def run(self, prompt: str) -> DirectOutcome:
         from horizon.direct import canary as canary_mod
-        from horizon.direct.guards import InjectionGuardInput, Qwen3GuardOutput
+        from horizon.direct.guards import InjectionGuardInput, make_output_guard
         f, t0 = self.cfg.flags, time.time()
         ig, score = "off", None
         if f.use_firewall:
@@ -467,7 +467,7 @@ class DirectEngine:
         leaked = f.use_canary and canary_mod.leaked(answer, token)
         og, reason = "off", ""
         if not leaked and f.use_output_guard:
-            v = Qwen3GuardOutput(self.cfg.direct).check(prompt, answer)
+            v = make_output_guard(self.cfg.direct).check(prompt, answer)
             og, reason = ("blocked" if v.blocked else "passed"), v.reason
         final = ("[withheld: the answer leaked the secret system prompt token]" if leaked else
                  "[withheld by Qwen3Guard: unsafe answer]" if og == "blocked" else answer)

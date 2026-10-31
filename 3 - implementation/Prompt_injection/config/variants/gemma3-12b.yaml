@@ -1,0 +1,22 @@
+# Second campaign with NO Qwen model: Gemma 3 12B (Google) as planner, victim and attacker, IBM Granite Guardian as
+# output guard. Copied to config/local.yaml of its own run folder by cluster/launch_variant.sh (never used here).
+run:
+  experiment_name: horizon-gemma3-12b
+models:
+  p_llm: ollama_chat/gemma3:12b
+  q_llm: ollama_chat/gemma3:12b
+  attacker: ollama_chat/gemma3:12b
+  disable_thinking: false        # Gemma 3 has no thinking mode
+  tool_calling: prompting        # Ollama's Gemma 3 template has no tool support → AgentDojo LocalLLM
+  parallel_requests: 2
+direct:
+  output_guard_kind: granite_guardian
+  output_guard_model: ibm-granite/granite-guardian-3.1-2b      # Apache-2.0, not gated
+  output_guard_revision: 81145486e85c6c82c01e759c0356d9d6da4d21a5
+  output_guard_risk: harm
+  output_guard_block: ["Yes"]   # quoted: unquoted YAML Yes is the boolean true
+  min_free_gpu_gb: 7             # the guard (≈ 5 GB) goes on the GPU only if Gemma leaves that much free, else CPU
+campaign:
+  profiles:
+    bounded:
+      parallel_requests: 2       # 12B weights (≈ 8 GB) + KV cache: 2 slots × 16k context stay fully on the 16 GB GPU

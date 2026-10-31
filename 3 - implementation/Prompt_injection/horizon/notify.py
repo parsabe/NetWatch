@@ -72,6 +72,18 @@ def _chat_id(token: str) -> str | None:
     return cid
 
 
+def run_tag() -> str:
+    """Which campaign a message comes from (two runs with different models notify the same chat): HORIZON_RUN if
+    set, else the victim model of this copy's config, e.g. 'qwen3:8b' or 'gemma3:12b'."""
+    if os.environ.get("HORIZON_RUN"):
+        return os.environ["HORIZON_RUN"]
+    try:
+        from horizon.config import load_config
+        return load_config().models["q_llm"].split("/", 1)[-1]
+    except Exception:
+        return ""
+
+
 def send(text: str) -> bool:
     """Send one message; returns False (never raises) if Telegram is not configured or unreachable."""
     if os.environ.get("HORIZON_NO_NOTIFY"):           # tests and dry runs
@@ -82,7 +94,8 @@ def send(text: str) -> bool:
     cid = _chat_id(token)
     if not cid:
         return False
-    head = f"🔭 Horizon · {socket.gethostname().split('.')[0]}"
+    tag = run_tag()
+    head = f"🔭 Horizon{f' [{tag}]' if tag else ''} · {socket.gethostname().split('.')[0]}"
     ok = True
     for i, part in enumerate(chunks(text), 1):
         n = len(chunks(text))

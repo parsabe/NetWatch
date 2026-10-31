@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from horizon.config import add_config_args, config_from_args  # noqa: E402
 from horizon.direct import canary as canary_mod  # noqa: E402
-from horizon.direct.guards import InjectionGuardInput, Qwen3GuardOutput  # noqa: E402
+from horizon.direct.guards import InjectionGuardInput, make_output_guard  # noqa: E402
 from horizon.llm import LLM  # noqa: E402
 
 SYSTEM = "You are a helpful, harmless assistant."
@@ -39,7 +39,7 @@ class Guarded:
         f = cfg.flags
         self.llm = LLM(cfg.models["p_llm"], cfg.models)
         self.inp = InjectionGuardInput(cfg.direct) if f.use_firewall else None
-        self.out = Qwen3GuardOutput(cfg.direct) if f.use_output_guard else None
+        self.out = make_output_guard(cfg.direct) if f.use_output_guard else None
         self.token = canary_mod.new_token(cfg.direct["canary_hex_bytes"]) if f.use_canary else None
         self.log: list[dict] = []
         self.stats = {"requests": 0, "errors": 0, "input_blocked": 0, "output_blocked": 0, "canary_leaks": 0}

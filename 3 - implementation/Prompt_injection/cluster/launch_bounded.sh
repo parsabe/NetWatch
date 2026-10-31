@@ -51,23 +51,26 @@ echo "$PLAN"
 echo "$PLAN" | grep -q "budget OK" || { echo "!! budget check failed — nothing submitted"; exit 1; }
 
 say "4. submit"
+PAR=$("${PY[@]}" -c "from horizon.config import load_config; print(load_config().campaign['profiles']['bounded']['parallel_requests'])")
+echo "  model: $("${PY[@]}" -c "from horizon.notify import run_tag; print(run_tag())") · Ollama slots per GPU: $PAR · folder: $PWD"
+JN="${JOBNAME:-horizon}"                                         # PBS job name (qstat shows it)
 DEP=()
 if [ -z "${NO_SMOKE:-}" ]; then
-  SMOKE=$(qsub cluster/horizon_smoke.pbs)
-  echo "  smoke job: $SMOKE (≈ 1–3 h, in a copy at ~/0_smoke)"
+  SMOKE=$(qsub -N "${JN:0:9}-smoke" cluster/horizon_smoke.pbs)
+  echo "  smoke job: $SMOKE (≈ 1–3 h, in a copy at ~/0_smoke_$(basename "$PWD"))"
   DEP=(-W "depend=afterok:$SMOKE")
 fi
 if [ -n "${ONE_GPU:-}" ]; then
-  A=$(qsub "${DEP[@]}" cluster/horizon_campaign.pbs); B=""
+  A=$(qsub "${DEP[@]}" -N "$JN" -v PARALLEL="$PAR" cluster/horizon_campaign.pbs); B=""
   echo "  campaign (one GPU, all phases): $A"
 else
-  A=$(qsub "${DEP[@]}" -v LANE=A cluster/horizon_campaign.pbs)    # without LANE a job runs EVERY phase
-  B=$(qsub "${DEP[@]}" -v LANE=B cluster/horizon_campaign.pbs)
+  A=$(qsub "${DEP[@]}" -N "${JN:0:13}-A" -v LANE=A,PARALLEL="$PAR" cluster/horizon_campaign.pbs)   # no LANE = EVERY phase
+  B=$(qsub "${DEP[@]}" -N "${JN:0:13}-B" -v LANE=B,PARALLEL="$PAR" cluster/horizon_campaign.pbs)
   echo "  lane A: $A    lane B: $B"
 fi
 [ -n "${SMOKE:-}" ] && echo "  the lanes are held until the smoke job ends with exit 0; if it fails, PBS drops them"
 
-tg "🚀 Bounded campaign submitted (2,702–3,038 tests, allowed 2,000–4,000)
+tg "🚀 Bounded campaign submitted from $(basename "$PWD") (2,702–3,038 tests, allowed 2,000–4,000)
 ${SMOKE:+smoke: $SMOKE (lanes wait for it)
 }lane A: $A${B:+
 lane B: $B}

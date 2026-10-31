@@ -29,7 +29,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from horizon.config import ROOT, add_config_args, config_from_args, load_config  # noqa: E402
-from horizon.direct.guards import GatedModelError, InjectionGuardInput, Qwen3GuardOutput  # noqa: E402
+from horizon.direct.guards import GatedModelError, InjectionGuardInput, make_output_guard  # noqa: E402
 from horizon.logging_utils import log_examples, mlflow_run  # noqa: E402
 from horizon.stage1 import stats  # noqa: E402
 
@@ -81,7 +81,7 @@ def detect(cfg, limit: int | None) -> pd.DataFrame:
     """Every prompt through every detector; one row per item is appended at once (resumable)."""
     a = cfg.stage1["alpha"]
     sets = load_sets(cfg.run["seed"], limit)
-    detectors = {"input_guard": InjectionGuardInput(cfg.direct), "output_guard": Qwen3GuardOutput(cfg.direct)}
+    detectors = {"input_guard": InjectionGuardInput(cfg.direct), "output_guard": make_output_guard(cfg.direct)}
     OUT.mkdir(parents=True, exist_ok=True)
     items = OUT / "direct_items.csv"
     done = (set(map(tuple, pd.read_csv(items)[["detector", "set", "idx"]].astype(str).to_numpy()))

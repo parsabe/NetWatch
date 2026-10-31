@@ -25,7 +25,7 @@ from agentdojo.agent_pipeline.errors import AbortAgentError
 
 from horizon.config import ROOT, Config
 from horizon.direct import canary as canary_mod
-from horizon.direct.guards import InjectionGuardInput, Qwen3GuardOutput
+from horizon.direct.guards import InjectionGuardInput, Qwen3GuardOutput, make_output_guard
 from horizon.llm import LLM
 from horizon.stage1.transforms import build_variants
 from horizon.stage2.camel_adapter import EpisodeState, HorizonPolicyEngine, HorizonPrivilegedLLM, tool_signatures
@@ -153,7 +153,12 @@ def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, a
                                              s2["p_llm_max_attempts"]))
     else:
         client = openai.OpenAI(base_url=f"http://127.0.0.1:{cfg.models['proxy_port']}/v1", api_key="local")
-        llm = agent_pipeline.OpenAILLM(client, cfg.models["p_llm"].split("/", 1)[1], temperature=cfg.models["temperature"])
+        name = cfg.models["p_llm"].split("/", 1)[1]
+        if cfg.models.get("tool_calling", "native") == "prompting":   # Ollama refuses `tools` for e.g. Gemma 3:
+            from agentdojo.agent_pipeline.llms.local_llm import LocalLLM   # tools described in the prompt instead
+            llm = LocalLLM(client, name, temperature=cfg.models["temperature"])
+        else:
+            llm = agent_pipeline.OpenAILLM(client, name, temperature=cfg.models["temperature"])
         sysmsg = load_system_message(None)
         if token:
             sysmsg = canary_mod.with_canary(sysmsg, token)
@@ -162,7 +167,7 @@ def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, a
         elements = [agent_pipeline.SystemMessage(sysmsg), *elements, llm,
                     agent_pipeline.ToolsExecutionLoop([executor, llm])]
     if f.use_output_guard or f.use_canary:
-        elements.append(OutputGuard(Qwen3GuardOutput(cfg.direct) if f.use_output_guard else None, token, log,
+        elements.append(OutputGuard(make_output_guard(cfg.direct) if f.use_output_guard else None, token, log,
                                     state.emit))
     pipe = agent_pipeline.AgentPipeline(elements)
     pipe.name = ablation_name(cfg)

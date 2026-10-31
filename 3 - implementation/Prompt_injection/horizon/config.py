@@ -89,6 +89,7 @@ def _set_dotted(d: dict, dotted: str, raw: str) -> None:
 
 
 AUTOTUNED = ROOT / "config" / "autotuned.yaml"     # upgrades adopted by eval/autotune.py (delete to undo)
+LOCAL = ROOT / "config" / "local.yaml"             # this copy's own settings (e.g. another model; cluster/launch_variant.sh)
 
 
 def _merge(base: dict, over: dict) -> dict:
@@ -98,12 +99,16 @@ def _merge(base: dict, over: dict) -> dict:
 
 
 def load_config(path: str | Path | None = None, overrides: list[str] | None = None) -> Config:
-    """params.yaml, then config/autotuned.yaml (adopted upgrades, default config only), then --set overrides."""
+    """params.yaml, then config/autotuned.yaml (adopted upgrades), then config/local.yaml (this copy's own settings) —
+    both for the default config only — then --set overrides."""
     raw = yaml.safe_load(Path(path or DEFAULT_PARAMS).read_text())
     raw = copy.deepcopy(raw)
     if (path is None or Path(path).resolve() == DEFAULT_PARAMS.resolve()) and AUTOTUNED.exists() \
             and not os.environ.get("HORIZON_NO_AUTOTUNED"):
         raw = _merge(raw, yaml.safe_load(AUTOTUNED.read_text()) or {})
+    if (path is None or Path(path).resolve() == DEFAULT_PARAMS.resolve()) and LOCAL.exists() \
+            and not os.environ.get("HORIZON_NO_LOCAL"):
+        raw = _merge(raw, yaml.safe_load(LOCAL.read_text()) or {})
     for ov in overrides or []:
         key, _, val = ov.partition("=")
         _set_dotted(raw, key.strip(), val)

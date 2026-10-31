@@ -157,3 +157,66 @@ class Qwen3GuardOutput:
         with torch.no_grad():
             out = self._model.generate(**ids, max_new_tokens=self.cfg["guard_max_new_tokens"], do_sample=False)
         return self.verdict(self._tok.decode(out[0, ids.input_ids.shape[-1]:], skip_special_tokens=True))
+
+
+class GraniteGuardianOutput:
+    """IBM Granite Guardian (Apache-2.0, not gated) as the output guard — the non-Qwen alternative to Qwen3Guard.
+
+    The model's chat template turns (user, assistant) into "Is the assistant message harmful based on the risk
+    definition?" (or the user message alone, when there is no answer) and the model answers 'Yes' or 'No'
+    (direct.output_guard_risk picks the risk definition, e.g. 'harm', 'jailbreak'). 'Yes' blocks. Same interface as
+    Qwen3GuardOutput: check(user_text, assistant_text="") → GuardVerdict, preload().
+    """
+
+    def __init__(self, direct_cfg: dict):
+        self.cfg = direct_cfg
+        self._model = self._tok = None
+
+    def _load(self):
+        with _LOAD_LOCK:
+            if self._model is not None:
+                return
+            mid, rev = self.cfg["output_guard_model"], self.cfg["output_guard_revision"]
+            try:
+                import torch
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+                self._tok = AutoTokenizer.from_pretrained(mid, revision=rev)
+                dev = _device(self.cfg["device"], self.cfg.get("min_free_gpu_gb", 0))
+                model = AutoModelForCausalLM.from_pretrained(
+                    mid, revision=rev, dtype=torch.bfloat16 if dev == "cuda" else torch.float32).to(dev).eval()
+                self._model = model
+            except Exception as e:
+                raise _gated(mid, e) from e
+
+    def preload(self) -> None:
+        self._load()
+
+    def check(self, user_text: str, assistant_text: str = "") -> GuardVerdict:
+        self._load()
+        import torch
+        conv = [{"role": "user", "content": user_text}]
+        if assistant_text:
+            conv.append({"role": "assistant", "content": assistant_text})
+        text = self._tok.apply_chat_template(conv, guardian_config={"risk_name": self.cfg["output_guard_risk"]},
+                                             add_generation_prompt=True, tokenize=False)
+        ids = self._tok([text], return_tensors="pt").to(self._model.device)
+        with torch.no_grad():
+            out = self._model.generate(**ids, max_new_tokens=self.cfg["guard_max_new_tokens"], do_sample=False)
+        answer = self._tok.decode(out[0, ids.input_ids.shape[-1]:], skip_special_tokens=True).strip()
+        label = answer.split()[0].strip(".,:").capitalize() if answer else "unparsed"
+        # YAML 1.1 reads an unquoted Yes / No as a boolean: accept both spellings
+        block = {("Yes" if x else "No") if isinstance(x, bool) else str(x).capitalize()
+                 for x in self.cfg["output_guard_block"]}
+        blocked = label in block
+        return GuardVerdict(blocked, None, f"granite-guardian {self.cfg['output_guard_risk']}: {label}",
+                            "granite_guardian")
+
+
+def make_output_guard(direct_cfg: dict):
+    """direct.output_guard_kind: qwen3guard (default) | granite_guardian."""
+    kind = direct_cfg.get("output_guard_kind", "qwen3guard")
+    if kind == "granite_guardian":
+        return GraniteGuardianOutput(direct_cfg)
+    if kind == "qwen3guard":
+        return Qwen3GuardOutput(direct_cfg)
+    raise ValueError(f"unknown direct.output_guard_kind: {kind!r}")

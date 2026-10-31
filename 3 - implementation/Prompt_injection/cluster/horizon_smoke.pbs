@@ -8,10 +8,10 @@
 #PBS -o horizon_smoke.log
 # Smoke test of the WHOLE campaign machinery at tiny size (profile smoke, ≈ 1–3 h), before a big run:
 #   qsub cluster/horizon_smoke.pbs        → Telegram message + horizon_smoke_live.log + ~/0_smoke/report/campaign/
-# It runs in a copy (~/0_smoke) so its results never mix with the real campaign's results/.
+# It runs in a copy (~/0_smoke_<run folder name>) so its results never mix with the real campaign's results/.
 set -uo pipefail
 SRC="${PBS_O_WORKDIR:-$(dirname "$0")/..}"
-DST="$HOME/0_smoke"
+DST="${SMOKE_DIR:-$HOME/0_smoke_$(basename "$SRC")}"   # one smoke copy per run: two runs never wipe each other's
 mkdir -p "$DST"
 rsync -a --delete --exclude .venv --exclude results --exclude report --exclude mlartifacts --exclude 'horizon*.log' \
       --exclude data/raw --exclude config/autotuned.yaml "$SRC/" "$DST/"

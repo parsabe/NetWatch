@@ -34,7 +34,9 @@ models:
   proxy_default_max_tokens: 2048   # role proxy: limit for clients that send none (garak, PyRIT) ...
   proxy_max_tokens_ceiling: 4096   # ... and the most any client may ask for
   request_timeout_s: 900     # includes waiting in Ollama's queue (campaign: several phases share the slots)
-  disable_thinking: true     # Qwen3 thinking off via reasoning_effort (LiteLLM + role proxy)
+  disable_thinking: true     # Qwen3 thinking off via reasoning_effort (LiteLLM + role proxy); false for non-thinking models
+  tool_calling: native       # plain AgentDojo agent: native = OpenAI tool calls | prompting = tools described in the prompt
+                             # (AgentDojo LocalLLM) for models whose Ollama template has no tool support, e.g. Gemma 3
   reasoning_effort_off: none
   cache_dir: ./results/llm_cache
 
@@ -286,6 +288,8 @@ direct:
   input_guard_max_window: 512     # tokens per window (model limit); longer text is scored in windows
   input_guard_stride: 64          # token overlap between windows
   input_guard_contaminated_sets: [xstest_safe]   # in the guard's training data (model card) → flagged in results
+  output_guard_kind: qwen3guard                      # qwen3guard | granite_guardian (horizon/direct/guards.py)
+  output_guard_risk: harm                            # granite_guardian only: risk definition (harm, jailbreak, ...)
   output_guard_model: Qwen/Qwen3Guard-Gen-0.6B      # replaces Llama Guard (Meta access rejected); Apache-2.0
   output_guard_revision: fada3b2f655b89601929198343c94cd2f64d93cc
   output_guard_block: [Unsafe]                       # add Controversial for a stricter guard
