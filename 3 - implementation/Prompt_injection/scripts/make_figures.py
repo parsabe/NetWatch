@@ -395,7 +395,7 @@ def stage2_inputs(cfg, R_Q):
     d = ROOT / "results" / "stage2" / (RUNS["stage2"] or cfg.run["split"])
     if (d / "episodes.csv").exists():
         inp, notes = build_stage2_inputs(pd.read_csv(d / "episodes.csv"), _read_or_none(d / "calibration.csv"),
-                                         _read_or_none(d / "runs.csv"), cfg.stage2.get("sion_min_cell", 20))
+                                         _read_or_none(d / "runs.csv"), cfg.stage2["sion_min_cell"])
         for n in notes:
             print(f"  [stage 2 data] {n}", flush=True)
         DATA_NOTES.extend(notes)

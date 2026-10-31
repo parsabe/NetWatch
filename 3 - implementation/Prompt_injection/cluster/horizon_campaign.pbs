@@ -26,7 +26,7 @@ export GIT_PYTHON_REFRESH=quiet  # no git on the nodes: silences MLflow's GitPyt
 # Every server stays a child of this job and is stopped when it ends: the node health check takes a node offline
 # when it finds orphaned ("rogue") processes — this happened to mgpunode002 with the old nohup'd servers.
 cleanup() {
-  kill "${SERVE_PID:-}" "${GPUMON:-}" 2>/dev/null
+  kill "${SERVE_PID:-}" "${GPUMON:-}" "${PROGRESS_PID:-}" 2>/dev/null
   pkill -u "$USER" -f "ollama [s]erve" 2>/dev/null
   pkill -u "$USER" -f "openai_role_[p]roxy.py" 2>/dev/null
   pkill -u "$USER" -f "guarded_[s]erver.py" 2>/dev/null
@@ -72,6 +72,17 @@ nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used,memory.total --form
   >> "$GPULOG" 2>/dev/null &
 GPUMON=$!
 
+# Hourly Telegram progress (every phase: status + tests done / planned). One overview for both lanes, so only lane A
+# (or a single job without lanes) sends it. PROGRESS_MIN=0 switches it off.
+PROGRESS_MIN="${PROGRESS_MIN:-60}"
+if [ "$PROGRESS_MIN" -gt 0 ] && [ "${LANE:-A}" = "A" ]; then
+  ( while sleep $((PROGRESS_MIN * 60)); do
+      "$UV" run --no-sync python scripts/progress.py --send >/dev/null 2>&1 || true
+    done ) &
+  PROGRESS_PID=$!
+  echo "==== progress → Telegram every $PROGRESS_MIN min"
+fi
+
 echo "==== 5. campaign"
 timeout --preserve-status --signal=TERM $((WALLTIME_H * 3600 - STOP_EARLY_S)) \
   ./run_campaign.sh --profile "$PROFILE" ${LANE:+--lane "$LANE"} "$@"
@@ -80,6 +91,7 @@ echo "==== GPU use during the run (average utilization %):"
 awk -F', ' '$1 ~ /^[0-9]/ {s+=$2; n++} END {if (n) printf "  %.0f %% over %d samples\n", s/n, n}' \
   "$GPULOG"
 echo "campaign exit code $rc (0 done · 2 done with problems · 3 paused)"
+"$UV" run --no-sync python scripts/progress.py --send >/dev/null 2>&1 || true   # final snapshot of this part
 if [ "$rc" -eq 3 ] && [ -z "${NO_RESUBMIT:-}" ]; then
   echo "paused before the walltime → submitting the next part"
   qsub ${LANE:+-v LANE=$LANE} cluster/horizon_campaign.pbs \

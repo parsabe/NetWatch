@@ -26,6 +26,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -65,7 +66,7 @@ def make_handler(upstream: str, timeout: float, disable_thinking: bool, effort_o
                     data, status = r.read(), r.status
             except urllib.error.HTTPError as e:
                 data, status = e.read(), e.code
-                if status >= 500 and LOOP_ERROR.search(data) and self.command == "POST":
+                if status >= HTTPStatus.INTERNAL_SERVER_ERROR and LOOP_ERROR.search(data) and self.command == "POST":
                     data, status = empty_completion(model), 200          # the model only looped: nothing usable
             except Exception as e:                                       # timeout, connection refused, ...
                 data = json.dumps({"error": {"message": f"upstream: {type(e).__name__}: {e}"[:300],

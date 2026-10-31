@@ -350,9 +350,9 @@ def garak(cfg, args) -> pd.DataFrame:
                     failed.append(f"{target}/{probe}")
         if target == "guarded":
             errs, reqs = _guarded_error_rate(endpoint)
-            if reqs and errs / reqs > rc.get("max_upstream_error_rate", 0.02):
+            if reqs and errs / reqs > rc["max_upstream_error_rate"]:
                 failed.append(f"guarded endpoint: {errs} of {reqs} requests hit an upstream error "
-                              f"(> {rc.get('max_upstream_error_rate', 0.02):.0%}): empty answers would read as 'blocked'")
+                              f"(> {rc['max_upstream_error_rate']:.0%}): empty answers would read as 'blocked'")
     df = pd.DataFrame(rows)
     if len(df):
         summary = _cp_rows(df, ["target", "family", "probe"], "fails", "n", cfg.stage1["alpha"])

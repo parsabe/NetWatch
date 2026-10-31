@@ -69,8 +69,10 @@ class LLM:
         for attempt in range(attempts):
             params = {"temperature": self.temperature, "max_tokens": cap}
             if loops:                       # break the loop: sample, penalise repeats (→ Ollama repeat_penalty), stop sooner
-                params.update(temperature=min(1.0, max(self.temperature, 0.2 + 0.2 * loops)),
-                              frequency_penalty=1.0 + 0.15 * loops, max_tokens=max(128, cap // (1 + loops)))
+                lr = self.cfg["loop_retry"]
+                params.update(temperature=min(1.0, max(self.temperature, lr["temperature_step"] * (1 + loops))),
+                              frequency_penalty=1.0 + lr["repeat_penalty_step"] * loops,
+                              max_tokens=max(lr["min_tokens"], cap // (1 + loops)))
             try:
                 r = litellm.completion(model=self.model, messages=msgs,
                                        api_base=self._api_base() if self_hosted else None,

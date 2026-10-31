@@ -29,6 +29,8 @@ models:
   max_tokens: 768
   llm_attempts: 4            # tries per call; an Ollama "token repeat limit" abort is retried with a different sample
   degenerate_policy: empty   # every sample looped → "" (counted, never cached); "raise" = fail the call instead
+  loop_retry: {temperature_step: 0.2, repeat_penalty_step: 0.15, min_tokens: 128}   # k-th retry: T = step·(k+1),
+                             # Ollama repeat_penalty = 1 + step·k, max_tokens = cap/(k+1) (not below min_tokens)
   proxy_default_max_tokens: 2048   # role proxy: limit for clients that send none (garak, PyRIT) ...
   proxy_max_tokens_ceiling: 4096   # ... and the most any client may ask for
   request_timeout_s: 900     # includes waiting in Ollama's queue (campaign: several phases share the slots)
