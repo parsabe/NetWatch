@@ -13,9 +13,11 @@ Runs = this project folder (Qwen3-8B) and every ~/0_runs/<name>/ copy (e.g. Gemm
 Read-only: the bot never starts, stops or changes anything, and it runs no command a message names — only the fixed
 ones above.
 
-Two ways to run it on the LOGIN node (cluster/telegram_bot.sh does this for you):
-    .venv/bin/python scripts/telegram_bot.py --once            # one poll, ≤ 50 s long-poll (cron: every minute)
-    .venv/bin/python scripts/telegram_bot.py                   # forever (tmux / screen)
+It runs on the LOGIN node (compute nodes have no internet) as a normal background process — no cron, no root:
+    ./cluster/telegram_bot.sh start                            # (cluster/launch_quick2h.sh starts it for you)
+    .venv/bin/python scripts/telegram_bot.py                   # the loop itself; one instance only (lock file);
+                                                               # ends by itself --idle-h hours after your last job
+    .venv/bin/python scripts/telegram_bot.py --once            # one poll, ≤ 50 s long-poll
     .venv/bin/python scripts/telegram_bot.py --set-commands    # register the command menu in Telegram (once)
     .venv/bin/python scripts/telegram_bot.py --test /status    # print the answer here, send nothing
 """
@@ -44,7 +46,9 @@ OFFSET_FILE = notify.CONF_DIR / "telegram_offset"
 RUNS_DIR = Path.home() / "0_runs"
 QSTAT = shutil.which("qstat") or "/opt/pbs/bin/qstat"
 USER = os.environ.get("USER") or getpass.getuser()
-POLL_S = 50                              # long-poll; cron starts the next poll every minute
+POLL_S = 50                              # long-poll: answers arrive within seconds
+LOCK_FILE = notify.CONF_DIR / "bot.lock"
+ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]|\r")
 
 COMMANDS = [("status", "overview: PBS jobs + progress of every run"),
             ("qstat", "qstat -u $USER with time used / left per job"),
@@ -175,7 +179,21 @@ def run_summary(name: str, d: Path) -> str:
         except ValueError:
             pass
     return f"🔭 {name}  ({d})\n" + "\n".join(head[1:] if head and head[0].startswith("📊") else head) + \
-        (f"\nphases: {states}" if states else "") + fin
+        (f"\nphases: {states}" if states else "") + fin + live_tail(d, 8)
+
+
+def live_tail(d: Path, n: int, max_age_h: float = 6) -> str:
+    """The last n lines of the run's newest live log (what the job prints in its terminal), if it is recent."""
+    logs = sorted(d.glob("horizon_live*.log"), key=lambda p: p.stat().st_mtime)
+    if not logs or time.time() - logs[-1].stat().st_mtime > max_age_h * 3600:
+        return ""
+    p = logs[-1]
+    with p.open("rb") as f:                                   # read only the end: live logs grow to many MB
+        f.seek(max(0, p.stat().st_size - 20000))
+        lines = [ANSI.sub("", x).rstrip() for x in f.read().decode(errors="replace").splitlines()[1:]]
+    lines = [x[:150] for x in lines if x.strip()][-n:]
+    age = (time.time() - p.stat().st_mtime) / 60
+    return f"\n📟 {p.name} (last write {age:.0f} min ago):\n" + "\n".join("  " + x for x in lines)
 
 
 def cmd_status(_arg: str) -> list[tuple[str, bool]]:
@@ -198,11 +216,9 @@ def cmd_log(arg: str) -> list[tuple[str, bool]]:
     for n, d in runs():
         if arg and arg.lower() not in n.lower() and arg.lower() not in d.name.lower():
             continue
-        logs = sorted(d.glob("horizon_live*.log"), key=lambda p: p.stat().st_mtime)[-2:]
-        for p in logs:
-            tail = p.read_text(errors="replace").splitlines()[-20:]
-            age = (time.time() - p.stat().st_mtime) / 60
-            out.append((f"{n} · {p.name} (last write {age:.0f} min ago)\n" + "\n".join(x[:160] for x in tail), True))
+        t = live_tail(d, 25, max_age_h=24 * 30)
+        if t:
+            out.append((f"{n}{t}", True))
     return out or [(f"no live log found{f' for {arg!r}' if arg else ''}", False)]
 
 
@@ -311,6 +327,8 @@ def main() -> int:
     ap.add_argument("--once", action="store_true", help="one poll (for cron), then exit")
     ap.add_argument("--set-commands", action="store_true", help="register the command menu in Telegram")
     ap.add_argument("--test", metavar="COMMAND", help="print the answer to e.g. '/status' here; send nothing")
+    ap.add_argument("--idle-h", type=float, default=3.0,
+                    help="loop mode: stop this many hours after the last PBS job of yours ended (0 = never)")
     args = ap.parse_args()
     if args.test:
         for body, pre in answer(args.test):
@@ -331,8 +349,25 @@ def main() -> int:
     if args.once:
         poll(token, cid, POLL_S)
         return 0
+    import fcntl
+    lock = open(LOCK_FILE, "w")
+    try:                                                     # one bot only: two pollers steal each other's updates
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("another bot is already running on this node (lock: %s)" % LOCK_FILE)
+        return 0
+    lock.write(str(os.getpid())); lock.flush()
+    print(f"{datetime.now():%Y-%m-%d %H:%M:%S} bot running on {os.uname().nodename}, pid {os.getpid()}", flush=True)
+    last_job, checked = time.time(), 0.0
     while True:
         poll(token, cid, POLL_S)
+        if args.idle_h and time.time() - checked > 300:      # every 5 min: any job of mine still queued / running?
+            checked = time.time()
+            if re.search(r"^\d+\.", sh([QSTAT, "-w", "-u", USER], timeout=30), flags=re.M):
+                last_job = checked
+            elif checked - last_job > args.idle_h * 3600:
+                print(f"{datetime.now():%Y-%m-%d %H:%M:%S} no PBS jobs for {args.idle_h:g} h → bot stops", flush=True)
+                return 0
 
 
 if __name__ == "__main__":

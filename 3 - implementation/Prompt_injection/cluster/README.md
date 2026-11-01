@@ -29,14 +29,16 @@ defence configuration, guard misses and false alarms, PyRIT, XPIA, garak, and th
 ## 0b · Watch from Telegram (/status, /qstat, …)
 
 ```bash
-./cluster/telegram_bot.sh install   # login node, once: cron polls Telegram every minute + sets the command menu
+./cluster/telegram_bot.sh start     # login node; launch_quick2h.sh does this for you. No cron, no root needed.
 ```
 
-Then send the bot: `/status` (PBS jobs with time used and left, plus every run's tests and phase states), `/qstat`
-(`qstat -u $USER` with an analysis per job, including exit codes of jobs that ended), `/progress` (every phase of every
-run), `/log qwen` or `/log gemma` (last lines of the live log), `/compare` (overview chart + significant differences
-Qwen vs Gemma), `/help`. The bot answers only your chat, runs only these fixed read-only commands, and lives on the
-login node where you installed it. `./cluster/telegram_bot.sh status` shows its log; `… uninstall` removes it.
+Then send the bot: `/status` (PBS jobs with time used and left, every run's tests and phase states, and the last lines
+the job printed in its terminal), `/qstat` (`qstat -u $USER` with an analysis per job, including exit codes of jobs
+that ended), `/progress` (every phase of every run), `/log qwen` or `/log gemma` (last 25 lines of the live log),
+`/compare` (overview chart + significant differences Qwen vs Gemma), `/help`. The bot answers only your chat and runs
+only these fixed read-only commands. It is a background process on the login node (compute nodes have no internet):
+it stops by itself 3 h after your last job ended and when the login node reboots — then `start` again.
+`./cluster/telegram_bot.sh status` shows whether it runs and its log; `… stop` stops it.
 
 ## 1 · Upload
 

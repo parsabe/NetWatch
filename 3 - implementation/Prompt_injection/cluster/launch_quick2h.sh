@@ -20,8 +20,11 @@ JOBNAME=qwen-2h ./cluster/launch_bounded.sh
 echo; echo "######## Gemma 3 12B (~/0_runs/gemma3-12b)"
 SKIP_TESTS=1 JOBNAME=gemma-2h ./cluster/launch_variant.sh gemma3-12b
 
+echo; echo "######## Telegram bot (/status, /qstat, /log … on your phone)"
+./cluster/telegram_bot.sh start || echo "  (bot not started — run ./cluster/telegram_bot.sh start by hand)"
+
 echo
-echo "both submitted. Watch:  qstat -u $USER"
+echo "both submitted. Watch:  qstat -u $USER   or /status in Telegram"
 echo "  tail -f horizon_live.log ~/0_runs/gemma3-12b/horizon_live.log"
 echo "  .venv/bin/python scripts/progress.py ;  (cd ~/0_runs/gemma3-12b && .venv/bin/python scripts/progress.py)"
 echo "after both ended (≤ 2 h):  .venv/bin/python scripts/compare_runs.py . ~/0_runs/gemma3-12b"
