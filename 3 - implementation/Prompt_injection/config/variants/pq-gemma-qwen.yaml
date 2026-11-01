@@ -1,0 +1,17 @@
+# Pairing test (profile pair2h, cluster/launch_pairs.sh): PLANNER (P-LLM) = gemma, READER (Q-LLM) = qwen.
+# The attacker is the same third model in all four pairings (mistral:7b), so no model attacks itself, and the
+# guards are the same (DeBERTa input guard + Qwen3Guard output guard) — only P and Q differ between the runs.
+# Roles: P-LLM = CaMeL planner, the plain AgentDojo agent ('none'), the PyRIT / garak target.
+#        Q-LLM = CaMeL quarantined readers, the Stage 1 / XPIA document reader.
+run:
+  experiment_name: horizon-pq-gemma-qwen
+models:
+  p_llm: ollama_chat/gemma3:12b
+  q_llm: ollama_chat/qwen3:8b
+  attacker: ollama_chat/mistral:7b
+  disable_thinking: true         # applies only to models.thinking_models (Qwen3); Gemma 3 / Mistral have none
+  tool_calling: prompting   # plain agent = P-LLM; Ollama's Gemma 3 template has no tools
+campaign:
+  profiles:
+    pair2h:
+      parallel_requests: 1   # two models (≈ 6.4 + 7.5 GB) share the 16 GB GPU: 1 slot each; the attacker is loaded when needed

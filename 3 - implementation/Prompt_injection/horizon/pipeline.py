@@ -185,7 +185,7 @@ def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, a
     token = canary_mod.new_token(cfg.direct["canary_hex_bytes"]) if f.use_canary else None
     elements: list = [agent_pipeline.InitQuery()]
     if f.use_firewall:
-        elements.insert(0, InputGuard(InjectionGuardInput(cfg.direct), log, state.emit))
+        elements.insert(0, InputGuard(_shared("input", cfg.direct, InjectionGuardInput), log, state.emit))
     mix = resolve_mix(cfg)
     if f.use_stage2:
         q = Quarantine(LLM(cfg.models["q_llm"], cfg.models), mix, s2["parser"], s2,
@@ -213,11 +213,23 @@ def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, a
         elements = [agent_pipeline.SystemMessage(sysmsg), *elements, llm,
                     agent_pipeline.ToolsExecutionLoop([executor, llm])]
     if f.use_output_guard or f.use_canary:
-        elements.append(OutputGuard(make_output_guard(cfg.direct) if f.use_output_guard else None, token, log,
+        elements.append(OutputGuard(_shared("output", cfg.direct, make_output_guard) if f.use_output_guard else None, token, log,
                                     state.emit))
     pipe = agent_pipeline.AgentPipeline(elements)
     pipe.name = ablation_name(cfg)
     return Built(pipe, state, log, token)
+
+
+_GUARDS: dict = {}
+
+
+def _shared(kind: str, direct_cfg: dict, make):
+    """One guard model per process: a pipeline is built per suite, and each used to load its own copy (≈ 1–5 GB)."""
+    import json
+    key = (kind, json.dumps(direct_cfg, sort_keys=True, default=str))
+    if key not in _GUARDS:
+        _GUARDS[key] = make(direct_cfg)
+    return _GUARDS[key]
 
 
 def ablation_name(cfg: Config) -> str:

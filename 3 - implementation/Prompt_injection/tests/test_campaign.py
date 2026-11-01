@@ -284,3 +284,38 @@ def test_quick2h_profile_has_caps_only_on_leaf_phases_and_fits_its_budget():
     assert prof["time_budget_min"] <= 2 * 60 - 25                 # 2 h walltime − start-up − 15 min stop margin
     assert max(prof["max_minutes"].values()) <= prof["time_budget_min"]
     assert not C.budget_problems(plan, prof)
+
+
+def test_pair2h_profile_keeps_only_planner_reader_phases_and_fits_its_budget():
+    prof = C.profile_of(CFG, "pair2h")
+    cfg = load_config(None, prof["set"])
+    plan = C.build_plan(cfg, prof, [])
+    names = {p.name for p in plan}
+    assert not names & set(prof["skip"])                         # skipped phases are really gone
+    assert {"stage1_fit", "calibrate", "ablation_none", "ablation_full", "xpia_none", "xpia_full"} <= names
+    assert all(d in names for p in plan for d in p.needs)        # nothing needs a skipped phase
+    needed = {d for p in plan for d in [*p.needs, *p.wants]}
+    assert not needed & set(prof["max_minutes"])
+    assert prof["time_budget_min"] <= 2 * 60 - 25
+    assert not C.budget_problems(plan, prof)
+
+
+def test_pairing_variants_differ_only_in_planner_and_reader():
+    import yaml
+    from horizon.config import _merge
+    base = yaml.safe_load((ROOT / "config" / "params.yaml").read_text())
+    runs = {}
+    for f in sorted((ROOT / "config" / "variants").glob("pq-*.yaml")):
+        runs[f.stem] = _merge(base, yaml.safe_load(f.read_text()))
+    assert len(runs) == 4
+    assert {(m["models"]["p_llm"], m["models"]["q_llm"]) for m in runs.values()} == {
+        (p, q) for p in ("ollama_chat/qwen3:8b", "ollama_chat/gemma3:12b")
+        for q in ("ollama_chat/qwen3:8b", "ollama_chat/gemma3:12b")}
+    assert len({m["models"]["attacker"] for m in runs.values()}) == 1           # one attacker for all four
+    assert all(m["models"]["attacker"] not in (m["models"]["p_llm"], m["models"]["q_llm"]) for m in runs.values())
+    assert len({json_dump(m["direct"]) for m in runs.values()}) == 1             # same guards everywhere
+
+
+def json_dump(x) -> str:
+    import json
+    return json.dumps(x, sort_keys=True, default=str)

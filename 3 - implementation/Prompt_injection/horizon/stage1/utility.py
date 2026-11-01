@@ -28,7 +28,16 @@ def token_f1(prediction: str, reference: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
-METRICS = {"token_f1": token_f1}
+def token_recall(prediction: str, reference: str) -> float:
+    """Share of the reference answer's tokens that appear in the model answer. Unlike F1 it does not punish a long
+    answer that contains the right information (quick2h, 1 Nov: correct but verbose answers scored F1 ≈ 0.25)."""
+    p, r = _normalize(prediction), _normalize(reference)
+    if not r:
+        return 1.0
+    return sum((Counter(p) & Counter(r)).values()) / len(r)
+
+
+METRICS = {"token_f1": token_f1, "token_recall": token_recall}
 
 
 def utility(prediction: str, reference: str, metric: str) -> float:

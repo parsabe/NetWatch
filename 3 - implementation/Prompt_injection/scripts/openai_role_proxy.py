@@ -56,7 +56,8 @@ def cap_tokens(payload: dict, default: int, ceiling: int) -> None:
 
 
 def make_handler(upstream: str, timeout: float, disable_thinking: bool, effort_off: str,
-                 default_max_tokens: int = 2048, max_tokens_ceiling: int = 4096):
+                 default_max_tokens: int = 2048, max_tokens_ceiling: int = 4096,
+                 thinking_models: tuple[str, ...] = ("qwen3",)):
     class Handler(BaseHTTPRequestHandler):
         def _forward(self, body: bytes | None, model: str = "horizon"):
             req = urllib.request.Request(upstream + self.path, data=body, method=self.command,
@@ -87,7 +88,7 @@ def make_handler(upstream: str, timeout: float, disable_thinking: bool, effort_o
             try:
                 payload = json.loads(body)
                 model = str(payload.get("model", model))
-                if disable_thinking and "messages" in payload:
+                if disable_thinking and "messages" in payload and any(t in model.lower() for t in thinking_models):
                     payload.setdefault("reasoning_effort", effort_off)
                 if "messages" in payload:
                     cap_tokens(payload, default_max_tokens, max_tokens_ceiling)
@@ -115,7 +116,8 @@ def main() -> None:
     m = cfg.models
     srv = ThreadingHTTPServer(("127.0.0.1", port), make_handler(
         m["api_base"], m["request_timeout_s"], m["disable_thinking"], m["reasoning_effort_off"],
-        int(m.get("proxy_default_max_tokens", 2048)), int(m.get("proxy_max_tokens_ceiling", 4096))))
+        int(m.get("proxy_default_max_tokens", 2048)), int(m.get("proxy_max_tokens_ceiling", 4096)),
+        tuple(m.get("thinking_models", ["qwen3"]))))
     print(f"role proxy on http://127.0.0.1:{port} → {cfg.models['api_base']}", flush=True)
     srv.serve_forever()
 

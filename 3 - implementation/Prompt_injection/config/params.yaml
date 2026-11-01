@@ -38,6 +38,7 @@ models:
   tool_calling: native       # plain AgentDojo agent: native = OpenAI tool calls | prompting = tools described in the prompt
                              # (AgentDojo LocalLLM) for models whose Ollama template has no tool support, e.g. Gemma 3
   reasoning_effort_off: none
+  thinking_models: [qwen3]   # disable_thinking applies only to these model families (a run may mix Qwen and Gemma)
   cache_dir: ./results/llm_cache
 
 # Ablation switches (§1.7). stage1_variant fixes one τ; stage1_mix: "pi_star" uses π*
@@ -241,6 +242,35 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
         agent_adaptive: [--limit-user, "1", --limit-injection, "1"]
         xpia: [--limit, "8", --xpia-converters, none]
         detect: [--limit, "10"]
+        pyrit: [--limit, "1"]
+    pair2h:                  # WHICH MODEL IS THE BETTER PLANNER (P-LLM) AND THE BETTER READER (Q-LLM)? Four runs, one per
+                             # pairing (cluster/launch_pairs.sh: qwen/qwen, gemma/gemma, qwen/gemma, gemma/qwen), each
+                             # ONE GPU job of ≤ 2 h. Same fixed attacker (mistral:7b, neither of the two) and the same
+                             # guards in all four, so only P and Q differ.
+                             # Only phases that tell planners / readers apart: Stage 1 (Q reads documents), AgentDojo
+                             # 'none' (plain agent = P) and 'full' (P plans, Q reads), XPIA none / full, the adaptive
+                             # attacker, PyRIT and garak (they attack the P-LLM). Skipped: guards (independent of P/Q,
+                             # measured on 1 Nov), the middle ablations / XPIA setups (they need many more tests).
+                             # AgentDojo: 3 attack types × 2 injection tasks, episodes round-robin over the 3 suites.
+      workers: 4
+      min_tests: 300
+      max_tests: 1500
+      parallel_requests: 2   # pure pairs; the mixed pairs use 1 (two models + attacker share the 16 GB GPU)
+      time_budget_min: 90    # as quick2h: PBS job 120 min, stop at 105 min, report ≈ 3 min
+      max_minutes: {stage1_report: 25, ablation_none: 40, ablation_full: 40, xpia_none: 12, xpia_full: 25,
+                    agent_adaptive: 20, pyrit: 25, garak: 20}
+      skip: [autotune, stage1_altmodel, detect, ablation_stage1, ablation_stage2, "ablation_stage1+2", xpia_stage1,
+             xpia_stage2, "xpia_stage1+2"]
+      set: [stage1.pilot_n=12, stage1.pilot_clean=6, stage1.pilot_adaptive_targets=1, stage1.n_adaptive_eval_keys=3,
+            stage1.attack_budget=3, stage2.adaptive_budget=3, stage2.alpha_user=0.02,
+            redteam.garak_generations=1, redteam.garak_prompt_cap=3]
+      args:
+        stage1: [--pilot]
+        calibrate: [--attacks, important_instructions, value_tamper, --limit-user, "2", --limit-injection, "2"]
+        ablation: [--attacks, important_instructions, tool_knowledge, value_tamper, --limit-user, "3",
+                   --limit-injection, "2"]
+        agent_adaptive: [--limit-user, "1", --limit-injection, "1"]
+        xpia: [--limit, "12", --xpia-converters, none]
         pyrit: [--limit, "1"]
     cluster:                 # everything at the configured sizes; several agent jobs in parallel
       workers: 4

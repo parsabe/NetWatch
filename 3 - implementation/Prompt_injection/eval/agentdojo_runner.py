@@ -124,53 +124,64 @@ def run_episodes(cfg, split: str, attack_names: list[str], limit_user: int | Non
     splits = json.loads(SPLIT_FILE.read_text())
     done = _done_ids(out, "episodes", tag, "attack_id")
     errors: list[str] = []
+    # Episodes are run ROUND-ROBIN over the suites (workspace, slack, travel, workspace, …), not suite after suite: a
+    # phase stopped by its time cap then still covers every suite (quick2h, 1 Nov: 'none' stopped after 8 episodes,
+    # all from workspace/slack, travel never ran).
+    queues = []
     for s in cfg.stage2["suites"]:
         suite = get_suite(cfg.stage2["benchmark_version"], s)
         built = build_pipeline(cfg, suite)                        # Z3 proof runs here
-        u_ids = splits["suites"][s][split][:limit_user]
-        i_ids = splits["suites"][s]["injection_tasks"][:limit_inj]
-        for uid in u_ids:
-            ut = suite.get_user_task_by_id(uid)
-            if f"{s}/{uid}/benign" not in done:
-                built.state.reset()
-                t0 = time.time()
-                try:
-                    util, _ = suite.run_task_with_pipeline(built.pipeline, ut, injection_task=None, injections={})
-                except Exception as e:                            # one broken episode must not cost the phase
-                    _episode_error(out, tag, f"{s}/{uid}/benign", e, errors)
-                    continue
-                _save(out, "episodes", [{"config": tag, "suite": s, "user_task": uid, "injection_task": "",
-                                         "style": "benign", "attack_id": f"{s}/{uid}/benign", "utility": int(util),
-                                         "asr": 0, "G": 0, "C": 0, "F": 0, "alarms": built.state.alarms,
-                                         "seconds": time.time() - t0}])
-            for an in attack_names:
-                attack = load_attack(an, suite, built.pipeline)
-                for iid in i_ids:
-                    if f"{s}/{uid}/{iid}/{an}" in done:
-                        continue
-                    it = suite.get_injection_task_by_id(iid)
-                    built.state.reset()
-                    t0 = time.time()
-                    try:
-                        util, sec = suite.run_task_with_pipeline(built.pipeline, ut, it, attack.attack(ut, it))
-                        los = episode_losses(built.state, attacker_entities(suite, ut, it), goal_functions(suite, it))
-                    except Exception as e:                        # recorded in errors.csv, not counted as a test
-                        _episode_error(out, tag, f"{s}/{uid}/{iid}/{an}", e, errors)
-                        continue
-                    # Without Stage 2 there is no policy engine, hence no events: G would be 0 for EVERY episode and a
-                    # configuration that lets 9 % of the attacks through would look loss-free to the Sion game.
-                    # With no policy in the way, an attack that succeeded is by definition a bypass: G = 1.
-                    G = los["G"] if cfg.flags.use_stage2 else int(sec)
-                    aid = f"{s}/{uid}/{iid}/{an}"
-                    _save(out, "calibration", [{**c, "attack_id": aid} for c in los["calibration"]])
-                    _save(out, "runs", [{"attack_id": f"{aid}#{k}", "run": j, "success": x}
-                                        for k, r in enumerate(los["runs"]) for j, x in enumerate(r)])
-                    _save(out, "episodes", [{"config": tag, "suite": s, "user_task": uid, "injection_task": iid,
-                                             "style": an, "attack_id": aid, "utility": int(util), "asr": int(sec),
-                                             "G": G, "C": los["C"], "F": los["F"],
-                                             "alarms": built.state.alarms, "seconds": time.time() - t0}])
-                    print(f"  {aid}: utility={int(util)} asr={int(sec)} G={G} C={los['C']} F={los['F']}",
-                          flush=True)
+        attacks = {an: load_attack(an, suite, built.pipeline) for an in attack_names}
+        q = []
+        for uid in splits["suites"][s][split][:limit_user]:
+            q.append((s, suite, built, uid, None, None))
+            q += [(s, suite, built, uid, iid, an) for an in attack_names
+                  for iid in splits["suites"][s]["injection_tasks"][:limit_inj]]
+        queues.append([(job, attacks) for job in q])
+    order = [queues[k][r] for r in range(max(map(len, queues), default=0)) for k in range(len(queues))
+             if r < len(queues[k])]
+    for (s, suite, built, uid, iid, an), attacks in order:
+        ut = suite.get_user_task_by_id(uid)
+        if iid is None:                                           # benign episode: utility only
+            if f"{s}/{uid}/benign" in done:
+                continue
+            built.state.reset()
+            t0 = time.time()
+            try:
+                util, _ = suite.run_task_with_pipeline(built.pipeline, ut, injection_task=None, injections={})
+            except Exception as e:                                # one broken episode must not cost the phase
+                _episode_error(out, tag, f"{s}/{uid}/benign", e, errors)
+                continue
+            _save(out, "episodes", [{"config": tag, "suite": s, "user_task": uid, "injection_task": "",
+                                     "style": "benign", "attack_id": f"{s}/{uid}/benign", "utility": int(util),
+                                     "asr": 0, "G": 0, "C": 0, "F": 0, "alarms": built.state.alarms,
+                                     "seconds": time.time() - t0}])
+            print(f"  {s}/{uid}/benign: utility={int(util)}", flush=True)
+            continue
+        aid = f"{s}/{uid}/{iid}/{an}"
+        if aid in done:
+            continue
+        it = suite.get_injection_task_by_id(iid)
+        built.state.reset()
+        t0 = time.time()
+        try:
+            util, sec = suite.run_task_with_pipeline(built.pipeline, ut, it, attacks[an].attack(ut, it))
+            los = episode_losses(built.state, attacker_entities(suite, ut, it), goal_functions(suite, it))
+        except Exception as e:                                    # recorded in errors.csv, not counted as a test
+            _episode_error(out, tag, aid, e, errors)
+            continue
+        # Without Stage 2 there is no policy engine, hence no events: G would be 0 for EVERY episode and a
+        # configuration that lets 9 % of the attacks through would look loss-free to the Sion game.
+        # With no policy in the way, an attack that succeeded is by definition a bypass: G = 1.
+        G = los["G"] if cfg.flags.use_stage2 else int(sec)
+        _save(out, "calibration", [{**c, "attack_id": aid} for c in los["calibration"]])
+        _save(out, "runs", [{"attack_id": f"{aid}#{k}", "run": j, "success": x}
+                            for k, r in enumerate(los["runs"]) for j, x in enumerate(r)])
+        _save(out, "episodes", [{"config": tag, "suite": s, "user_task": uid, "injection_task": iid,
+                                 "style": an, "attack_id": aid, "utility": int(util), "asr": int(sec),
+                                 "G": G, "C": los["C"], "F": los["F"],
+                                 "alarms": built.state.alarms, "seconds": time.time() - t0}])
+        print(f"  {aid}: utility={int(util)} asr={int(sec)} G={G} C={los['C']} F={los['F']}", flush=True)
     p = out / "episodes.csv"
     df = pd.read_csv(p) if p.exists() else pd.DataFrame(columns=["config", "style", "utility", "asr", "G", "C", "F",
                                                                   "seconds"])

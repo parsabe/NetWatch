@@ -105,7 +105,9 @@ def run_clean(cfg, out: Path, clean: list[dict], variants: dict, victim: LLM) ->
         p = build_prompt(variants[name], c["task"], c["document"])
         reply = victim.chat(p.messages)
         row = {"doc_id": c["id"], "variant": name,
-               "utility": utility(reply, c["reference"], cfg.stage1["utility_metric"])}
+               "utility": utility(reply, c["reference"], cfg.stage1["utility_metric"]),
+               "recall": utility(reply, c["reference"], "token_recall"),       # second view, for the report
+               "answer": " ".join(reply.split())[:300]}
         with _LOCK:
             _append(path, row)
     _parallel(cfg, jobs, one, "clean")

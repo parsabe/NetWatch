@@ -222,24 +222,46 @@ def cmd_log(arg: str) -> list[tuple[str, bool]]:
     return out or [(f"no live log found{f' for {arg!r}' if arg else ''}", False)]
 
 
+def profile_of(d: Path) -> tuple[str, float]:
+    """(campaign profile, last change) of a run folder, from results/campaign/state*.json."""
+    st = sorted((d / "results" / "campaign").glob("state*.json"), key=lambda p: p.stat().st_mtime)
+    if not st:
+        return "", 0.0
+    try:
+        return json.loads(st[-1].read_text()).get("profile", ""), st[-1].stat().st_mtime
+    except ValueError:
+        return "", st[-1].stat().st_mtime
+
+
 def cmd_compare(_arg: str) -> list[tuple[str, bool]]:
-    folders = [str(d) for _, d in runs()]
+    # compare the runs of the NEWEST campaign profile only (e.g. the four pair2h pairings, not older runs)
+    prof = {d: profile_of(d) for _, d in runs()}
+    newest = max(prof.values(), key=lambda x: x[1], default=("", 0.0))[0]
+    folders = [str(d) for d, (pf, _) in prof.items() if pf == newest and (d / "report" / "campaign" /
+                                                                       "results_by_group.csv").exists()]
     if len(folders) < 2:
-        return [("only one run folder found — nothing to compare", False)]
+        return [(f"fewer than two finished runs of profile '{newest}' — nothing to compare yet", False)]
     text = sh([python_of(ROOT), "scripts/compare_runs.py", *folders, "--no-pdf"], cwd=ROOT, timeout=400)
     out = ROOT / "report" / "compare"
-    sig = []
-    if (out / "attacks.csv").exists():
-        import pandas as pd
-        a = pd.read_csv(out / "attacks.csv")
-        if "p (Fisher)" in a:
-            names = [c for c in a.columns if c not in ("area", "group", "config", "Δ ASR", "p (Fisher)")]
-            s = a[a["p (Fisher)"].astype(str).str.endswith("*")]
-            sig = [f"• {r['group']} · {r['config']}: {r[names[0]]} → {r[names[-1]]}" for _, r in s.head(12).iterrows()]
-            head = f"⚖️ {' vs '.join(names)}: {len(a)} groups, {len(s)} significant differences (α = 0.05)"
-            return [("__photo__" + str(out / "charts" / "00_overview.png"), False),
-                    ("\n".join([head, *sig]) + f"\nfull report: {out}/compare_runs.md", False)]
-    return [(text[-3000:] or "compare failed", True)]
+    if not (out / "scoreboard.csv").exists():
+        return [(text[-3000:] or "compare failed", True)]
+    import pandas as pd
+    msgs: list[tuple[str, bool]] = [("__photo__" + str(out / "charts" / "00_overview.png"), False)]
+    b = pd.read_csv(out / "scoreboard.csv").fillna("—")
+    names = [c for c in b.columns if c not in ("role", "measure", "better")]
+    lines = [f"🏁 {len(names)} runs (profile {newest}): " + " · ".join(f"[{i + 1}] {n}" for i, n in enumerate(names))]
+    for _, r in b.iterrows():
+        lines.append(f"{r['role']} · {r['measure']} ({r['better']} = better)")
+        lines.append("   " + " | ".join(f"[{i + 1}] {r[n]}" for i, n in enumerate(names)))
+    msgs.append(("\n".join(lines), True))
+    a = pd.read_csv(out / "attacks.csv") if (out / "attacks.csv").exists() else None
+    if a is not None and "p (Fisher)" in a:                      # two runs: significant differences
+        s_ = a[a["p (Fisher)"].astype(str).str.endswith("*")]
+        msgs.append((f"⚖️ {len(s_)} of {len(a)} groups differ significantly (α = 0.05)\n" +
+                     "\n".join(f"• {r['group']} · {r['config']}: {r[names[0]]} → {r[names[-1]]}"
+                               for _, r in s_.head(12).iterrows()), False))
+    msgs.append((f"full report: {out}/compare_runs.md (PDF: run compare_runs.py without --no-pdf)", False))
+    return msgs
 
 
 def cmd_help(_arg: str) -> list[tuple[str, bool]]:

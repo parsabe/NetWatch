@@ -60,12 +60,17 @@ until curl -s "localhost:$PROXY_PORT/v1/models" >/dev/null; do
                                         alert server_failed; exit 1; }
   sleep 2
 done
-MODEL=$("$UV" run --no-sync python -c "from horizon.config import load_config; print(load_config().models['q_llm'].split('/',1)[1])")
-curl -s localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"prompt\":\"hi\",\"stream\":false}" >/dev/null
-"$OLLAMA" ps                     # PROCESSOR column must say "100% GPU"
-"$OLLAMA" ps | grep -q "100% GPU" && echo "OK: $MODEL runs fully on the GPU" \
-  || { echo "!! $MODEL is NOT fully on the GPU (see PROCESSOR column above)"
-       alert not_on_gpu; }
+# planner (P-LLM) and reader (Q-LLM) may be two different models (cluster/launch_pairs.sh): load both
+MODELS=$("$UV" run --no-sync python -c "from horizon.config import load_config; m=load_config().models; print(' '.join(dict.fromkeys(x.split('/',1)[1] for x in (m['p_llm'], m['q_llm']))))")
+for MODEL in $MODELS; do
+  curl -s localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"prompt\":\"hi\",\"stream\":false}" >/dev/null
+done
+"$OLLAMA" ps                     # PROCESSOR column must say "100% GPU" for every model
+for MODEL in $MODELS; do
+  "$OLLAMA" ps | grep "^$MODEL " | grep -q "100% GPU" && echo "OK: $MODEL runs fully on the GPU" \
+    || { echo "!! $MODEL is NOT fully on the GPU (see PROCESSOR column above)"
+         alert not_on_gpu; }
+done
 
 echo "==== 4. GPU usage every 5 min → $GPULOG"
 nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used,memory.total --format=csv -l 300 \

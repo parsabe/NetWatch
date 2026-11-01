@@ -21,6 +21,12 @@ _THINK = re.compile(r"<think>.*?</think>", re.DOTALL)
 _DEGENERATE = re.compile(r"token repeat limit|prediction aborted|repeat limit reached", re.IGNORECASE)
 
 
+def thinks(model: str, models_cfg: dict) -> bool:
+    """Does this model have a thinking mode that disable_thinking must switch off? Per MODEL, not per run: a run can
+    mix a planner and a reader from different families (Qwen3 thinks, Gemma 3 has no thinking mode)."""
+    return any(t in model.lower() for t in models_cfg.get("thinking_models", ["qwen3"]))
+
+
 class LLM:
     def __init__(self, model: str, models_cfg: dict, temperature: float | None = None):
         self.model = model
@@ -45,7 +51,7 @@ class LLM:
 
     def chat(self, messages: list[dict], use_cache: bool = True, **extra) -> str:
         msgs = [dict(m) for m in messages]
-        if self.cfg.get("disable_thinking"):
+        if self.cfg.get("disable_thinking") and thinks(self.model, self.cfg):
             extra = {"reasoning_effort": self.cfg["reasoning_effort_off"], **extra}
         key = self._key(msgs, extra)
         path = self.cache_dir / key[:2] / f"{key}.json"

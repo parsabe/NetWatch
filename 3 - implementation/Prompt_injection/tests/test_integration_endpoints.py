@@ -59,15 +59,19 @@ def test_role_proxy_forwards_path_and_rewrites_role(fake_openai):
     from openai_role_proxy import make_handler
     url, seen = fake_openai
     proxy = _serve(make_handler(url, 10, True, "none"))
-    req = urllib.request.Request(f"http://127.0.0.1:{proxy.server_address[1]}/v1/chat/completions",
-                                 data=json.dumps({"model": "m", "messages": [{"role": "developer", "content": "s"}]})
-                                 .encode(), headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=10) as r:
-        assert r.status == 200
+    bodies = {}
+    for model in ("qwen3:8b", "gemma3:12b"):         # thinking off only for models that think (models.thinking_models)
+        req = urllib.request.Request(f"http://127.0.0.1:{proxy.server_address[1]}/v1/chat/completions",
+                                     data=json.dumps({"model": model, "messages": [{"role": "developer",
+                                                                                    "content": "s"}]}).encode(),
+                                     headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            assert r.status == 200
+        path, bodies[model] = seen[-1]
+        assert path == "/v1/chat/completions"
     proxy.shutdown()
-    path, body = seen[-1]
-    assert path == "/v1/chat/completions"
-    assert body["messages"][0]["role"] == "system" and body["reasoning_effort"] == "none"
+    assert bodies["qwen3:8b"]["messages"][0]["role"] == "system" and bodies["qwen3:8b"]["reasoning_effort"] == "none"
+    assert "reasoning_effort" not in bodies["gemma3:12b"]
 
 
 def test_pyrit_targets_hit_chat_completions(fake_openai):

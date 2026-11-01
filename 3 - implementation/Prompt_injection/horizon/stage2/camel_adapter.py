@@ -196,14 +196,34 @@ DIALECT_RULES = """
 
 ## Rules of this restricted Python (code that breaks them fails)
 - Answer with exactly ONE ```python code block.
-- Lists are immutable: no `.append`, `.extend`, `.pop`, `.insert`, `.remove`, no slices (`x[1:3]`). Build lists with
-  list comprehensions or `items = items + [new_item]`.
-- Not supported: `try`/`except`, `def`, `lambda`, `class`, `return`, `while`, `break`, `continue`, `assert`, `with`,
-  `import`, generator expressions (use a list comprehension), `isinstance`, `next`, chained comparisons (`a < b < c`).
+- To get structured values from `query_ai_assistant`, FIRST define a schema class, then pass the class:
+  ```
+  class Company(BaseModel):
+      name: str
+      rating: float
+  class Companies(BaseModel):
+      items: list[Company]
+  found = query_ai_assistant("List each company and its rating: " + str(reviews), Companies)
+  top = [c.name for c in found.items if c.rating >= 4.5]
+  ```
+  Field types: str, int, float, bool, or list[...] of those or of your own classes. No default values, no `Field()`.
+  There is NO `dict` type here (`dict[...]` fails): use a class with fields, or a list of such classes. Never build
+  schemas with `type(...)`, `create_model` or `model_construct`.
+- Tool results are objects, not dicts: use attributes such as `event.start_time` or `email.sender`, never
+  `event["start_time"]`.
+- Dates: there is no `datetime.now()` / `datetime.datetime` / `date.today()`. Get today from the tools (e.g.
+  `get_current_day()`); parse with `datetime.strptime(text, "%Y-%m-%d")` or `datetime.fromisoformat(text)`; add time
+  with `timedelta(days=7)`.
+- Lists are immutable: no `.append`, `.extend`, `.pop`, `.insert`, `.remove`, and no slices (`x[1:3]`, `s[0:4]`).
+  Build lists with list comprehensions or `items = [*items, new_item]`; take single items with `x[0]`.
+- Not supported: `try`/`except`, `def`, `lambda`, `return`, `while`, `break`, `continue`, `assert`, `with`,
+  `import`, `exit()`/`quit()`, generator expressions (use a list comprehension), `isinstance`, `next`, chained
+  comparisons (`a < b < c`). To stop because something is missing: `raise ValueError("what is missing")`.
 - Never assign to a name that already exists, e.g. `date`, `time`, `datetime`, `list`, `str`, `sum` or a tool name:
   use new names such as `event_date`.
-- Variables from your earlier code blocks still exist. After an error, change the line that failed; never send the
-  same code again and never repeat a tool call that had side effects (e.g. sending an email)."""
+- After an error: the lines BEFORE the failing line already ran (their variables and classes exist); nothing from the
+  failing line on did. Send the whole corrected program, change the line that failed, and never repeat a tool call
+  that had side effects (e.g. sending an email)."""
 
 
 class HorizonPrivilegedLLM(PrivilegedLLM):

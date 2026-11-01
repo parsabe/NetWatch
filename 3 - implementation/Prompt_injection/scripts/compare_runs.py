@@ -32,18 +32,29 @@ KEYS = ["area", "group", "config"]
 OUT = ROOT / "report" / "compare"
 
 
-def run_name(d: Path) -> str:
-    """The victim model of that run folder (config/local.yaml over params.yaml)."""
+def run_models(d: Path) -> dict:
+    """models.* of that run folder (params.yaml, then that folder's config/local.yaml)."""
     import yaml
-    model = load_config().models["q_llm"]
+    from horizon.config import _merge
+    m = dict(load_config().models)
+    if d.resolve() != ROOT.resolve() and (d / "config" / "params.yaml").exists():
+        m = yaml.safe_load((d / "config" / "params.yaml").read_text())["models"]
     local = d / "config" / "local.yaml"
     if local.exists():
-        model = (yaml.safe_load(local.read_text()) or {}).get("models", {}).get("q_llm", model)
-    elif d.resolve() != ROOT.resolve():
-        p = d / "config" / "params.yaml"
-        if p.exists():
-            model = yaml.safe_load(p.read_text())["models"]["q_llm"]
-    return model.split("/", 1)[-1]
+        m = _merge(m, (yaml.safe_load(local.read_text()) or {}).get("models", {}))
+    return m
+
+
+def run_name(d: Path) -> str:
+    """The model of that run; 'P <planner> · Q <reader>' when the two roles use different models."""
+    m = run_models(d)
+    p, q = (m[k].split("/", 1)[-1] for k in ("p_llm", "q_llm"))
+    return q if p == q else f"P {p} · Q {q}"
+
+
+def pair_name(d: Path) -> str:
+    m = run_models(d)
+    return "P {} · Q {}".format(*(m[k].split("/", 1)[-1] for k in ("p_llm", "q_llm")))
 
 
 def load(d: Path) -> pd.DataFrame | None:
@@ -100,7 +111,47 @@ def utility_table(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     return m.fillna("—").sort_values(KEYS).reset_index(drop=True) if m is not None else pd.DataFrame()
 
 
-def write_pdf(md_title: str, status: pd.DataFrame, charts, att: pd.DataFrame, util: pd.DataFrame, notes) -> bool:
+SCORES = [  # (role it tells about, label, group prefix, config, measure, better)
+    ("reader (Q)", "Stage 1 attacks, no marking", "document attacks (report", "none", "attack", "lower"),
+    ("reader (Q)", "Stage 1 attacks, datamark_dynamic", "document attacks (report", "datamark_dynamic", "attack", "lower"),
+    ("reader (Q)", "Stage 1 answer quality (F1), no marking", "clean documents (report", "none", "utility", "higher"),
+    ("reader (Q)", "XPIA attacks, no defence", "PyRIT XPIA", "none", "attack", "lower"),
+    ("planner (P)", "AgentDojo attacks, no defence", "AgentDojo (report)", "none", "attack", "lower"),
+    ("planner (P)", "AgentDojo tasks solved, no defence", "AgentDojo (report)", "none", "benign", "higher"),
+    ("planner (P)", "PyRIT jailbreaks", "PyRIT jailbreak", None, "attack", "lower"),
+    ("planner (P)", "garak probes, model alone", "garak probes", "bare", "attack", "lower"),
+    ("pair (P+Q)", "AgentDojo attacks, full Horizon", "AgentDojo (report)", "full", "attack", "lower"),
+    ("pair (P+Q)", "AgentDojo tasks solved, full Horizon", "AgentDojo (report)", "full", "benign", "higher"),
+    ("pair (P+Q)", "XPIA attacks, full Horizon", "PyRIT XPIA", "full", "attack", "lower"),
+    ("pair (P+Q)", "adaptive attacker vs full Horizon", "AgentDojo adaptive attacker", "full", "attack", "lower"),
+    ("pair (P+Q)", "garak probes, with Horizon's guard", "garak probes", "guarded", "attack", "lower"),
+]
+
+
+def scoreboard(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """One row per question ('which model is the better planner / reader?'), one column per run: k/n (rate)."""
+    rows = []
+    for role, label, grp, conf, kind, better in SCORES:
+        row = {"role": role, "measure": label, "better": better}
+        for nm, df in frames.items():
+            g = df[df["group"].astype(str).str.startswith(grp)]
+            if conf is not None:
+                g = g[g["config"].astype(str) == conf]
+            if kind == "attack":
+                n, k = int(g["attacks"].sum()), int(g["got_through"].sum())
+                row[nm] = f"{k}/{n} ({k / n:.0%})" if n else "—"
+            elif kind == "benign":
+                n, k = int(g["benign"].sum()), int(g["benign_ok"].sum())
+                row[nm] = f"{k}/{n} ({k / n:.0%})" if n else "—"
+            else:
+                g = g[g["benign"] > 0]
+                row[nm] = f"{g['utility'].mean():.2f} (n={int(g['benign'].sum())})" if len(g) else "—"
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def write_pdf(md_title: str, status: pd.DataFrame, charts, att: pd.DataFrame, util: pd.DataFrame, notes,
+              sb: pd.DataFrame | None = None) -> bool:
     if not shutil.which("xelatex"):
         return False
     sys.path.insert(0, str(ROOT / "eval"))
@@ -111,7 +162,11 @@ def write_pdf(md_title: str, status: pd.DataFrame, charts, att: pd.DataFrame, ut
     tex = [(PREAMBLE % esc(datetime.now().isoformat(timespec="minutes"))).replace("@FONTS@", _latex_fonts())
            .replace("Horizon campaign report", esc(md_title)),
            "\\section*{Runs}\n", latex_table(status, "Runs compared"), "\\begin{itemize}\n",
-           *[f"\\item {esc(x)}\n" for x in notes], "\\end{itemize}\n", "\\section*{Charts}\n"]
+           *[f"\\item {esc(x)}\n" for x in notes], "\\end{itemize}\n",
+           *(["\\section*{Scoreboard: better planner / reader}\n",
+              latex_table(sb, "Per run: k/n (rate); reader rows depend on the Q-LLM, planner rows on the P-LLM",
+                          longtable=True)] if sb is not None else []),
+           "\\section*{Charts}\n"]
     for p, c in charts:
         tex.append("\\begin{figure}[H]\\centering\\includegraphics[height=0.42\\textheight,width=\\linewidth,"
                    f"keepaspectratio]{{charts/{p.with_suffix('.pdf').name}}}\\caption*{{{esc(c)}}}\\end{{figure}}\n")
@@ -174,14 +229,20 @@ def main() -> int:
         notes.append(f"WARNING: the runs used different profiles ({', '.join(sorted(map(str, profiles)))}), so "
                      "sample sizes differ — compare rates and intervals, not counts.")
     title = f"Runs compared: {' vs '.join(names)}"
-    md = [f"# {title}", "", st.to_markdown(index=False), "", *[f"- {x}" for x in notes], "", "## Charts", ""]
+    sb = scoreboard(frames)
+    sb.to_csv(OUT / "scoreboard.csv", index=False)
+    md = [f"# {title}", "", st.to_markdown(index=False), "", *[f"- {x}" for x in notes], "",
+          "## Scoreboard: which model is the better planner / reader?", "",
+          "k/n (rate) per run; `better` says which direction is good. Reader rows depend only on the Q-LLM, planner "
+          "rows only on the P-LLM, pair rows on both.", "", sb.to_markdown(index=False), "", "## Charts", ""]
     md += [f"![{c}](charts/{p.name})\n\n*{c}*\n" for p, c in charts]
     md += ["## Attacks: share that got through", "",
            f"`k/n = rate [95 % CI]`; Δ = {names[-1]} − {names[0]}; * = significant at α = {alpha}.", "",
            att.to_markdown(index=False), "", "## Benign side: utility and false alarms", "",
            util.to_markdown(index=False) if len(util) else "(none)", ""]
     (OUT / "compare_runs.md").write_text("\n".join(md))
-    ok = False if args.no_pdf else write_pdf(title, st, charts, att, util, notes)
+    ok = False if args.no_pdf else write_pdf(title, st, charts, att, util, notes, sb)
+    print(sb.to_markdown(index=False), end="\n\n")
     print(att.to_markdown(index=False))
     print(f"\nwritten: {OUT}/compare_runs.md" + (" + compare_runs.pdf" if ok else "") + f" · {len(charts)} charts")
     if args.send:
