@@ -1,54 +1,69 @@
-# NetWatch: a cybernetic guardrail architecture for multimodal autonomous systems
+# RQ3 · BlackWall: autonomous oversight and anti-rogue containment
 
-Master's thesis project. NetWatch protects autonomous AI agents at runtime against attacks that static safety
-filters and prompt engineering miss. The work is split into three research questions, and each one is developed on
-its own branch.
+[NetWatch](https://github.com/parsabe/NetWatch) · [RQ1 Prompt injection](https://github.com/parsabe/NetWatch/tree/RQ1-Prompt-Injection) · [RQ2 VectorDB Flame](https://github.com/parsabe/NetWatch/tree/RQ2-VectorDB-Flame) · **RQ3 BlackWall** · [Documentation](https://github.com/parsabe/NetWatch/tree/DOCUMENTATION)
 
-## Research questions and branches
+**Research question.** How can a supervisor predict, detect and mathematically constrain rogue agent trajectories
+(goal drift, deceptive alignment, harmful actions) with latent-space probing, control barrier functions and
+hardware-rooted guarantees?
 
-| Branch | What it holds | Status |
+**Status:** not started. This branch holds only this folder. The thesis text is on
+[`DOCUMENTATION`](https://github.com/parsabe/NetWatch/tree/DOCUMENTATION).
+
+## Planned components
+
+| Component | Engineering | Mathematics |
 |---|---|---|
-| `master` | This README, the licenses (`LICENSE`, `THIRD_PARTY_LICENSES.md`, `LICENSES/`) and the shared material every branch starts from | — |
-| [`RQ1-Prompt-Injection`](../../tree/RQ1-Prompt-Injection) | **RQ1 · Prompt injection: the Horizon architecture.** How can cryptographic randomisation, distributionally robust optimisation and deterministic causal mediation be combined into one guardrail that puts a provable upper bound on indirect prompt-injection risk without hurting model utility? | Implemented, under evaluation (`3 - implementation/Prompt_injection/`) |
-| [`RQ2-VectorDB-Flame`](../../tree/RQ2-VectorDB-Flame) | **RQ2 · VectorDB Flame: secure vector RAG and retrieval integrity.** How can RAG vector pipelines be shielded against corpus poisoning, indirect instruction delivery and data exfiltration (Ed25519 chunk attestation, zero-trust ABAC, outlier detection in the embedding space, cryptographic honeytokens)? | Not started |
-| [`RQ3-BlackWall`](../../tree/RQ3-BlackWall) | **RQ3 · BlackWall: autonomous oversight and anti-rogue containment.** How can a cognitive supervisor predict, detect and mathematically constrain rogue agent trajectories (goal drift, deceptive alignment, harmful actions) with latent-space probing, control barrier functions and hardware-rooted guarantees? | Not started |
-| [`DOCUMENTATION`](../../tree/DOCUMENTATION) | The thesis text (LaTeX, `4 - Documentation/`) | Writing |
+| Latent probing | read the agent model's activations at every step and flag drift from the user's task | linear probes, activation deltas |
+| Action interception | middleware that freezes every tool call and its arguments before execution | — |
+| Safety filter | block an action that would leave the safe set | control barrier function: safe set $h(x)\ge 0$, allow only actions with $\dot h(x) \ge -\alpha(h(x))$ |
+| Hardware root of trust | the supervisor's decisions and logs are signed inside a trusted execution environment | attestation guarantees |
 
-The branches are **never merged** into each other or into `master`. Each one starts from `master` and adds its own
-work. `git.sh` handles all five:
+## Folder layout
 
-```bash
-./git.sh status            # all five branches: last commit, what is not pushed yet
-./git.sh open RQ2          # open a branch in its own folder (~/NetWatch/<branch>) and work there
-./git.sh "what I changed"  # commit everything in this folder on its branch and push that branch
-./git.sh push-all          # push all five branches
+```
+README.md  LICENSE  CITATION.cff
+src/         code (to come)
+results/     what every run produces: per-item CSV/JSON, logs, calibration data
+report/      tables, charts and PDF reports built from results/
+figures/     images and plots for the thesis
 ```
 
-To clone one branch elsewhere: `git clone -b RQ1-Prompt-Injection https://github.com/parsabe/NetWatch.git`.
+Everything this RQ produces stays inside this folder. Nothing is shared through the repository root.
 
-## Repository layout
+## References
 
-| Path | Contents |
-|---|---|
-| `3 - implementation/` | Code. On `RQ1-Prompt-Injection`: `Prompt_injection/` (Horizon: Stage 1 keyed spotlighting, Stage 2 CaMeL-based guardrail, AgentDojo / PyRIT / garak evaluation, PBS cluster scripts) |
-| `4 - Documentation/` | The thesis in LaTeX (`main.tex`; build with `./compile_latex.sh`); edited on `DOCUMENTATION` |
-| `Ref/` | Reference papers, grouped by research topic (third-party copyright, see below) |
-| `Meetings/` | Meeting notes |
-| `propose.md`, `direction.md` | Proposal and implementation direction notes |
+1. A. D. Ames, S. Coogan, M. Egerstedt, G. Notomista, K. Sreenath, P. Tabuada. *Control Barrier Functions: Theory
+   and Applications.* European Control Conference 2019. [arXiv:1903.11199](https://arxiv.org/abs/1903.11199)
+2. S. Abdelnabi, A. Fay, G. Cherubin, A. Salem, M. Fritz, A. Paverd. *Get my drift? Catching LLM Task Drift with
+   Activation Deltas.* SaTML 2025. [arXiv:2406.00799](https://arxiv.org/abs/2406.00799)
+3. C. Burns, H. Ye, D. Klein, J. Steinhardt. *Discovering Latent Knowledge in Language Models Without
+   Supervision.* ICLR 2023. [arXiv:2212.03827](https://arxiv.org/abs/2212.03827)
+4. A. Zou et al. *Representation Engineering: A Top-Down Approach to AI Transparency.* 2023.
+   [arXiv:2310.01405](https://arxiv.org/abs/2310.01405)
+5. E. Hubinger et al. *Sleeper Agents: Training Deceptive LLMs that Persist Through Safety Training.* 2024.
+   [arXiv:2401.05566](https://arxiv.org/abs/2401.05566)
+6. R. Greenblatt, B. Shlegeris, K. Sachan, F. Roger. *AI Control: Improving Safety Despite Intentional
+   Subversion.* ICML 2024. [arXiv:2312.06942](https://arxiv.org/abs/2312.06942)
 
-## RQ1 in short (branch `RQ1-Prompt-Injection`)
+More papers on this topic are in [`Ref/`](https://github.com/parsabe/NetWatch/tree/master/Ref) on `master`
+(folders "Rogue AI, Deception & Cognitive" and "System Sandboxing & Cryptographic Hardware").
 
-Horizon has two stages. **Stage 1** marks untrusted text with a randomly chosen, secretly keyed transformation (π*,
-fitted as a minimax game) so injected instructions are recognisable. **Stage 2** runs the agent through a CaMeL-style
-interpreter: a privileged planner never sees untrusted text, quarantined readers vote on extracted values, and a
-Z3-checked policy with a conformally calibrated confirmation threshold λ̂ gates every tool call. The evaluation runs
-on a PBS GPU cluster with two victim models (Qwen3-8B and Gemma 3 12B). See
-`3 - implementation/Prompt_injection/README.md` and `3 - implementation/Prompt_injection/cluster/README.md`.
+## Citation
 
-## Licenses
+This folder is one part of NetWatch. Please cite the whole project; GitHub's "Cite this repository" button on
+[`master`](https://github.com/parsabe/NetWatch) uses `CITATION.cff`, which is also in this folder.
 
-- **Own code and text:** MIT License, see [`LICENSE`](LICENSE).
-- **Third-party software, models and datasets** keep their own licenses. [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)
-  lists each one, and [`LICENSES/`](LICENSES) holds the full license texts. Datasets and model weights are downloaded
-  by the setup scripts and are not stored in this repository.
-- **`Ref/`:** the papers belong to their authors and publishers and are **not** covered by this repository's license.
+```bibtex
+@mastersthesis{netwatch2026,
+  author = {parsabe},
+  title  = {{NetWatch}: A Cybernetic Guardrail Architecture for Multimodal Autonomous Systems},
+  school = {Master's thesis},
+  year   = {2026},
+  url    = {https://github.com/parsabe/NetWatch},
+  note   = {RQ3 BlackWall, branch RQ3-BlackWall}
+}
+```
+
+## License
+
+Own code and text: MIT, see [`LICENSE`](LICENSE). Papers and third-party components keep their own licenses.
