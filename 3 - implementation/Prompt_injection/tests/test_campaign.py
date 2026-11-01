@@ -301,12 +301,13 @@ def test_pair2h_profile_keeps_only_planner_reader_phases_and_fits_its_budget():
 
 
 def test_pairing_variants_differ_only_in_planner_and_reader():
+    import copy
     import yaml
     from horizon.config import _merge
     base = yaml.safe_load((ROOT / "config" / "params.yaml").read_text())
     runs = {}
     for f in sorted((ROOT / "config" / "variants").glob("pq-*.yaml")):
-        runs[f.stem] = _merge(base, yaml.safe_load(f.read_text()))
+        runs[f.stem] = _merge(copy.deepcopy(base), yaml.safe_load(f.read_text()))
     assert len(runs) == 4
     assert {(m["models"]["p_llm"], m["models"]["q_llm"]) for m in runs.values()} == {
         (p, q) for p in ("ollama_chat/qwen3:8b", "ollama_chat/gemma3:12b")
