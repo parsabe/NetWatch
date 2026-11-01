@@ -42,7 +42,7 @@ is_name() { idx "$1" >/dev/null 2>&1; }
 attached() { [ "$1" = 0 ] || [ -e "$ROOT/${DIRS[$1]}/.git" ]; }
 not_pushed() {                             # commits on the branch that origin does not have yet
   git rev-parse -q --verify "refs/remotes/origin/$1" >/dev/null || { echo "all"; return; }
-  git rev-list --count "origin/$1..$1"
+  git rev-list --count "refs/remotes/origin/$1..refs/heads/$1" --
 }
 
 ensure_branch() {                          # local branch, from origin if it is there, else an empty start commit
@@ -110,7 +110,7 @@ case "${1:-}" in
       if ! attached "$i"; then printf '  %-22s %-22s not attached (./git.sh setup)\n' "$b" "${DIRS[$i]}/"; continue; fi
       changed=$(git -C "$d" status --porcelain | wc -l)
       printf '  %-22s %-22s %3s changed file(s) · %s not pushed · %s\n' "$b" "${DIRS[$i]}/" "$changed" \
-             "$(not_pushed "$b")" "$(git log -1 --format='%h %cr: %s' "$b" | cut -c1-60)"
+             "$(not_pushed "$b")" "$(git log -1 --format='%h %cr: %s' "refs/heads/$b" -- | cut -c1-60)"
     done
     ;;
   push-all)
