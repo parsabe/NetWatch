@@ -1,3 +1,0 @@
-\beamer@sectionintoc {1}{Stage 1: Keyed Spotlighting with Robust Risk Bounds}{3}{0}{1}
-\beamer@sectionintoc {2}{Stage 2: Deterministic Guardrail (Math-Hardened CaMeL)}{28}{0}{2}
-\beamer@sectionintoc {3}{References}{47}{0}{3}

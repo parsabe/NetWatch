@@ -2,8 +2,8 @@
 # Compile the thesis and the meeting slides to PDF (pdflatex, in place, next to each .tex file).
 #
 #   ./compile_latex.sh            # both documents
-#   ./compile_latex.sh docs       # only  4 - Documentation/main.tex
-#   ./compile_latex.sh slides     # only  Meetings/20.10/combined_presentation.tex
+#   ./compile_latex.sh docs       # only  main.tex (this folder)
+#   ./compile_latex.sh slides     # only  ../Meetings/20.10/combined_presentation.tex (master checkout)
 #
 # Uses latexmk when it is installed, otherwise runs pdflatex three times (table of contents, references
 # and page numbers need several passes; both documents keep their references inside the .tex, no bibtex).
@@ -11,8 +11,8 @@
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-DOCS=("$ROOT/4 - Documentation|main.tex")
-SLIDES=("$ROOT/Meetings/20.10|combined_presentation.tex")
+DOCS=("$ROOT|main.tex")
+SLIDES=("$ROOT/../Meetings/20.10|combined_presentation.tex")   # on master, next to this folder
 case "${1:-all}" in
   docs)   JOBS=("${DOCS[@]}") ;;
   slides) JOBS=("${SLIDES[@]}") ;;

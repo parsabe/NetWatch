@@ -1,5 +1,5 @@
 # Enable the account-local TeX Live installation in the current shell:
-#   source /home/pb70gygu/0/use-texlive.sh
+#   source ~/0/Documentation/use-texlive.sh
 # The cluster's default Perl lacks Time::HiRes, which latexmk requires.
 # Use the complete Perl already installed by the cluster alongside TeX Live.
 
