@@ -26,6 +26,18 @@ defence configuration, guard misses and false alarms, PyRIT, XPIA, garak, and th
 .venv/bin/python scripts/compare_runs.py . ~/0_runs/gemma3-12b   # → report/compare/compare_runs.{md,pdf} + charts/
 ```
 
+## 0b · Watch from Telegram (/status, /qstat, …)
+
+```bash
+./cluster/telegram_bot.sh install   # login node, once: cron polls Telegram every minute + sets the command menu
+```
+
+Then send the bot: `/status` (PBS jobs with time used and left, plus every run's tests and phase states), `/qstat`
+(`qstat -u $USER` with an analysis per job, including exit codes of jobs that ended), `/progress` (every phase of every
+run), `/log qwen` or `/log gemma` (last lines of the live log), `/compare` (overview chart + significant differences
+Qwen vs Gemma), `/help`. The bot answers only your chat, runs only these fixed read-only commands, and lives on the
+login node where you installed it. `./cluster/telegram_bot.sh status` shows its log; `… uninstall` removes it.
+
 ## 1 · Upload
 
 Copy the `Prompt_Injection` folder **without** `.venv/`, `results/`, `report/`, `mlartifacts/`:
