@@ -57,10 +57,12 @@ def cap_tokens(payload: dict, default: int, ceiling: int) -> None:
 
 def make_handler(upstream: str, timeout: float, disable_thinking: bool, effort_off: str,
                  default_max_tokens: int = 2048, max_tokens_ceiling: int = 4096,
-                 thinking_models: tuple[str, ...] = ("qwen3",)):
+                 thinking_models: tuple[str, ...] = ("qwen3",), routes: dict | None = None):
+    routes = routes or {}                     # model name → its own Ollama server (models.model_ports)
+
     class Handler(BaseHTTPRequestHandler):
         def _forward(self, body: bytes | None, model: str = "horizon"):
-            req = urllib.request.Request(upstream + self.path, data=body, method=self.command,
+            req = urllib.request.Request(routes.get(model, upstream) + self.path, data=body, method=self.command,
                                          headers={"Content-Type": "application/json"})
             try:
                 with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -117,7 +119,8 @@ def main() -> None:
     srv = ThreadingHTTPServer(("127.0.0.1", port), make_handler(
         m["api_base"], m["request_timeout_s"], m["disable_thinking"], m["reasoning_effort_off"],
         int(m.get("proxy_default_max_tokens", 2048)), int(m.get("proxy_max_tokens_ceiling", 4096)),
-        tuple(m.get("thinking_models", ["qwen3"]))))
+        tuple(m.get("thinking_models", ["qwen3"])),
+        {name: f"http://127.0.0.1:{port}" for name, port in (m.get("model_ports") or {}).items()}))
     print(f"role proxy on http://127.0.0.1:{port} → {cfg.models['api_base']}", flush=True)
     srv.serve_forever()
 

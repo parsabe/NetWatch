@@ -75,18 +75,19 @@ for line in subprocess.run([sys.argv[1], "list"], capture_output=True, text=True
     g = re.search(r"([\d.]+)\s*(GB|MB)", line)
     if f and g:
         size[f[0]] = float(g.group(1)) / (1000 if g.group(2) == "MB" else 1)
-print(" ".join(sorted(names, key=lambda n: -size.get(n, size.get(n + ":latest", 0)))))
+ports = m.get("model_ports") or {}
+print(" ".join(f"{n}@{ports.get(n, 11434)}" for n in sorted(names, key=lambda n: -size.get(n, size.get(n + ":latest", 0)))))
 PYEOF
 )
-echo "loading (largest first): $MODELS"
-for MODEL in $MODELS; do
-  curl -s localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"prompt\":\"hi\",\"stream\":false}" >/dev/null
+echo "loading (largest first, model@server): $MODELS"
+for MP in $MODELS; do
+  curl -s "localhost:${MP#*@}/api/generate" -d "{\"model\":\"${MP%@*}\",\"prompt\":\"hi\",\"stream\":false}" >/dev/null
 done
-"$OLLAMA" ps                     # PROCESSOR column must say "100% GPU" for every model
-for MODEL in $MODELS; do
-  "$OLLAMA" ps | grep "^$MODEL " | grep -q "100% GPU" && echo "OK: $MODEL runs fully on the GPU" \
-    || { echo "!! $MODEL is NOT fully on the GPU (see PROCESSOR column above)"
-         alert not_on_gpu; }
+for MP in $MODELS; do            # PROCESSOR column must say "100% GPU" for every model
+  OLLAMA_HOST="127.0.0.1:${MP#*@}" "$OLLAMA" ps | tail -n +2
+  OLLAMA_HOST="127.0.0.1:${MP#*@}" "$OLLAMA" ps | grep "^${MP%@*} " | grep -q "100% GPU" \
+    && echo "OK: ${MP%@*} runs fully on the GPU (server :${MP#*@})" \
+    || { echo "!! ${MP%@*} is NOT fully on the GPU (server :${MP#*@})"; alert not_on_gpu; }
 done
 
 echo "==== 4. GPU usage every 5 min → $GPULOG"

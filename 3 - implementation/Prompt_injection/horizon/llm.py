@@ -42,7 +42,7 @@ class LLM:
         """Ollama models use api_base; openai/<id> models use openai_api_base when set (e.g. colibri)."""
         if self.model.startswith(("openai/", "hosted_vllm/")) and self.cfg.get("openai_api_base"):
             return self.cfg["openai_api_base"]
-        return self.cfg.get("api_base")
+        return api_base_for(self.model, self.cfg)
 
     def _key(self, messages, extra) -> str:
         blob = json.dumps({"model": self.model, "messages": messages, "t": self.temperature,
@@ -105,10 +105,21 @@ class LLM:
         return out
 
 
+def api_base_for(model: str, models_cfg: dict) -> str | None:
+    """Ollama endpoint of a model: models.model_ports gives some models their OWN Ollama server (cluster pairings: two
+    models on one 16 GB GPU — in one server, Ollama's over-prediction for Gemma evicted the other model on every load)."""
+    port = (models_cfg.get("model_ports") or {}).get(model.split("/", 1)[-1])
+    return f"http://127.0.0.1:{port}" if port else models_cfg.get("api_base")
+
+
 def server_alive(models_cfg: dict) -> bool:
     import urllib.request
+    bases = [models_cfg["api_base"]] + [f"http://127.0.0.1:{p}" for p in (models_cfg.get("model_ports") or {}).values()]
     try:
-        with urllib.request.urlopen(models_cfg["api_base"] + "/api/tags", timeout=3) as r:
-            return r.status == 200
+        for b in bases:
+            with urllib.request.urlopen(b + "/api/tags", timeout=3) as r:
+                if r.status != 200:
+                    return False
+        return True
     except Exception:
         return False

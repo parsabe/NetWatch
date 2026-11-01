@@ -17,12 +17,23 @@ OLLAMA_HOST=127.0.0.1:11434 OLLAMA_MAX_LOADED_MODELS="${HORIZON_MAX_LOADED:-3}" 
   nohup "$OLLAMA" serve > results/logs/ollama.log 2>&1 &
 OLLAMA_PID=$!
 until curl -s localhost:11434/api/version >/dev/null; do sleep 1; done
+# models.model_ports: some models get their OWN Ollama server (same GPU), so two models never evict each other
+EXTRA_PIDS=()
+for PORT in $("$UV" run --no-sync python -c "from horizon.config import load_config; print(' '.join(str(p) for p in sorted(set((load_config().models.get('model_ports') or {}).values()))))"); do
+  OLLAMA_CONTEXT_LENGTH="$(get ollama_context_length)" OLLAMA_FLASH_ATTENTION=1 \
+  OLLAMA_KV_CACHE_TYPE="$(get ollama_kv_cache_type)" OLLAMA_NUM_PARALLEL="${HORIZON_PARALLEL:-$(get parallel_requests)}" \
+  OLLAMA_HOST="127.0.0.1:$PORT" OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_KEEP_ALIVE="${HORIZON_KEEP_ALIVE:--1}" \
+    nohup "$OLLAMA" serve > "results/logs/ollama_$PORT.log" 2>&1 &
+  EXTRA_PIDS+=($!)
+  until curl -s "localhost:$PORT/api/version" >/dev/null; do sleep 1; done
+  echo "second Ollama server on :$PORT"
+done
 pkill -f "openai_role_[p]roxy.py" 2>/dev/null || true
 nohup "$UV" run --no-sync python scripts/openai_role_proxy.py > results/logs/proxy.log 2>&1 &
 PROXY_PID=$!
 until curl -s "localhost:$(get proxy_port)/v1/models" >/dev/null; do sleep 1; done
 echo "ollama + proxy up"
 if [ "${HORIZON_FOREGROUND:-0}" = 1 ]; then
-  trap 'kill "$OLLAMA_PID" "$PROXY_PID" 2>/dev/null' EXIT TERM INT
+  trap 'kill "$OLLAMA_PID" "$PROXY_PID" "${EXTRA_PIDS[@]}" 2>/dev/null' EXIT TERM INT
   wait
 fi
