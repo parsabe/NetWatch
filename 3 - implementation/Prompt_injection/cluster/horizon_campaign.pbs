@@ -60,8 +60,25 @@ until curl -s "localhost:$PROXY_PORT/v1/models" >/dev/null; do
                                         alert server_failed; exit 1; }
   sleep 2
 done
-# planner (P-LLM) and reader (Q-LLM) may be two different models (cluster/launch_pairs.sh): load both
-MODELS=$("$UV" run --no-sync python -c "from horizon.config import load_config; m=load_config().models; print(' '.join(dict.fromkeys(x.split('/',1)[1] for x in (m['p_llm'], m['q_llm']))))")
+# planner (P-LLM) and reader (Q-LLM) may be two different models (cluster/launch_pairs.sh): load both, the LARGER
+# first. Ollama over-predicts Gemma 3 12B (12.4 GiB predicted, 7.9 GiB used): loaded second, that prediction evicted
+# the first model, and the two then swapped on almost every call (pair2h, 1 Nov). Models stay loaded for the whole job
+# (OLLAMA_KEEP_ALIVE=-1 in scripts/serve_local.sh).
+MODELS=$("$UV" run --no-sync python - "$OLLAMA" <<'PYEOF'
+import re, subprocess, sys
+from horizon.config import load_config
+m = load_config().models
+names = list(dict.fromkeys(x.split("/", 1)[1] for x in (m["p_llm"], m["q_llm"])))
+size = {}
+for line in subprocess.run([sys.argv[1], "list"], capture_output=True, text=True).stdout.splitlines()[1:]:
+    f = line.split()
+    g = re.search(r"([\d.]+)\s*(GB|MB)", line)
+    if f and g:
+        size[f[0]] = float(g.group(1)) / (1000 if g.group(2) == "MB" else 1)
+print(" ".join(sorted(names, key=lambda n: -size.get(n, size.get(n + ":latest", 0)))))
+PYEOF
+)
+echo "loading (largest first): $MODELS"
 for MODEL in $MODELS; do
   curl -s localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"prompt\":\"hi\",\"stream\":false}" >/dev/null
 done

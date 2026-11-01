@@ -9,6 +9,8 @@ models:
   p_llm: ollama_chat/gemma3:12b
   q_llm: ollama_chat/gemma3:12b
   attacker: ollama_chat/mistral:7b
+  ollama_kv_cache_type: q4_0   # all four pairings alike: frees ≈ 0.6 GB per model so planner + reader both stay on the
+                               # 16 GB GPU (with q8_0 Ollama predicted 0.1 GB too much and the two models kept swapping)
   disable_thinking: true         # applies only to models.thinking_models (Qwen3); Gemma 3 / Mistral have none
   tool_calling: prompting   # plain agent = P-LLM; Ollama's Gemma 3 template has no tools
 campaign:

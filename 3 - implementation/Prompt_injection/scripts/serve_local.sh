@@ -13,7 +13,7 @@ mkdir -p results/logs
 pkill -f "ollama [s]erve" 2>/dev/null || true
 OLLAMA_CONTEXT_LENGTH="$(get ollama_context_length)" OLLAMA_FLASH_ATTENTION=1 \
 OLLAMA_KV_CACHE_TYPE="$(get ollama_kv_cache_type)" OLLAMA_NUM_PARALLEL="${HORIZON_PARALLEL:-$(get parallel_requests)}" \
-OLLAMA_HOST=127.0.0.1:11434 OLLAMA_MAX_LOADED_MODELS="${HORIZON_MAX_LOADED:-3}" \
+OLLAMA_HOST=127.0.0.1:11434 OLLAMA_MAX_LOADED_MODELS="${HORIZON_MAX_LOADED:-3}" OLLAMA_KEEP_ALIVE="${HORIZON_KEEP_ALIVE:--1}" \
   nohup "$OLLAMA" serve > results/logs/ollama.log 2>&1 &
 OLLAMA_PID=$!
 until curl -s localhost:11434/api/version >/dev/null; do sleep 1; done
