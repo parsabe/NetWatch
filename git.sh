@@ -1,107 +1,134 @@
 #!/usr/bin/env bash
-# Git for the NetWatch thesis: five branches, never merged into each other.
+# Git for the NetWatch thesis: five branches, never merged. Each branch holds ONE folder, at the branch root.
 #
-#   master                 README + licenses (what every branch shares)
-#   RQ1-Prompt-Injection   RQ1 · Horizon (prompt injection)          short name: RQ1
-#   RQ2-VectorDB-Flame     RQ2 · secure vector DB / RAG              short name: RQ2
-#   RQ3-BlackWall          RQ3 · BlackWall cognitive overseer         short name: RQ3
-#   DOCUMENTATION          the thesis text (LaTeX)                    short name: DOC
+#   folder in this checkout     branch                 short name   holds
+#   . (this folder)             master                 master       README, LICENSE, CITATION.cff, git.sh, Ref/, Meetings/
+#   RQ1-Prompt-injection/       RQ1-Prompt-Injection   RQ1          Horizon (prompt injection) + its results/report/figures
+#   RQ2-VectorDB-Flame/         RQ2-VectorDB-Flame     RQ2          secure vector DB / RAG
+#   RQ3-BlackWall/              RQ3-BlackWall          RQ3          BlackWall oversight
+#   Documentation/              DOCUMENTATION          DOC          the thesis (LaTeX)
 #
-#   ./git.sh                     commit EVERYTHING changed here on the current branch and push that branch
+# The four subfolders are git worktrees of their branches inside the master checkout: one folder on disk with
+# everything in it, but every subfolder commits to its own branch (master's .gitignore leaves them out).
+#
+#   ./git.sh setup               attach the four folders to their branches (fresh clone: checks them out;
+#                                existing folders: keeps the files as they are, nothing is overwritten)
+#   ./git.sh status              all five: branch, uncommitted files, commits not pushed yet, last commit
+#   ./git.sh                     commit EVERY folder that changed on its own branch and push those branches
 #   ./git.sh "message"           the same, with your commit message
-#   ./git.sh status              all five branches: last commit, commits not pushed yet, folders they are open in
-#   ./git.sh open RQ2            open a branch in its OWN folder (~/NetWatch/<branch>) — safest way to work on it
-#   ./git.sh switch RQ2 --force  change the branch of THIS folder (needs --force, refused while you have PBS jobs:
-#                                the cluster runs Horizon from ~/0, and switching swaps the code under a job)
+#   ./git.sh RQ1 ["message"]     only one folder (RQ1, RQ2, RQ3, DOC, master)
 #   ./git.sh push-all            push all five branches
-#   ./git.sh setup               create any of the five branches that is missing (from master) and push them
 #
-# Short names: RQ1, RQ2, RQ3, DOC (or the full names). Run it from anywhere; it works on the folder it lives in.
+# Run it from anywhere; it works on the checkout it lives in.
 set -euo pipefail
-cd "$(dirname "$(readlink -f "$0")")"
+ROOT="$(dirname "$(readlink -f "$0")")"
+cd "$ROOT"
 
 BRANCHES=(master RQ1-Prompt-Injection RQ2-VectorDB-Flame RQ3-BlackWall DOCUMENTATION)
-FOLDERS="$HOME/NetWatch"
+DIRS=(. RQ1-Prompt-injection RQ2-VectorDB-Flame RQ3-BlackWall Documentation)
 MAX_MB=95                                  # GitHub refuses files over 100 MB
 
-full() {
+idx() {                                    # short or full name → position in BRANCHES/DIRS
   case "${1,,}" in
-    master|main) echo master ;;
-    rq1*) echo RQ1-Prompt-Injection ;;
-    rq2*) echo RQ2-VectorDB-Flame ;;
-    rq3*) echo RQ3-BlackWall ;;
-    doc*) echo DOCUMENTATION ;;
-    *) echo "unknown branch '$1' (use master, RQ1, RQ2, RQ3, DOC)" >&2; exit 2 ;;
+    master|main|root) echo 0 ;;                 # exact names only: a message like "RQ1: fix" stays a message
+    rq1|rq1-prompt-injection) echo 1 ;;
+    rq2|rq2-vectordb-flame) echo 2 ;;
+    rq3|rq3-blackwall) echo 3 ;;
+    doc|docs|documentation) echo 4 ;;
+    *) return 1 ;;
   esac
 }
-here() { git branch --show-current; }
-has_remote() { git ls-remote --exit-code --heads origin "$1" >/dev/null 2>&1; }
+is_name() { idx "$1" >/dev/null 2>&1; }
+attached() { [ "$1" = 0 ] || [ -e "$ROOT/${DIRS[$1]}/.git" ]; }
+not_pushed() {                             # commits on the branch that origin does not have yet
+  git rev-parse -q --verify "refs/remotes/origin/$1" >/dev/null || { echo "all"; return; }
+  git rev-list --count "origin/$1..$1"
+}
 
-commit_push() {
-  local msg="${1:-update $(here) $(date '+%Y-%m-%d %H:%M')}"
-  git add -A
-  local big
-  big=$(git diff --cached --name-only --diff-filter=AM -z | xargs -0 -r -I{} find {} -maxdepth 0 -type f -size +"${MAX_MB}"M 2>/dev/null || true)
-  if [ -n "$big" ]; then
-    echo "!! files over ${MAX_MB} MB (GitHub refuses them) — add them to .gitignore, nothing was committed:"
-    echo "$big"; git reset -q; exit 1
+ensure_branch() {                          # local branch, from origin if it is there, else an empty start commit
+  local b="$1"
+  git show-ref -q --verify "refs/heads/$b" && return 0
+  if git fetch -q origin "$b" 2>/dev/null; then git branch -q "$b" FETCH_HEAD; return 0; fi
+  local empty; empty=$(git hash-object -t tree /dev/null)
+  git branch -q "$b" "$(git commit-tree "$empty" -m "$b: start the branch")"
+}
+
+attach() {                                 # make folder i a worktree of its branch
+  local i="$1" b="${BRANCHES[$1]}" d="$ROOT/${DIRS[$1]}"
+  [ "$i" = 0 ] && return 0
+  if [ -e "$d/.git" ]; then echo "  ${DIRS[$i]}/ → $b (already attached)"; return 0; fi
+  ensure_branch "$b"
+  if [ -d "$d" ] && [ -n "$(ls -A "$d")" ]; then
+    # keep the files on disk exactly as they are; only the git link and the index are added
+    local tmp="$d.attach.$$"
+    mv "$d" "$tmp"
+    git worktree add -q --no-checkout "$d" "$b"
+    mv "$d/.git" "$tmp/.git"
+    rmdir "$d"
+    mv "$tmp" "$d"
+    git -C "$d" reset -q                   # index = branch, working files untouched
+    echo "  ${DIRS[$i]}/ → $b (existing files kept; './git.sh status' shows what differs from the branch)"
+  else
+    rmdir "$d" 2>/dev/null || true
+    git worktree add -q "$d" "$b"
+    echo "  ${DIRS[$i]}/ → $b (checked out)"
   fi
-  if git diff --cached --quiet; then echo "nothing to commit on $(here)"; else git commit -m "$msg"; fi
-  git push -u origin "$(here)"
-  echo "DONE: $(here) pushed"
+}
+
+commit_one() {                             # commit folder i on its branch; push if anything is not on GitHub
+  local i="$1" msg="$2" b="${BRANCHES[$1]}" d="$ROOT/${DIRS[$1]}"
+  if ! attached "$i"; then echo "!! ${DIRS[$i]}/ is not attached to $b — run ./git.sh setup"; return 1; fi
+  local on; on=$(git -C "$d" branch --show-current)
+  if [ "$on" != "$b" ]; then echo "!! ${DIRS[$i]}/ is on '$on', expected $b — not touching it"; return 1; fi
+  git -C "$d" add -A
+  local big
+  big=$(cd "$d" && git diff --cached --name-only --diff-filter=AM -z \
+        | xargs -0 -r -I{} find {} -maxdepth 0 -type f -size +"${MAX_MB}"M 2>/dev/null || true)
+  if [ -n "$big" ]; then
+    echo "!! ${DIRS[$i]}/: files over ${MAX_MB} MB (GitHub refuses them) — add them to .gitignore; nothing committed:"
+    echo "$big" | sed 's/^/     /'; git -C "$d" reset -q; return 1
+  fi
+  if git -C "$d" diff --cached --quiet; then
+    echo "  $b: nothing to commit"
+  else
+    git -C "$d" commit -q -m "${msg:-update ${DIRS[$i]} $(date '+%Y-%m-%d %H:%M')}"
+    echo "  $b: committed $(git -C "$d" log -1 --format='%h %s' | cut -c1-80)"
+  fi
+  if [ "$(not_pushed "$b")" != 0 ]; then git push -q -u origin "$b" && echo "  $b: pushed"; fi
 }
 
 case "${1:-}" in
+  setup)
+    git worktree prune
+    echo "attaching the folders in $ROOT:"
+    for i in 1 2 3 4; do attach "$i"; done
+    ;;
   status)
     git fetch -q origin 2>/dev/null || echo "(could not reach GitHub — showing local state)"
-    echo "this folder: $(pwd) · on branch $(here)"
-    for b in "${BRANCHES[@]}"; do
-      if ! git show-ref -q --verify "refs/heads/$b"; then printf '  %-22s (missing — ./git.sh setup)\n' "$b"; continue; fi
-      ahead=$(git rev-list --count "origin/$b..$b" 2>/dev/null || echo "all")
-      printf '  %-22s %s · %s not pushed\n' "$b" "$(git log -1 --format='%h %cr: %s' "$b" | cut -c1-70)" "$ahead"
+    for i in 0 1 2 3 4; do
+      b="${BRANCHES[$i]}"; d="$ROOT/${DIRS[$i]}"
+      if ! attached "$i"; then printf '  %-22s %-22s not attached (./git.sh setup)\n' "$b" "${DIRS[$i]}/"; continue; fi
+      changed=$(git -C "$d" status --porcelain | wc -l)
+      printf '  %-22s %-22s %3s changed file(s) · %s not pushed · %s\n' "$b" "${DIRS[$i]}/" "$changed" \
+             "$(not_pushed "$b")" "$(git log -1 --format='%h %cr: %s' "$b" | cut -c1-60)"
     done
-    echo "open folders:"; git worktree list | sed 's/^/  /'
-    ;;
-  open)
-    b=$(full "${2:?which branch? e.g. ./git.sh open RQ2}")
-    dir="$FOLDERS/$b"
-    if git worktree list --porcelain | grep -qx "branch refs/heads/$b"; then
-      echo "already open: $(git worktree list | grep "\[$b\]" | awk '{print $1}')"; exit 0
-    fi
-    mkdir -p "$FOLDERS"
-    git show-ref -q --verify "refs/heads/$b" || { git fetch -q origin "$b" && git branch "$b" "origin/$b"; }
-    git worktree add "$dir" "$b"
-    echo "opened $b in $dir — work there, then run ./git.sh inside it"
-    ;;
-  switch)
-    b=$(full "${2:?which branch? e.g. ./git.sh switch RQ2}")
-    if [ -n "$(git status --porcelain)" ]; then echo "!! uncommitted changes — run ./git.sh first"; exit 1; fi
-    [ "$b" = "$(here)" ] && { echo "already on $b"; exit 0; }
-    if [ "${3:-}" != "--force" ]; then
-      echo "!! this replaces every tracked file in $(pwd) with branch $b. The cluster runs Horizon from ~/0, so use:"
-      echo "     ./git.sh open ${2}            (the branch in its own folder, ~/0 stays as it is)"
-      echo "   or, if you really want THIS folder on $b:  ./git.sh switch ${2} --force"; exit 1
-    fi
-    if command -v qstat >/dev/null && [ -n "$(qstat -u "$USER" 2>/dev/null)" ]; then
-      echo "!! you have PBS jobs (qstat -u $USER) — they may run code from this folder; not switching"; exit 1
-    fi
-    git switch "$b"
     ;;
   push-all)
     for b in "${BRANCHES[@]}"; do git show-ref -q --verify "refs/heads/$b" && git push -u origin "$b"; done
     ;;
-  setup)
-    for b in "${BRANCHES[@]}"; do
-      git show-ref -q --verify "refs/heads/$b" && continue
-      if has_remote "$b"; then git branch "$b" "origin/$b"; else git branch "$b" master; fi
-      echo "created $b"
-    done
-    "$0" push-all
-    ;;
   -h|--help|help)
-    sed -n '2,22p' "$0"
+    sed -n '2,23p' "$0"
+    ;;
+  open|switch)
+    echo "'$1' is gone: every branch is always open in its own folder (${DIRS[*]:1}). See ./git.sh help"; exit 2
     ;;
   *)
-    commit_push "${1:-}"
+    if [ $# -ge 1 ] && is_name "$1"; then
+      commit_one "$(idx "$1")" "${2:-}"
+    else
+      rc=0
+      for i in 1 2 3 4 0; do commit_one "$i" "${1:-}" || rc=1; done
+      exit "$rc"
+    fi
     ;;
 esac

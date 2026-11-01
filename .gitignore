@@ -1,0 +1,20 @@
+# master holds only README, LICENSE, CITATION.cff, git.sh, Ref/ and Meetings/.
+# These four folders are git worktrees of their own branches (see ./git.sh setup):
+/RQ1-Prompt-injection/
+/RQ2-VectorDB-Flame/
+/RQ3-BlackWall/
+/Documentation/
+# results belong inside each RQ folder, never at the root
+/results/
+/mlruns/
+# LaTeX build files of the meeting slides
+Meetings/**/*.aux
+Meetings/**/*.fdb_latexmk
+Meetings/**/*.fls
+Meetings/**/*.log
+Meetings/**/*.nav
+Meetings/**/*.out
+Meetings/**/*.snm
+Meetings/**/*.synctex.gz
+Meetings/**/*.toc
+Meetings/**/*.vrb
