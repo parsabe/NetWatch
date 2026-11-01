@@ -216,7 +216,7 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
                              # ≈ 25–70 s, plain agent ≈ 7 s (more now that Gemma sees tool results), PyRIT attack
                              # 1–5 min, garak ≈ 11–34 s per output.
                              #   stage1_fit ≈ 190 · stage1_report ≈ 190  (15 attacks + 6 clean + 2 adaptive targets × 3
-                             #   keys, × 7 τ) · detect 200 · calibrate 15 · ablations 5 × 18 · xpia 5 × 8 · pyrit 6 ·
+                             #   keys, × 7 τ) · detect 200 · calibrate 30 · ablations 5 × 18 · xpia 5 × 8 · pyrit 6 ·
                              #   agent_adaptive 3 · garak ≤ 36
                              # Time guarantee: the campaign stops / skips leaf phases after time_budget_min (finished
                              # tests are kept) and each leaf phase has its own cap (max_minutes); stage1_fit and
@@ -236,7 +236,7 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
             redteam.garak_generations=1, redteam.garak_prompt_cap=3]
       args:
         stage1: [--pilot]
-        calibrate: [--attacks, important_instructions, value_tamper, --limit-user, "1", --limit-injection, "2"]
+        calibrate: [--attacks, important_instructions, value_tamper, --limit-user, "2", --limit-injection, "2"]   # 30 episodes: 15 gave Qwen 0 CONFIRM events → λ̂ = ∞
         ablation: [--attacks, important_instructions, value_tamper, --limit-user, "2", --limit-injection, "1"]
         agent_adaptive: [--limit-user, "1", --limit-injection, "1"]
         xpia: [--limit, "8", --xpia-converters, none]

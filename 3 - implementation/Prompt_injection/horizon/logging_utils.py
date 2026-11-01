@@ -12,6 +12,7 @@ from __future__ import annotations
 import contextlib
 import json
 import random
+import re
 import tempfile
 import time
 from pathlib import Path
@@ -36,7 +37,9 @@ def _open(cfg: Config, run_name: str, tags: dict | None, tracking_uri: str):
     try:
         flat = cfg.flat()
         # MLflow caps param length; the full config is logged as the config.json artifact.
-        mlflow.log_params({k: v[:MAX_PARAM_CHARS] for k, v in flat.items()})
+        # MLflow keys allow only letters, digits, _ - . / and space: 'ablation_stage1+2' made EVERY run's
+        # log_params fail (quick2h, 1 Nov), so tracking silently fell back to nothing for the whole campaign.
+        mlflow.log_params({re.sub(r"[^\w\-./ ]", "_", k): v[:MAX_PARAM_CHARS] for k, v in flat.items()})
         mlflow.set_tags({"seed": cfg.run["seed"], "split": cfg.run["split"],
                          "p_llm": cfg.models["p_llm"], "q_llm": cfg.models["q_llm"], **(tags or {})})
         mlflow.log_dict(cfg.model_dump(), "config.json")
