@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use NetWatch or one of its parts, please cite it as below."
+title: "NetWatch: A Cybernetic Guardrail Architecture for Multimodal Autonomous Systems"
+type: software
+authors:
+  - alias: parsabe
+    email: parsabe99@gmail.com
+repository-code: "https://github.com/parsabe/NetWatch"
+license: MIT
+date-released: "2026-11-01"
+keywords:
+  - prompt injection
+  - LLM agents
+  - guardrails
+  - retrieval-augmented generation
+  - AI oversight
+preferred-citation:
+  type: thesis
+  thesis-type: "Master's thesis"
+  title: "NetWatch: A Cybernetic Guardrail Architecture for Multimodal Autonomous Systems"
+  authors:
+    - alias: parsabe
+  year: 2026
+  url: "https://github.com/parsabe/NetWatch"

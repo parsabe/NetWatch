@@ -1,54 +1,71 @@
-# NetWatch: a cybernetic guardrail architecture for multimodal autonomous systems
+# RQ2 · VectorDB Flame: secure vector RAG and retrieval integrity
 
-Master's thesis project. NetWatch protects autonomous AI agents at runtime against attacks that static safety
-filters and prompt engineering miss. The work is split into three research questions, and each one is developed on
-its own branch.
+[NetWatch](https://github.com/parsabe/NetWatch) · [RQ1 Prompt injection](https://github.com/parsabe/NetWatch/tree/RQ1-Prompt-Injection) · **RQ2 VectorDB Flame** · [RQ3 BlackWall](https://github.com/parsabe/NetWatch/tree/RQ3-BlackWall) · [Documentation](https://github.com/parsabe/NetWatch/tree/DOCUMENTATION)
 
-## Research questions and branches
+**Research question.** How can retrieval-augmented generation (RAG) pipelines that use vector databases be
+shielded against corpus poisoning, indirect instruction delivery and data exfiltration?
 
-| Branch | What it holds | Status |
+**Status:** not started. This branch holds only this folder. The thesis text is on
+[`DOCUMENTATION`](https://github.com/parsabe/NetWatch/tree/DOCUMENTATION), and the prompt-injection defence that
+RQ2 builds on (Horizon) is on [`RQ1-Prompt-Injection`](https://github.com/parsabe/NetWatch/tree/RQ1-Prompt-Injection).
+
+## Planned components
+
+| Component | Engineering | Mathematics |
 |---|---|---|
-| `master` | This README, the licenses (`LICENSE`, `THIRD_PARTY_LICENSES.md`, `LICENSES/`) and the shared material every branch starts from | — |
-| [`RQ1-Prompt-Injection`](../../tree/RQ1-Prompt-Injection) | **RQ1 · Prompt injection: the Horizon architecture.** How can cryptographic randomisation, distributionally robust optimisation and deterministic causal mediation be combined into one guardrail that puts a provable upper bound on indirect prompt-injection risk without hurting model utility? | Implemented, under evaluation (`3 - implementation/Prompt_injection/`) |
-| [`RQ2-VectorDB-Flame`](../../tree/RQ2-VectorDB-Flame) | **RQ2 · VectorDB Flame: secure vector RAG and retrieval integrity.** How can RAG vector pipelines be shielded against corpus poisoning, indirect instruction delivery and data exfiltration (Ed25519 chunk attestation, zero-trust ABAC, outlier detection in the embedding space, cryptographic honeytokens)? | Not started |
-| [`RQ3-BlackWall`](../../tree/RQ3-BlackWall) | **RQ3 · BlackWall: autonomous oversight and anti-rogue containment.** How can a cognitive supervisor predict, detect and mathematically constrain rogue agent trajectories (goal drift, deceptive alignment, harmful actions) with latent-space probing, control barrier functions and hardware-rooted guarantees? | Not started |
-| [`DOCUMENTATION`](../../tree/DOCUMENTATION) | The thesis text (LaTeX, `4 - Documentation/`) | Writing |
+| Chunk attestation | Ed25519 signature on every chunk at ingestion; unsigned or altered chunks are never retrieved | signature security (EUF-CMA) |
+| Zero-trust access | attribute-based access control (ABAC) on every query, per user and per chunk | policy as a decidable predicate |
+| Poison detection | quarantine pipeline before chunks enter the index | Mahalanobis distance in the embedding space, $D_M(x)=\sqrt{(x-\mu)^\top\Sigma^{-1}(x-\mu)}$ |
+| Exfiltration tripwires | cryptographic honeytokens planted in the corpus; any appearance in output raises an alarm | false-alarm and detection bounds |
 
-The branches are **never merged** into each other or into `master`. Each one starts from `master` and adds its own
-work. `git.sh` handles all five:
+## Folder layout
 
-```bash
-./git.sh status            # all five branches: last commit, what is not pushed yet
-./git.sh open RQ2          # open a branch in its own folder (~/NetWatch/<branch>) and work there
-./git.sh "what I changed"  # commit everything in this folder on its branch and push that branch
-./git.sh push-all          # push all five branches
+```
+README.md  LICENSE  CITATION.cff
+src/         code (to come)
+results/     what every run produces: per-item CSV/JSON, logs, calibration data
+report/      tables, charts and PDF reports built from results/
+figures/     images and plots for the thesis
 ```
 
-To clone one branch elsewhere: `git clone -b RQ1-Prompt-Injection https://github.com/parsabe/NetWatch.git`.
+Everything this RQ produces stays inside this folder. Nothing is shared through the repository root.
 
-## Repository layout
+## References
 
-| Path | Contents |
-|---|---|
-| `3 - implementation/` | Code. On `RQ1-Prompt-Injection`: `Prompt_injection/` (Horizon: Stage 1 keyed spotlighting, Stage 2 CaMeL-based guardrail, AgentDojo / PyRIT / garak evaluation, PBS cluster scripts) |
-| `4 - Documentation/` | The thesis in LaTeX (`main.tex`; build with `./compile_latex.sh`); edited on `DOCUMENTATION` |
-| `Ref/` | Reference papers, grouped by research topic (third-party copyright, see below) |
-| `Meetings/` | Meeting notes |
-| `propose.md`, `direction.md` | Proposal and implementation direction notes |
+1. W. Zou, R. Geng, B. Wang, J. Jia. *PoisonedRAG: Knowledge Corruption Attacks to Retrieval-Augmented Generation
+   of Large Language Models.* USENIX Security 2025. [arXiv:2402.07867](https://arxiv.org/abs/2402.07867)
+2. K. Greshake, S. Abdelnabi, S. Mishra, C. Endres, T. Holz, M. Fritz. *Not what you've signed up for:
+   Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection.* AISec 2023.
+   [arXiv:2302.12173](https://arxiv.org/abs/2302.12173)
+3. D. J. Bernstein, N. Duif, T. Lange, P. Schwabe, B.-Y. Yang. *High-speed high-security signatures.* Journal of
+   Cryptographic Engineering 2(2), 2012. [ed25519.cr.yp.to](https://ed25519.cr.yp.to/ed25519-20110926.pdf)
+4. V. C. Hu et al. *Guide to Attribute Based Access Control (ABAC) Definition and Considerations.* NIST SP 800-162,
+   2014. [doi:10.6028/NIST.SP.800-162](https://doi.org/10.6028/NIST.SP.800-162)
+5. K. Lee, K. Lee, H. Lee, J. Shin. *A Simple Unified Framework for Detecting Out-of-Distribution Samples and
+   Adversarial Attacks.* NeurIPS 2018. [arXiv:1807.03888](https://arxiv.org/abs/1807.03888)
+6. L. Spitzner. *Honeytokens: The Other Honeypot.* SecurityFocus, 2003.
+7. E. Debenedetti et al. *Defeating Prompt Injections by Design* (CaMeL). 2025.
+   [arXiv:2503.18813](https://arxiv.org/abs/2503.18813)
 
-## RQ1 in short (branch `RQ1-Prompt-Injection`)
+More papers on this topic are in [`Ref/`](https://github.com/parsabe/NetWatch/tree/master/Ref) on `master`
+(folder "Secure Vector Databases & RAG").
 
-Horizon has two stages. **Stage 1** marks untrusted text with a randomly chosen, secretly keyed transformation (π*,
-fitted as a minimax game) so injected instructions are recognisable. **Stage 2** runs the agent through a CaMeL-style
-interpreter: a privileged planner never sees untrusted text, quarantined readers vote on extracted values, and a
-Z3-checked policy with a conformally calibrated confirmation threshold λ̂ gates every tool call. The evaluation runs
-on a PBS GPU cluster with two victim models (Qwen3-8B and Gemma 3 12B). See
-`3 - implementation/Prompt_injection/README.md` and `3 - implementation/Prompt_injection/cluster/README.md`.
+## Citation
 
-## Licenses
+This folder is one part of NetWatch. Please cite the whole project; GitHub's "Cite this repository" button on
+[`master`](https://github.com/parsabe/NetWatch) uses `CITATION.cff`, which is also in this folder.
 
-- **Own code and text:** MIT License, see [`LICENSE`](LICENSE).
-- **Third-party software, models and datasets** keep their own licenses. [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)
-  lists each one, and [`LICENSES/`](LICENSES) holds the full license texts. Datasets and model weights are downloaded
-  by the setup scripts and are not stored in this repository.
-- **`Ref/`:** the papers belong to their authors and publishers and are **not** covered by this repository's license.
+```bibtex
+@mastersthesis{netwatch2026,
+  author = {parsabe},
+  title  = {{NetWatch}: A Cybernetic Guardrail Architecture for Multimodal Autonomous Systems},
+  school = {Master's thesis},
+  year   = {2026},
+  url    = {https://github.com/parsabe/NetWatch},
+  note   = {RQ2 VectorDB Flame, branch RQ2-VectorDB-Flame}
+}
+```
+
+## License
+
+Own code and text: MIT, see [`LICENSE`](LICENSE). Papers and third-party components keep their own licenses.
