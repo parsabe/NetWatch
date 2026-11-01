@@ -11,8 +11,8 @@
 #   ./git.sh "message"           the same, with your commit message
 #   ./git.sh status              all five branches: last commit, commits not pushed yet, folders they are open in
 #   ./git.sh open RQ2            open a branch in its OWN folder (~/NetWatch/<branch>) — safest way to work on it
-#   ./git.sh switch RQ2          change the branch of THIS folder (refused while you have PBS jobs: the cluster
-#                                runs Horizon from ~/0, and switching swaps the code under a running job)
+#   ./git.sh switch RQ2 --force  change the branch of THIS folder (needs --force, refused while you have PBS jobs:
+#                                the cluster runs Horizon from ~/0, and switching swaps the code under a job)
 #   ./git.sh push-all            push all five branches
 #   ./git.sh setup               create any of the five branches that is missing (from master) and push them
 #
@@ -76,9 +76,14 @@ case "${1:-}" in
   switch)
     b=$(full "${2:?which branch? e.g. ./git.sh switch RQ2}")
     if [ -n "$(git status --porcelain)" ]; then echo "!! uncommitted changes — run ./git.sh first"; exit 1; fi
-    if command -v qstat >/dev/null && [ -n "$(qstat -u "$USER" 2>/dev/null)" ] && [ "${3:-}" != "--force" ]; then
-      echo "!! you have PBS jobs and the cluster runs Horizon from this folder — use: ./git.sh open ${2}"
-      echo "   (or ./git.sh switch ${2} --force if no job uses this folder)"; exit 1
+    [ "$b" = "$(here)" ] && { echo "already on $b"; exit 0; }
+    if [ "${3:-}" != "--force" ]; then
+      echo "!! this replaces every tracked file in $(pwd) with branch $b. The cluster runs Horizon from ~/0, so use:"
+      echo "     ./git.sh open ${2}            (the branch in its own folder, ~/0 stays as it is)"
+      echo "   or, if you really want THIS folder on $b:  ./git.sh switch ${2} --force"; exit 1
+    fi
+    if command -v qstat >/dev/null && [ -n "$(qstat -u "$USER" 2>/dev/null)" ]; then
+      echo "!! you have PBS jobs (qstat -u $USER) — they may run code from this folder; not switching"; exit 1
     fi
     git switch "$b"
     ;;
