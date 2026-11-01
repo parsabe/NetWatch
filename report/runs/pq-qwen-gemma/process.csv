@@ -1,0 +1,11 @@
+order,phase,what,status,note,start,end,duration,tests planned,tests done
+1,stage1_fit,Stage 1 on the fit split,ok,,2026-11-01T17:53:30,2026-11-01T18:20:16,0 h 26 min,147,147
+2,ablation_none,AgentDojo · defence 'none',ok,stopped by time cap,2026-11-01T17:53:30,2026-11-01T18:33:32,0 h 40 min,63,31
+3,xpia_none,PyRIT XPIA · 'none',ok,,2026-11-01T17:53:30,2026-11-01T17:55:00,0 h 01 min,12,12
+4,calibrate,Calibrate λ̂ (conformal risk control),ok,,2026-11-01T18:20:21,2026-11-01T18:36:17,0 h 15 min,30,30
+5,stage1_report,Stage 1 on the report split,ok,stopped by time cap,2026-11-01T18:20:21,2026-11-01T18:45:22,0 h 25 min,147,132
+6,ablation_full,AgentDojo · defence 'full',ok,,2026-11-01T18:36:22,2026-11-01T18:52:08,0 h 15 min,63,63
+7,xpia_full,PyRIT XPIA · 'full',ok,,2026-11-01T18:36:22,2026-11-01T18:51:43,0 h 15 min,12,12
+8,pyrit,"PyRIT · PAIR, TAP, Crescendo jailbreaks",ok,stopped by time cap,2026-11-01T17:53:45,2026-11-01T18:18:46,0 h 25 min,6,1
+9,garak,garak · direct + indirect probes,ok,stopped by time cap,2026-11-01T17:55:05,2026-11-01T18:15:06,0 h 20 min,36,20
+10,agent_adaptive,AgentDojo · adaptive attacker vs. full Horizon,ok,,2026-11-01T18:36:22,2026-11-01T18:46:38,0 h 10 min,3,3

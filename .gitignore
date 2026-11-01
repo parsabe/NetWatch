@@ -1,0 +1,28 @@
+# Environment and downloads (rebuilt by scripts/setup.sh / run_campaign.sh --prepare)
+.venv/
+data/raw/
+third_party/camel-prompt-injection/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# results/: the per-phase CSV/JSON of a run ARE versioned (campaign/, stage1/, stage2/, testing/).
+# Left out: caches, databases, raw logs and archived older runs (large, rebuilt by every run).
+results/llm_cache/
+results/archive/
+results/logs/
+results/campaign/logs/
+results/mlartifacts/
+results/mlruns*/
+results/*.db
+results/*.db-*
+results/testing/garak/
+mlruns/
+
+# LaTeX build files of the reports (the .pdf, .md and .tex are kept)
+report/**/*.aux
+report/**/*.fls
+report/**/*.fdb_latexmk
+report/**/*.out
+report/**/*.toc
+report/**/*.synctex.gz

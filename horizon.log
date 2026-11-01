@@ -1,0 +1,67 @@
+==== job 1419316.mmaster02 on mgpunode002.cluster at So 1. Nov 14:28:28 CET 2026
+==== 1. GPU + driver (nvidia-smi)
+name, memory.total [MiB], driver_version
+Quadro RTX 5000, 16384 MiB, 595.71.05
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
+==== 2. PyTorch / CUDA (guard models: DeBERTa, Qwen3Guard)
+torch 2.14.1+cu130 · built for CUDA 13.0 · CUDA usable: True
+guards run on: Quadro RTX 5000
+==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)
+ollama + proxy up
+NAME        ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL              
+qwen3:8b    500a1f067a9f    10 GB    100% GPU     16384      llamacpp    4 minutes from now    
+OK: qwen3:8b runs fully on the GPU
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage.csv
+==== progress → Telegram every 30 min
+==== 5. campaign
+[14:28:54] campaign profile=quick2h workers=4 planned=768 min_tests=400
+[14:28:57] mlflow_ready db=results/mlflow.db
+[14:28:57] start phase=stage1_fit tests_planned=189
+[14:28:57] start phase=detect tests_planned=200
+[14:28:57] start phase=ablation_none tests_planned=18
+[14:28:57] start phase=xpia_none tests_planned=8
+[14:30:52] finish phase=detect status=ok minutes=1.9
+[14:31:12] start_server what=guarded endpoint port=11436
+[14:31:12] start phase=pyrit tests_planned=6
+[14:31:12] finish phase=xpia_none status=ok minutes=2.3
+[14:31:17] start phase=garak tests_planned=36
+[14:47:28] finish phase=stage1_fit status=ok minutes=18.5
+[14:47:33] start phase=calibrate tests_planned=15
+[14:48:58] cap phase=ablation_none minutes=20.0 why=phase cap of 20 min reached
+[14:48:58] finish phase=ablation_none status=ok minutes=20.0
+[14:49:03] start phase=stage1_report tests_planned=189
+[14:56:19] cap phase=garak minutes=25.0 why=phase cap of 25 min reached
+[14:56:19] finish phase=garak status=ok minutes=25.0
+[14:56:24] start phase=ablation_stage1 tests_planned=18
+[15:01:14] cap phase=pyrit minutes=30.0 why=phase cap of 30 min reached
+[15:01:14] finish phase=pyrit status=ok minutes=30.0
+[15:01:19] start phase=xpia_stage1 tests_planned=8
+[15:04:19] finish phase=calibrate status=ok minutes=16.8
+[15:04:24] start phase=ablation_stage2 tests_planned=18
+[15:04:29] finish phase=stage1_report status=ok minutes=15.4
+[15:04:35] start phase=ablation_stage1+2 tests_planned=18
+[15:04:35] finish phase=xpia_stage1 status=ok minutes=3.3
+[15:04:40] start phase=ablation_full tests_planned=18
+[15:09:15] finish phase=ablation_stage1 status=ok minutes=12.9
+[15:09:20] start phase=xpia_stage2 tests_planned=8
+[15:10:00] finish phase=ablation_stage2 status=ok minutes=5.6
+[15:10:05] start phase=xpia_stage1+2 tests_planned=8
+[15:10:05] finish phase=ablation_stage1+2 status=ok minutes=5.5
+[15:10:10] start phase=xpia_full tests_planned=8
+[15:13:00] finish phase=ablation_full status=ok minutes=8.3
+[15:13:05] start phase=agent_adaptive tests_planned=3
+[15:17:00] finish phase=xpia_stage2 status=ok minutes=7.7
+[15:17:00] finish phase=xpia_stage1+2 status=ok minutes=6.9
+[15:17:05] finish phase=agent_adaptive status=ok minutes=4.0
+[15:17:40] finish phase=xpia_full status=ok minutes=7.5
+[15:17:50] report_pdf ok=True
+[15:17:50] report total_tests=738 status=complete path=report/campaign/campaign_report.md
+
+campaign exit code 0  (0 complete · 2 finished with problems · 3 paused → run again)
+report: report/campaign/campaign_report.pdf (.md, CSV tables)
+==== GPU use during the run (average utilization %):
+  94 % over 10 samples
+campaign exit code 0 (0 done · 2 done with problems · 3 paused)
+/var/spool/pbs/mom_priv/jobs/1419316.mmaster02.SC: Zeile 28: 2274219 Beendet                 ( while sleep $((PROGRESS_MIN * 60)); do
+    "$UV" run --no-sync python scripts/progress.py --send > /dev/null 2>&1 || true;
+done )

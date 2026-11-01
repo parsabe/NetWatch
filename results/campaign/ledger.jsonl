@@ -1,0 +1,42 @@
+{"time": "2026-11-01T14:28:54", "event": "campaign", "profile": "quick2h", "workers": 4, "planned": 768, "min_tests": 400}
+{"time": "2026-11-01T14:28:57", "event": "mlflow_ready", "db": "results/mlflow.db"}
+{"time": "2026-11-01T14:28:57", "event": "start", "phase": "stage1_fit", "tests_planned": 189}
+{"time": "2026-11-01T14:28:57", "event": "start", "phase": "detect", "tests_planned": 200}
+{"time": "2026-11-01T14:28:57", "event": "start", "phase": "ablation_none", "tests_planned": 18}
+{"time": "2026-11-01T14:28:57", "event": "start", "phase": "xpia_none", "tests_planned": 8}
+{"time": "2026-11-01T14:30:52", "event": "finish", "phase": "detect", "status": "ok", "minutes": 1.9}
+{"time": "2026-11-01T14:31:12", "event": "start_server", "what": "guarded endpoint", "port": 11436}
+{"time": "2026-11-01T14:31:12", "event": "start", "phase": "pyrit", "tests_planned": 6}
+{"time": "2026-11-01T14:31:12", "event": "finish", "phase": "xpia_none", "status": "ok", "minutes": 2.3}
+{"time": "2026-11-01T14:31:17", "event": "start", "phase": "garak", "tests_planned": 36}
+{"time": "2026-11-01T14:47:28", "event": "finish", "phase": "stage1_fit", "status": "ok", "minutes": 18.5}
+{"time": "2026-11-01T14:47:33", "event": "start", "phase": "calibrate", "tests_planned": 15}
+{"time": "2026-11-01T14:48:58", "event": "cap", "phase": "ablation_none", "minutes": 20.0, "why": "phase cap of 20 min reached"}
+{"time": "2026-11-01T14:48:58", "event": "finish", "phase": "ablation_none", "status": "ok", "minutes": 20.0}
+{"time": "2026-11-01T14:49:03", "event": "start", "phase": "stage1_report", "tests_planned": 189}
+{"time": "2026-11-01T14:56:19", "event": "cap", "phase": "garak", "minutes": 25.0, "why": "phase cap of 25 min reached"}
+{"time": "2026-11-01T14:56:19", "event": "finish", "phase": "garak", "status": "ok", "minutes": 25.0}
+{"time": "2026-11-01T14:56:24", "event": "start", "phase": "ablation_stage1", "tests_planned": 18}
+{"time": "2026-11-01T15:01:14", "event": "cap", "phase": "pyrit", "minutes": 30.0, "why": "phase cap of 30 min reached"}
+{"time": "2026-11-01T15:01:14", "event": "finish", "phase": "pyrit", "status": "ok", "minutes": 30.0}
+{"time": "2026-11-01T15:01:19", "event": "start", "phase": "xpia_stage1", "tests_planned": 8}
+{"time": "2026-11-01T15:04:19", "event": "finish", "phase": "calibrate", "status": "ok", "minutes": 16.8}
+{"time": "2026-11-01T15:04:24", "event": "start", "phase": "ablation_stage2", "tests_planned": 18}
+{"time": "2026-11-01T15:04:29", "event": "finish", "phase": "stage1_report", "status": "ok", "minutes": 15.4}
+{"time": "2026-11-01T15:04:35", "event": "start", "phase": "ablation_stage1+2", "tests_planned": 18}
+{"time": "2026-11-01T15:04:35", "event": "finish", "phase": "xpia_stage1", "status": "ok", "minutes": 3.3}
+{"time": "2026-11-01T15:04:40", "event": "start", "phase": "ablation_full", "tests_planned": 18}
+{"time": "2026-11-01T15:09:15", "event": "finish", "phase": "ablation_stage1", "status": "ok", "minutes": 12.9}
+{"time": "2026-11-01T15:09:20", "event": "start", "phase": "xpia_stage2", "tests_planned": 8}
+{"time": "2026-11-01T15:10:00", "event": "finish", "phase": "ablation_stage2", "status": "ok", "minutes": 5.6}
+{"time": "2026-11-01T15:10:05", "event": "start", "phase": "xpia_stage1+2", "tests_planned": 8}
+{"time": "2026-11-01T15:10:05", "event": "finish", "phase": "ablation_stage1+2", "status": "ok", "minutes": 5.5}
+{"time": "2026-11-01T15:10:10", "event": "start", "phase": "xpia_full", "tests_planned": 8}
+{"time": "2026-11-01T15:13:00", "event": "finish", "phase": "ablation_full", "status": "ok", "minutes": 8.3}
+{"time": "2026-11-01T15:13:05", "event": "start", "phase": "agent_adaptive", "tests_planned": 3}
+{"time": "2026-11-01T15:17:00", "event": "finish", "phase": "xpia_stage2", "status": "ok", "minutes": 7.7}
+{"time": "2026-11-01T15:17:00", "event": "finish", "phase": "xpia_stage1+2", "status": "ok", "minutes": 6.9}
+{"time": "2026-11-01T15:17:05", "event": "finish", "phase": "agent_adaptive", "status": "ok", "minutes": 4.0}
+{"time": "2026-11-01T15:17:40", "event": "finish", "phase": "xpia_full", "status": "ok", "minutes": 7.5}
+{"time": "2026-11-01T15:17:50", "event": "report_pdf", "ok": true}
+{"time": "2026-11-01T15:17:50", "event": "report", "total_tests": 738, "status": "complete", "path": "report/campaign/campaign_report.md"}

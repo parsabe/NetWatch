@@ -1,0 +1,25 @@
+{
+ "status": "complete",
+ "profile": "pair2h",
+ "started": "2026-11-01T18:52:53",
+ "finished": "2026-11-01T20:23:02",
+ "total_tests": 397,
+ "min_tests": 300,
+ "max_tests": 1500,
+ "target_met": true,
+ "attacks": 332,
+ "attacks_got_through": 98,
+ "topup_rounds": 0,
+ "phases": {
+  "stage1_fit": "ok",
+  "ablation_none": "ok",
+  "xpia_none": "ok",
+  "calibrate": "ok",
+  "stage1_report": "ok",
+  "ablation_full": "ok",
+  "xpia_full": "ok",
+  "pyrit": "ok",
+  "garak": "ok",
+  "agent_adaptive": "ok"
+ }
+}

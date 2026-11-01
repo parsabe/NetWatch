@@ -1,0 +1,16 @@
+{
+  "pi_star": {
+    "datamark_dynamic": 0.858959172033625,
+    "random_scramble": 0.14104082792111694
+  },
+  "R_Q": 0.999999999954742,
+  "log_K": 9.210340371976184,
+  "V1_fit": 1.0,
+  "rho": 0.5714285714285714,
+  "eta": 0.05,
+  "q": 1000,
+  "rho_source": "data",
+  "v1_mean_bound": "cp",
+  "tau_star": "datamark_dynamic",
+  "chosen_on": "fit_pilot"
+}

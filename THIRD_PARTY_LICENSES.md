@@ -1,14 +1,14 @@
 # Third-party licenses
 
-NetWatch's own code and text are MIT-licensed (see `LICENSE`). Everything below belongs to its authors and keeps its
+Horizon (RQ1 of NetWatch) is MIT-licensed (see `LICENSE`). Everything below belongs to its authors and keeps its
 own license. None of the model weights or datasets are stored in this repository: the setup scripts download them
-(`3 - implementation/Prompt_injection/scripts/download_data.py`, `run_campaign.sh --prepare`). Full license texts are
+(`scripts/download_data.py`, `run_campaign.sh --prepare`). Full license texts are
 in `LICENSES/`: `Apache-2.0.txt`, `MIT-BIPIA.txt` and `MIT-JailbreakBench.txt` as examples of the MIT text. For any
 other component, the text that ships with that component applies.
 
-Versions are the ones locked in `3 - implementation/Prompt_injection/uv.lock` on 1 Nov 2026.
+Versions are the ones locked in `uv.lock` on 1 Nov 2026.
 
-## Software used by RQ1 (Horizon)
+## Software
 
 | Component | Use | License |
 |---|---|---|
@@ -36,6 +36,7 @@ Versions are the ones locked in `3 - implementation/Prompt_injection/uv.lock` on
 |---|---|---|
 | Qwen3-8B (Alibaba Qwen) | planner, quarantined reader, victim, attacker (run 1) | Apache-2.0 |
 | Gemma 3 12B (Google) | planner, quarantined reader, victim, attacker (run 2) | Gemma Terms of Use (https://ai.google.dev/gemma/terms) |
+| Mistral 7B Instruct (Mistral AI) | attacker in the four planner/reader pairing runs (`config/variants/pq-*.yaml`) | Apache-2.0 |
 | protectai/deberta-v3-base-prompt-injection-v2 | input guard | Apache-2.0 |
 | Qwen/Qwen3Guard-Gen-0.6B | output guard (run 1) | Apache-2.0 |
 | ibm-granite/granite-guardian-3.1-2b | output guard (run 2) | Apache-2.0 |
