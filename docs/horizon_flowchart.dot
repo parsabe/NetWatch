@@ -1,0 +1,117 @@
+// Horizon flowchart: the two stages of RQ1 with their maths, as in the 20.10 meeting slides.
+// Build:  dot -Tpng -Gdpi=200 docs/horizon_flowchart.dot -o docs/horizon_flowchart.png   (also -Tpdf, -Tsvg)
+digraph Horizon {
+  graph [fontname="DejaVu Sans" fontsize=13 rankdir=TB nodesep=0.35 ranksep=0.32 pad=0.4 splines=ortho newrank=true
+         labelloc=t label=<<B><FONT POINT-SIZE="22">Horizon: two stages against indirect prompt injection</FONT></B><BR/><FONT POINT-SIZE="12" COLOR="#52514E">Stage 1 hardens the READER (one document, no agent). Stage 2 puts that reader inside an AGENT with tools.</FONT><BR/> >];
+  node  [fontname="DejaVu Sans" fontsize=12 shape=box style="rounded,filled" penwidth=1.4 margin="0.18,0.08"
+         fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  edge  [fontname="DejaVu Sans" fontsize=10 color="#7A7974" arrowsize=0.75 penwidth=1.3 fontcolor="#52514E"];
+
+  // ---------- STAGE 1 ----------
+  subgraph cluster_s1 {
+    label=<<B><FONT POINT-SIZE="17">Stage 1 · Keyed spotlighting with risk bounds</FONT></B><BR/><FONT POINT-SIZE="11" COLOR="#52514E">offline experiment · a model reads ONE document and answers a fixed question · no user agent, no tools</FONT>>;
+    style="rounded,dashed" color="#5B4FC9" margin=18;
+
+    s1data [label=<<B>Document with a hidden attack δ</B><BR/><FONT POINT-SIZE="10">BIPIA · LLMail-Inject</FONT>> fillcolor="#F6F5F2"];
+    s1mark [label=<<B>Mark the document</B><BR/><FONT POINT-SIZE="10">marking τ (7 variants) · fresh secret key κ</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+    s1read [label=<<B>Reader LLM answers</B><BR/><FONT POINT-SIZE="10">the fixed question about the document</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+    s1hit  [label=<<B>Did it follow δ?</B><BR/><FONT POINT-SIZE="10">canary A(δ, κ) = 1</FONT>> shape=diamond style="filled" margin="0.05,0.05"];
+    s1count [label=<<B>Count</B><BR/><FONT POINT-SIZE="10">s successes in n attacks, per τ</FONT>>];
+
+    f_forge [label=<<B>Forging</B><BR/>q / |K<SUB>τ</SUB>|> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    f_cp    [label=<<B>Attack-rate bound</B><BR/>p̄<SUB>τ</SUB> = Beta<SUP>−1</SUP>(1−α; s+1, n−s)> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    f_dro   [label=<<B>DRO  ▼ worst-case weight</B><BR/>g<SUB>ρ</SUB>(p̄) = p̄ + √(2ρ p̄(1−p̄))> fillcolor="#E1F3EE" color="#8B1E1E" fontcolor="#0B4A37" penwidth=3];
+    f_adp   [label=<<B>Adaptive attacker  ▼</B><BR/>p̄<SUP>adp</SUP><SUB>τ</SUB> = rate of argmax<SUB>δ</SUB> attacks> fillcolor="#E1F3EE" color="#8B1E1E" fontcolor="#0B4A37" penwidth=3];
+    f_comb  [label=<<B>Combined risk  ▼ max</B><BR/>R̄<SUB>τ</SUB> = min{1, q/|K<SUB>τ</SUB>| + max(g<SUB>ρ</SUB>(p̄<SUB>τ</SUB>), p̄<SUP>adp</SUP><SUB>τ</SUB>)}> fillcolor="#E1F3EE" color="#8B1E1E" fontcolor="#0B4A37" penwidth=3];
+    f_sion  [label=<<B>Sion game, level 1  ▼ max over attacks</B><BR/>V<SUB>1</SUB> = min<SUB>π</SUB> max<SUB>Q</SUB> Σ π<SUB>τ</SUB> R̄<SUB>τ</SUB>   subject to  U ≥ U<SUB>0</SUB> − η> fillcolor="#E1F3EE" color="#8B1E1E" fontcolor="#0B4A37" penwidth=3];
+    s1out   [label=<<B>Stage 1 output</B><BR/><FONT POINT-SIZE="10">π* = which markings, how often · |K| · R̄<SUB>Q</SUB></FONT>> fillcolor="#F6F5F2" penwidth=2];
+
+    s1data -> s1mark -> s1read -> s1hit;
+    s1hit -> s1count [xlabel="yes / no"];
+    s1count -> f_cp;
+    {rank=same; f_forge; f_cp; f_adp}
+    f_cp -> f_dro;
+    f_forge -> f_comb; f_dro -> f_comb; f_adp -> f_comb;
+    f_comb -> f_sion -> s1out;
+  }
+
+  // ---------- STAGE 2 ----------
+  subgraph cluster_s2 {
+    label=<<B><FONT POINT-SIZE="17">Stage 2 · Deterministic guardrail (math-hardened CaMeL)</FONT></B><BR/><FONT POINT-SIZE="11" COLOR="#52514E">online · one user task with tools (AgentDojo) · the attack δ hides in emails, files, web pages</FONT>>;
+    style="rounded,dashed" color="#0F6B50" margin=18;
+
+    user  [label=<<B>User prompt</B><BR/><FONT POINT-SIZE="10">trusted</FONT>> fillcolor="#F6F5F2"];
+    plan  [label=<<B>Planner (P-LLM)</B><BR/><FONT POINT-SIZE="10">sees only the prompt · writes the plan as code</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+    interp [label=<<B>Interpreter</B><BR/><FONT POINT-SIZE="10">runs the plan · fetches data · labels every value</FONT>>];
+    ext   [label=<<B>External data</B><BR/><FONT POINT-SIZE="10">UNTRUSTED · may contain δ</FONT>> fillcolor="#FBE3CC" color="#B85C00"];
+    quar  [label=<<B>Quarantined readers × m</B><BR/><FONT POINT-SIZE="10">each: τ ~ π*, fresh κ (Stage 1 inside) · typed schema</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+    vote  [label=<<B>Majority?</B><BR/><FONT POINT-SIZE="10">≥ ⌊m/2⌋+1 agree</FONT>> shape=diamond style="filled" margin="0.05,0.05"];
+    refv  [label=<<B>Refuse the value</B>> fillcolor="#FBDCD9" color="#B3261E"];
+    val   [label=<<B>Typed value + label</B><BR/><FONT POINT-SIZE="10">UNTRUSTED · agreement s(x)</FONT>>];
+    pol   [label=<<B>Policy table</B><BR/><FONT POINT-SIZE="10">per tool and label</FONT>> shape=diamond style="filled" margin="0.05,0.05"];
+    conf  [label=<<B>s(x) ≥ λ<SUP>^</SUP> ?</B>> shape=diamond style="filled" margin="0.05,0.05"];
+    ask   [label=<<B>Ask the user</B>>];
+    deny  [label=<<B>Deny the call</B>> fillcolor="#FBDCD9" color="#B3261E"];
+    tool  [label=<<B>Tool call</B><BR/><FONT POINT-SIZE="10">allowed actions only</FONT>>];
+    ans   [label=<<B>Answer</B>> fillcolor="#F6F5F2"];
+
+    m_forge [label=<<B>Forging</B><BR/>Σ<SUB>τ</SUB> π*<SUB>τ</SUB> q / |K<SUB>τ</SUB>|> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    m_bits  [label=<<B>Typed schema</B><BR/>≤ log<SUB>2</SUB>|S| bits leak per value> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    m_hoef  [label=<<B>Hoeffding</B><BR/>P(vote fooled) ≤ exp(−2m(½ − R̄<SUB>Q</SUB>)<SUP>2</SUP>)> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    m_z3    [label=<<B>Noninterference (Z3)</B><BR/>untrusted label ⇒ never ALLOW> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    m_crc   [label=<<B>Conformal risk control</B><BR/>λ<SUP>^</SUP> = inf{λ : (n/(n+1)) L̂<SUB>n</SUB>(λ) + B/(n+1) ≤ α}> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+
+    user -> plan -> interp;
+    ext -> interp [xlabel="read" color="#B85C00"];
+    interp -> quar [xlabel="untrusted text" color="#B85C00"];
+    quar -> vote;
+    vote -> refv [xlabel="no"];
+    vote -> val [xlabel="yes"];
+    val -> pol;
+    pol:w -> conf:n [xlabel="CONFIRM"];
+    pol:e -> deny:n [xlabel="DENY"];
+    pol:s -> tool:n [xlabel="ALLOW"];
+    conf:s -> ask:n [xlabel="yes"];
+    conf:e -> deny:w [xlabel="no"];
+    ask -> tool [xlabel="approved"];
+    tool -> ans;
+
+    {rank=same; quar; m_forge}
+    {rank=same; vote; m_hoef}
+    {rank=same; pol; m_z3}
+    {rank=same; m_crc; conf; deny}
+    quar -> m_forge [style=dashed arrowhead=none color="#0F6B50"];
+    vote -> m_hoef  [style=dashed arrowhead=none color="#0F6B50"];
+    pol  -> m_z3    [style=dashed arrowhead=none color="#0F6B50"];
+    m_crc -> conf   [style=dashed arrowhead=none color="#0F6B50"];
+    {rank=same; val; m_bits}
+    val -> m_bits [style=dashed arrowhead=none color="#0F6B50"];
+  }
+
+  // ---------- BOTH STAGES ----------
+  subgraph cluster_v {
+    label=<<B><FONT POINT-SIZE="17">Horizon value · both stages in one number</FONT></B>>;
+    style="rounded,dashed" color="#8B1E1E" margin=18;
+    loss [label=<<B>Loss per attack  ▼ heavier harm, heavier weight</B><BR/>ℓ = G + a·C + h·F<BR/><FONT POINT-SIZE="10">G = got past the policy (weight 1) · C = reached "ask user" (a) · F = fooled the vote (h)</FONT>> fillcolor="#E1F3EE" color="#8B1E1E" fontcolor="#0B4A37" penwidth=3];
+    vh   [label=<<B>Sion game, level 2  ▼ max over attacks</B><BR/>V<SUB>H</SUB> = min<SUB>π∈Π</SUB> min{1, Σπ q/|K| + max(E[ℓ] + √(2ρ Var ℓ), Σπ ℓ<SUP>adp</SUP>)}<BR/><FONT POINT-SIZE="10">Π: utility ≥ U − η · leakage Σ log<SUB>2</SUB>|S| ≤ B</FONT>> fillcolor="#E1F3EE" color="#8B1E1E" fontcolor="#0B4A37" penwidth=3];
+    loss -> vh;
+  }
+
+  // ---------- how the stages connect ----------
+  s1out -> quar [xlabel="π*, |K|" style=dashed color="#5B4FC9" constraint=false];
+  s1out -> m_hoef [xlabel="R̄_Q" style=dashed color="#5B4FC9" constraint=false];
+  s1out -> user [style=invis];
+  ans -> loss [xlabel="G, C, F" style=dashed];
+  s1out -> vh [xlabel="CP, DRO, adaptive" style=dashed color="#5B4FC9" constraint=false];
+
+  // ---------- legend ----------
+  legend [shape=plaintext style="" label=<
+    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="6">
+      <TR><TD BGCOLOR="#EEEDFB" BORDER="1" COLOR="#5B4FC9" WIDTH="22"> </TD><TD ALIGN="LEFT">LLM</TD>
+          <TD BGCOLOR="#E1F3EE" BORDER="1" COLOR="#0F6B50" WIDTH="22"> </TD><TD ALIGN="LEFT">math</TD>
+          <TD BGCOLOR="#FFFFFF" BORDER="1" COLOR="#A8A6A0" WIDTH="22"> </TD><TD ALIGN="LEFT">code / data</TD>
+          <TD BGCOLOR="#FBE3CC" BORDER="1" COLOR="#B85C00" WIDTH="22"> </TD><TD ALIGN="LEFT">untrusted</TD>
+          <TD BGCOLOR="#E1F3EE" BORDER="3" COLOR="#8B1E1E" WIDTH="22"> </TD><TD ALIGN="LEFT"><B>▼ worst case weighs most ("event horizon")</B></TD></TR>
+    </TABLE>>];
+  vh -> legend [style=invis];
+}
