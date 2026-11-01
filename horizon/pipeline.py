@@ -62,6 +62,13 @@ def resolve_mix(cfg: Config) -> Mix | None:
     return Mix(variants, {n: p / total for n, p in kept.items()})
 
 
+def planner_cfg(cfg: Config) -> dict:
+    """Model settings for CaMeL's planner: its own output cap (stage2.p_llm_max_tokens). A whole program does not fit
+    in the 768 tokens every other call gets; Gemma's answers were cut off before the closing ``` (1 Nov)."""
+    cap = cfg.stage2.get("p_llm_max_tokens")
+    return {**cfg.models, "max_tokens": int(cap)} if cap else cfg.models
+
+
 def resolve_lambda(cfg: Config) -> float | None:
     if not cfg.flags.use_conformal:
         return None
@@ -195,7 +202,7 @@ def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, a
         role = role or policy.default_role
         factory = lambda env: HorizonPolicyEngine(env, policy if f.use_policy else None, tool_names, state,  # noqa: E731
                                                   lam, role, s2, approver)
-        elements.append(HorizonPrivilegedLLM(LLM(cfg.models["p_llm"], cfg.models), q, f.m, factory, state, token,
+        elements.append(HorizonPrivilegedLLM(LLM(cfg.models["p_llm"], planner_cfg(cfg)), q, f.m, factory, state, token,
                                              s2["p_llm_max_attempts"],
                                              dialect_rules=bool(s2.get("p_llm_dialect_rules", True))))
     else:

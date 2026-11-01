@@ -23,7 +23,7 @@ tg() { "${PY[@]}" -m horizon.notify "$1" >/dev/null 2>&1 || echo "  (Telegram me
 say "1. offline unit tests (no GPU, no model server)"
 if [ -z "${SKIP_TESTS:-}" ]; then
   "${PY[@]}" -m pytest -q tests/test_starvation.py tests/test_reliability.py tests/test_campaign.py \
-      tests/test_math_upgrades.py tests/test_stage2.py tests/test_integration_endpoints.py \
+      tests/test_math_upgrades.py tests/test_stage2.py tests/test_integration_endpoints.py tests/test_planner_fixes.py \
     || { echo "!! tests failed — nothing submitted"; exit 1; }
 else
   echo "  skipped (SKIP_TESTS=1)"

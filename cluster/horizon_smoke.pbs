@@ -13,7 +13,7 @@ set -uo pipefail
 SRC="${PBS_O_WORKDIR:-$(dirname "$0")/..}"
 DST="${SMOKE_DIR:-$HOME/0_smoke_$(basename "$SRC")}"   # one smoke copy per run: two runs never wipe each other's
 mkdir -p "$DST"
-rsync -a --delete --exclude .venv --exclude results --exclude report --exclude mlartifacts --exclude 'horizon*.log' \
+rsync -a --delete --exclude .git --exclude .venv --exclude results --exclude report --exclude mlartifacts --exclude 'horizon*.log' \
       --exclude data/raw --exclude config/autotuned.yaml "$SRC/" "$DST/"
 ln -sfn "$SRC/.venv" "$DST/.venv"
 ln -sfn "$SRC/data/raw" "$DST/data/raw"

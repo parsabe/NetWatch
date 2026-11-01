@@ -12,12 +12,14 @@
 # differ. teachingq runs at most 2 of your jobs at a time: the first two start now (the mixed pairs: the riskier
 # setup — two models share one 16 GB GPU — runs first), the other two wait and start when those end, so all four
 # finish ≈ 4 h after the start (more if the GPUs are busy).
+# Each pairing starts from zero (FRESH=1: an earlier run of it moves to ~/0_runs/<name>/archive/<time>/;
+# FRESH=0 ./cluster/launch_pairs.sh resumes instead).
 # Watch in Telegram (/status, /log pq-gemma, /compare) — the bot is started below.
 # At the end (or any time, on what has finished):
 #   .venv/bin/python scripts/compare_runs.py ~/0_runs/pq-qwen-qwen ~/0_runs/pq-gemma-gemma ~/0_runs/pq-qwen-gemma ~/0_runs/pq-gemma-qwen
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export PROFILE=pair2h WALLTIME_H=2 ONE_GPU=1 NO_SMOKE=1 NO_RESUBMIT=1 PROGRESS_MIN="${PROGRESS_MIN:-30}"
+export PROFILE=pair2h WALLTIME_H=2 ONE_GPU=1 NO_SMOKE=1 NO_RESUBMIT=1 PROGRESS_MIN="${PROGRESS_MIN:-30}" FRESH="${FRESH:-1}"
 PAIRS=(pq-qwen-gemma pq-gemma-qwen pq-qwen-qwen pq-gemma-gemma)
 first=1
 for name in "${PAIRS[@]}"; do

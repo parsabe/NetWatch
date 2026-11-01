@@ -126,6 +126,7 @@ stage2:
   unvoted_agreement: 1.0     # score s(x) for UNTRUSTED values that never went through a vote
   simulated_user: approve    # who answers CONFIRM prompts in simulation: approve | deny
   p_llm_max_attempts: 10     # CaMeL code-repair attempts per task
+  p_llm_max_tokens: 2048     # planner output cap (a whole program; every other call keeps models.max_tokens)
   p_llm_dialect_rules: true  # append CaMeL's restricted-Python rules to the planner prompt (horizon/stage2/camel_adapter.py)
   json_retries: 2            # re-ask a quarantined run whose output does not parse
   policies: [strict, confirm_untrusted]
