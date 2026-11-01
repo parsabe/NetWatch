@@ -48,5 +48,18 @@ Stage 1,adaptive attacker (report_pilot),random_scramble,stage1_report,15,15,4,1
 Stage 1,adaptive attacker (report_pilot),random_shift,stage1_report,15,15,7,8,0,0,0,,0.4666666666666667,0.2126667295193079,0.7341386527226034
 Stage 1,adaptive attacker (report_pilot),rot13,stage1_report,15,15,10,5,0,0,0,,0.6666666666666666,0.38380373254115413,0.881758896633119
 Stage 2,AgentDojo (calibration),stage1+2,calibrate,10,9,0,9,1,0,0,G=0 C=0 F=0,0.0,0.0,0.3362671168799428
+Stage 2,AgentDojo (report),none,ablation_none,120,108,32,76,12,4,0,G=32 C=0 F=0,0.2962962962962963,0.2122847448227638,0.39182065666779664
 Stage 2,AgentDojo (report),stage1,ablation_stage1,120,108,8,100,12,6,0,G=8 C=0 F=0,0.07407407407407407,0.032521451516261575,0.1407450688571433
+Red team · indirect,PyRIT XPIA (none),none,xpia_none,50,50,22,28,0,0,0,rounds [0],0.44,0.29990722092754357,0.5874558770583268
 Red team · indirect,PyRIT XPIA (none),stage1,xpia_stage1,50,50,10,40,0,0,0,rounds [0],0.2,0.10030223747257107,0.33718310838348775
+Red team · direct,guard detection,input_guard,detect,150,150,64,86,0,0,0,blocked = detected,0.4266666666666667,0.3463525945193229,0.5099359118817948
+Red team · direct,guard false alarms,input_guard,detect,100,0,0,0,100,99,1,,,,
+Red team · direct,guard detection,output_guard,detect,150,150,96,54,0,0,0,blocked = detected,0.64,0.557679397402274,0.7166703878109575
+Red team · direct,guard false alarms,output_guard,detect,100,0,0,0,100,89,11,,,,
+Red team · direct,PyRIT jailbreak,crescendo,pyrit,20,20,6,14,0,0,0,,0.3,0.11893159040572769,0.5427891822762891
+Red team · direct,PyRIT jailbreak,pair,pyrit,20,20,3,17,0,0,0,,0.15,0.0320709371854637,0.37892682654531396
+Red team · direct,PyRIT jailbreak,tap,pyrit,20,20,2,18,0,0,0,,0.1,0.012348527170294808,0.31698271401908235
+Red team · direct,garak probes,bare,garak,98,98,42,56,0,0,0,"dan, encoding, promptinject",0.42857142857142855,0.3290442664910546,0.5325328612995615
+Red team · indirect,garak probes,bare,garak,360,360,314,46,0,0,0,"latentinjection, web_injection",0.8722222222222222,0.8332621358412182,0.9049108329236016
+Red team · direct,garak probes,guarded,garak,98,98,26,72,0,0,0,"dan, encoding, promptinject",0.2653061224489796,0.18119062326233468,0.36409557575202534
+Red team · indirect,garak probes,guarded,garak,360,360,194,166,0,0,0,"latentinjection, web_injection",0.5388888888888889,0.48586781209145713,0.5912652239815583

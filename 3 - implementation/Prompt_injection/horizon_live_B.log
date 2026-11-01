@@ -114,3 +114,13 @@ OK: qwen3:8b runs fully on the GPU
 [19:42:57] finish phase=ablation_none status=ok minutes=60.0
 [19:42:57] finish phase=xpia_none status=ok minutes=60.0
 [19:43:02] start phase=garak tests_planned=336
+[20:45:48] finish phase=garak status=ok minutes=62.8
+[00:17:24] finish phase=pyrit status=ok minutes=274.5
+[00:17:30] report_pdf ok=False
+[00:17:30] report total_tests=2946 status=finished with problems path=report/campaign/campaign_report.md
+
+campaign exit code 2  (0 complete · 2 finished with problems · 3 paused → run again)
+report: report/campaign/campaign_report.pdf (.md, CSV tables)
+==== GPU use during the run (average utilization %):
+  76 % over 67 samples
+campaign exit code 2 (0 done · 2 done with problems · 3 paused)

@@ -1,4 +1,4 @@
-==== job 1419107.mmaster02 on mgpunode003.cluster at Sa 31. Okt 17:25:47 CET 2026
+==== job 1419108.mmaster02 on mgpunode003.cluster at Sa 31. Okt 18:42:39 CET 2026
 ==== 1. GPU + driver (nvidia-smi)
 name, memory.total [MiB], driver_version
 Quadro RTX 5000, 16384 MiB, 595.71.05
@@ -11,41 +11,26 @@ ollama + proxy up
 NAME        ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL              
 qwen3:8b    500a1f067a9f    10 GB    100% GPU     16384      llamacpp    4 minutes from now    
 OK: qwen3:8b runs fully on the GPU
-==== 4. GPU usage every 5 min → results/campaign/gpu_usage_A.csv
-==== progress → Telegram every 60 min
+==== 4. GPU usage every 5 min → results/campaign/gpu_usage_B.csv
 ==== 5. campaign
-[17:26:03] campaign profile=bounded workers=4 planned=3038 min_tests=2000
-[17:26:05] mlflow_ready db=results/mlflow.db
-[17:26:05] start phase=stage1_fit tests_planned=560
-[17:47:30] finish phase=stage1_fit status=ok minutes=21.4
-[17:47:36] start phase=calibrate tests_planned=160
-[17:47:36] start phase=stage1_report tests_planned=560
-[17:47:36] start phase=ablation_stage1 tests_planned=120
-[17:47:36] start phase=xpia_stage1 tests_planned=50
-[17:50:46] finish phase=calibrate status=failed minutes=3.2
-[17:50:46] retry phase=calibrate attempt=1 max=2
-[17:50:51] start phase=calibrate tests_planned=160
-[17:51:06] finish phase=calibrate status=failed minutes=0.3
-[17:51:06] retry phase=calibrate attempt=2 max=2
-[17:57:26] finish phase=xpia_stage1 status=ok minutes=9.8
-[18:27:12] finish phase=stage1_report status=ok minutes=39.6
-[18:41:57] finish phase=ablation_stage1 status=ok minutes=54.4
-[18:42:02] start phase=calibrate tests_planned=160
-[18:42:12] finish phase=calibrate status=failed minutes=0.2
-[18:42:17] skip phase=ablation_stage2 reason=needs calibrate
-[18:42:17] skip phase=ablation_stage1+2 reason=needs calibrate
-[18:42:17] skip phase=ablation_full reason=needs calibrate
-[18:42:17] skip phase=xpia_stage2 reason=needs calibrate
-[18:42:17] skip phase=xpia_stage1+2 reason=needs calibrate
-[18:42:17] skip phase=xpia_full reason=needs calibrate
-[18:42:17] skip phase=agent_adaptive reason=needs calibrate
-[18:42:23] report total_tests=1300 status=finished with problems path=report/campaign/campaign_report.md
+[18:42:53] campaign profile=bounded workers=4 planned=3038 min_tests=2000
+[18:42:55] mlflow_ready db=results/mlflow_laneB.db
+[18:42:55] start phase=detect tests_planned=500
+[18:42:55] start phase=ablation_none tests_planned=120
+[18:42:55] start phase=xpia_none tests_planned=50
+[19:42:57] start_server what=guarded endpoint port=11436
+[19:42:57] start phase=pyrit tests_planned=60
+[19:42:57] finish phase=detect status=ok minutes=60.0
+[19:42:57] finish phase=ablation_none status=ok minutes=60.0
+[19:42:57] finish phase=xpia_none status=ok minutes=60.0
+[19:43:02] start phase=garak tests_planned=336
+[20:45:48] finish phase=garak status=ok minutes=62.8
+[00:17:24] finish phase=pyrit status=ok minutes=274.5
+[00:17:30] report_pdf ok=False
+[00:17:30] report total_tests=2946 status=finished with problems path=report/campaign/campaign_report.md
 
 campaign exit code 2  (0 complete · 2 finished with problems · 3 paused → run again)
 report: report/campaign/campaign_report.pdf (.md, CSV tables)
 ==== GPU use during the run (average utilization %):
-  88 % over 16 samples
+  76 % over 67 samples
 campaign exit code 2 (0 done · 2 done with problems · 3 paused)
-/var/spool/pbs/mom_priv/jobs/1419107.mmaster02.SC: Zeile 28: 2017670 Beendet                 ( while sleep $((PROGRESS_MIN * 60)); do
-    "$UV" run --no-sync python scripts/progress.py --send > /dev/null 2>&1 || true;
-done )
