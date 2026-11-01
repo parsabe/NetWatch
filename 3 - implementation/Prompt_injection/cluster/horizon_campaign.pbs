@@ -94,7 +94,8 @@ echo "campaign exit code $rc (0 done · 2 done with problems · 3 paused)"
 "$UV" run --no-sync python scripts/progress.py --send >/dev/null 2>&1 || true   # final snapshot of this part
 if [ "$rc" -eq 3 ] && [ -z "${NO_RESUBMIT:-}" ]; then
   echo "paused before the walltime → submitting the next part"
-  qsub ${LANE:+-v LANE=$LANE} cluster/horizon_campaign.pbs \
+  qsub -l "walltime=$(printf '%02d' "$WALLTIME_H"):00:00" \
+       -v "PROFILE=$PROFILE,WALLTIME_H=$WALLTIME_H,PARALLEL=$PARALLEL${LANE:+,LANE=$LANE}" cluster/horizon_campaign.pbs \
     || { echo "resubmit by hand on the login node: qsub cluster/horizon_campaign.pbs"
          alert resubmit_failed; }
 fi

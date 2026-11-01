@@ -99,6 +99,17 @@ def _save(out: Path, name: str, rows: list[dict]) -> None:
         pd.DataFrame(rows).to_csv(p, mode="a", header=not p.exists(), index=False)
 
 
+def _episode_error(out: Path, tag: str, aid: str, e: Exception, errors: list[str]) -> None:
+    """An episode that raised (model server hiccup, interpreter bug, …): print it, keep it in errors.csv, go on.
+    It is NOT written to episodes.csv, so a later run of the phase tries it again."""
+    import traceback
+    msg = f"{type(e).__name__}: {str(e)[:300]}"
+    errors.append(f"{aid}: {msg}")
+    print(f"  {aid}: EPISODE ERROR {msg}", flush=True)
+    traceback.print_exc()
+    _save(out, "errors", [{"config": tag, "attack_id": aid, "error": msg, "time": time.strftime("%Y-%m-%dT%H:%M:%S")}])
+
+
 def _done_ids(out: Path, name: str, tag: str, col: str) -> set[str]:
     p = out / f"{name}.csv"
     if not p.exists():
@@ -111,6 +122,7 @@ def run_episodes(cfg, split: str, attack_names: list[str], limit_user: int | Non
                  out: Path, tag: str) -> pd.DataFrame:
     splits = json.loads(SPLIT_FILE.read_text())
     done = _done_ids(out, "episodes", tag, "attack_id")
+    errors: list[str] = []
     for s in cfg.stage2["suites"]:
         suite = get_suite(cfg.stage2["benchmark_version"], s)
         built = build_pipeline(cfg, suite)                        # Z3 proof runs here
@@ -121,7 +133,11 @@ def run_episodes(cfg, split: str, attack_names: list[str], limit_user: int | Non
             if f"{s}/{uid}/benign" not in done:
                 built.state.reset()
                 t0 = time.time()
-                util, _ = suite.run_task_with_pipeline(built.pipeline, ut, injection_task=None, injections={})
+                try:
+                    util, _ = suite.run_task_with_pipeline(built.pipeline, ut, injection_task=None, injections={})
+                except Exception as e:                            # one broken episode must not cost the phase
+                    _episode_error(out, tag, f"{s}/{uid}/benign", e, errors)
+                    continue
                 _save(out, "episodes", [{"config": tag, "suite": s, "user_task": uid, "injection_task": "",
                                          "style": "benign", "attack_id": f"{s}/{uid}/benign", "utility": int(util),
                                          "asr": 0, "G": 0, "C": 0, "F": 0, "alarms": built.state.alarms,
@@ -134,8 +150,12 @@ def run_episodes(cfg, split: str, attack_names: list[str], limit_user: int | Non
                     it = suite.get_injection_task_by_id(iid)
                     built.state.reset()
                     t0 = time.time()
-                    util, sec = suite.run_task_with_pipeline(built.pipeline, ut, it, attack.attack(ut, it))
-                    los = episode_losses(built.state, attacker_entities(suite, ut, it), goal_functions(suite, it))
+                    try:
+                        util, sec = suite.run_task_with_pipeline(built.pipeline, ut, it, attack.attack(ut, it))
+                        los = episode_losses(built.state, attacker_entities(suite, ut, it), goal_functions(suite, it))
+                    except Exception as e:                        # recorded in errors.csv, not counted as a test
+                        _episode_error(out, tag, f"{s}/{uid}/{iid}/{an}", e, errors)
+                        continue
                     # Without Stage 2 there is no policy engine, hence no events: G would be 0 for EVERY episode and a
                     # configuration that lets 9 % of the attacks through would look loss-free to the Sion game.
                     # With no policy in the way, an attack that succeeded is by definition a bypass: G = 1.
@@ -153,7 +173,12 @@ def run_episodes(cfg, split: str, attack_names: list[str], limit_user: int | Non
     p = out / "episodes.csv"
     df = pd.read_csv(p) if p.exists() else pd.DataFrame(columns=["config", "style", "utility", "asr", "G", "C", "F",
                                                                   "seconds"])
-    return df[df["config"] == tag]
+    df = df[df["config"] == tag]
+    if errors:
+        print(f"  {len(errors)} episode(s) crashed and were skipped (see {out / 'errors.csv'})", flush=True)
+        if not len(df):                                   # nothing worked at all: that is a broken setup, not data
+            raise RuntimeError(f"every episode crashed ({len(errors)}); first: {errors[0]}")
+    return df
 
 
 def adaptive(cfg, split: str, limit_user: int | None, limit_inj: int | None, out: Path, tag: str) -> pd.DataFrame:

@@ -246,3 +246,41 @@ def test_milestones_notify_once(sandbox, monkeypatch):
     assert len(groups) == 1 and any(m.startswith("❌ Step failed: Jailbreak scanner") for m in sent)
     C.notify_progress(st, "detect", CFG)
     assert len([m for m in sent if m.startswith("✅ Finished: guards and jailbreak")]) == 1
+
+
+def test_time_cap_stops_a_leaf_phase_and_keeps_it_ok(sandbox):
+    """quick2h: a leaf phase over its cap is stopped and counts as done (its rows are kept); a phase that others
+    need (stage1_fit) is never capped."""
+    slow = [sys.executable, "-c", "import time; time.sleep(30)"]
+    ok = [sys.executable, "-c", "import time; time.sleep(0.3)"]
+    plan = [C.Phase("stage1_fit", "", "", ok, [], "document", 1, 1),
+            C.Phase("pyrit", "", "", slow, [], "pyrit", 1, 1),
+            C.Phase("calibrate", "", "", ok, ["stage1_fit"], "agent", 1, 1)]
+    st = {"phases": {}}
+    t0 = __import__("time").time()
+    C.run_phases(plan, {"workers": 3, "set": [], "max_minutes": {"pyrit": 0.01, "stage1_fit": 0.001}}, st, [],
+                 load_config(None, ["campaign.max_retries=0"]))
+    assert __import__("time").time() - t0 < 20
+    assert st["phases"]["pyrit"]["status"] == "ok" and st["phases"]["pyrit"]["capped"]
+    assert st["phases"]["stage1_fit"]["status"] == "ok" and not st["phases"]["stage1_fit"].get("capped")
+    assert st["phases"]["calibrate"]["status"] == "ok"
+
+
+def test_campaign_deadline_skips_phases_that_did_not_start(sandbox, monkeypatch):
+    ok = [sys.executable, "-c", "pass"]
+    plan = [C.Phase("detect", "", "", ok, [], "guard", 1, 1), C.Phase("garak", "", "", ok, [], "garak", 1, 1)]
+    monkeypatch.setitem(C.T0, "t", __import__("time").time() - 3600)          # the budget is long used up
+    st = {"phases": {}}
+    C.run_phases(plan, {"workers": 2, "set": [], "time_budget_min": 1}, st, [], CFG)
+    assert {k: v["status"] for k, v in st["phases"].items()} == {"detect": "skipped", "garak": "skipped"}
+
+
+def test_quick2h_profile_has_caps_only_on_leaf_phases_and_fits_its_budget():
+    prof = C.profile_of(CFG, "quick2h")
+    cfg = load_config(None, prof["set"])
+    plan = C.build_plan(cfg, prof, [])
+    needed = {d for p in plan for d in [*p.needs, *p.wants]}
+    assert not needed & set(prof["max_minutes"]), "stage1_fit / calibrate must never be capped"
+    assert prof["time_budget_min"] <= 2 * 60 - 25                 # 2 h walltime − start-up − 15 min stop margin
+    assert max(prof["max_minutes"].values()) <= prof["time_budget_min"]
+    assert not C.budget_problems(plan, prof)

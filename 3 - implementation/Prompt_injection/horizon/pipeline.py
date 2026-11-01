@@ -14,6 +14,7 @@ every tool output is spotlighted with τ ~ π* and a fresh κ (Stage-1-only abla
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -49,7 +50,16 @@ def resolve_mix(cfg: Config) -> Mix | None:
     if not path.exists():
         raise FileNotFoundError(f"{path} not found: run the Stage 1 fit (eval/stage1_runner.py --fit) or set "
                                 "flags.stage1_variant")
-    return Mix(variants, json.loads(path.read_text())["pi_star"])
+    pi = json.loads(path.read_text())["pi_star"]
+    # A π* fitted before a marking was removed from stage1.variants (e.g. rot13, dropped 1 Nov 2026) must not crash
+    # the agent: keep the markings that still exist and renormalise.
+    kept = {n: float(p) for n, p in pi.items() if n in variants and float(p) > 0}
+    if not kept:
+        raise ValueError(f"{path}: none of the markings in π* ({', '.join(pi)}) is in stage1.variants; refit Stage 1")
+    if len(kept) < len([p for p in pi.values() if float(p) > 0]):
+        print(f"[horizon] π* in {path} names markings no longer configured; using {sorted(kept)}", file=sys.stderr)
+    total = sum(kept.values())
+    return Mix(variants, {n: p / total for n, p in kept.items()})
 
 
 def resolve_lambda(cfg: Config) -> float | None:
@@ -116,6 +126,42 @@ def _spotlight_formatter(mix: Mix):
     return fmt
 
 
+def _prompting_llm_class():
+    from agentdojo.agent_pipeline.llms.local_llm import LocalLLM
+
+    class PromptingToolLLM(LocalLLM):
+        """AgentDojo's LocalLLM (tools described in the prompt, for models whose Ollama template has no tool support),
+        with every tool result handed to the model as a USER turn.
+
+        LocalLLM sends tool results with role "tool", and Ollama's Gemma 3 template silently drops every message whose
+        role is not user/system/assistant: Gemma never saw a single tool result (0 utility in every plain-agent
+        episode of the 31 Oct smoke run). Its tool_delimiter="user" switch is no fix either: user content is then
+        iterated as a list of blocks, so a plain JSON string would be split into single characters.
+        The pipeline's own message history keeps the real tool messages (AgentDojo's checks read them)."""
+
+        def query(self, query, runtime, env=functions_runtime.EmptyEnv(), messages=(), extra_args={}):
+            shown = []
+            for m in messages:
+                if m["role"] == "tool":
+                    fn = m["tool_call"].function if m.get("tool_call") is not None else "the function"
+                    if m.get("error"):
+                        body = json.dumps({"error": m["error"]})
+                    else:
+                        res = ad_types.get_text_content_as_str(m["content"]) if m["content"] else "None"
+                        body = json.dumps({"result": "Success" if res == "None" else res})
+                    m = ad_types.ChatUserMessage(role="user", content=[ad_types.text_content_block_from_string(
+                        f"Output of {fn}: {body}")])
+                shown.append(m)
+            query, runtime, env, out, extra_args = super().query(query, runtime, env, shown, extra_args)
+            return query, runtime, env, [*messages, out[-1]], extra_args
+
+    return PromptingToolLLM
+
+
+def PromptingToolLLM(*args, **kwargs):  # noqa: N802  (lazy: AgentDojo's local_llm module is only needed for Gemma)
+    return _prompting_llm_class()(*args, **kwargs)
+
+
 @dataclass
 class Built:
     pipeline: agent_pipeline.AgentPipeline
@@ -150,13 +196,13 @@ def build_pipeline(cfg: Config, suite, role: str | None = None, listener=None, a
         factory = lambda env: HorizonPolicyEngine(env, policy if f.use_policy else None, tool_names, state,  # noqa: E731
                                                   lam, role, s2, approver)
         elements.append(HorizonPrivilegedLLM(LLM(cfg.models["p_llm"], cfg.models), q, f.m, factory, state, token,
-                                             s2["p_llm_max_attempts"]))
+                                             s2["p_llm_max_attempts"],
+                                             dialect_rules=bool(s2.get("p_llm_dialect_rules", True))))
     else:
         client = openai.OpenAI(base_url=f"http://127.0.0.1:{cfg.models['proxy_port']}/v1", api_key="local")
         name = cfg.models["p_llm"].split("/", 1)[1]
         if cfg.models.get("tool_calling", "native") == "prompting":   # Ollama refuses `tools` for e.g. Gemma 3:
-            from agentdojo.agent_pipeline.llms.local_llm import LocalLLM   # tools described in the prompt instead
-            llm = LocalLLM(client, name, temperature=cfg.models["temperature"])
+            llm = PromptingToolLLM(client, name, temperature=cfg.models["temperature"])  # tools described in the prompt
         else:
             llm = agent_pipeline.OpenAILLM(client, name, temperature=cfg.models["temperature"])
         sysmsg = load_system_message(None)

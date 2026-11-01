@@ -57,7 +57,7 @@ flags:
   use_canary: true
 
 stage1:
-  variants: [none, delimiting, datamark_fixed, datamark_dynamic, rot13, random_shift, random_scramble, base64]
+  variants: [none, delimiting, datamark_fixed, datamark_dynamic, random_shift, random_scramble, base64]
   alpha: 0.05
   rho_grid: {include_zero: true, log_min: -4, log_max: 0, num: 24}   # 0 plus log-spaced 1e-4..1
   eta_list: [0.02, 0.05, 0.10]
@@ -125,6 +125,7 @@ stage2:
   unvoted_agreement: 1.0     # score s(x) for UNTRUSTED values that never went through a vote
   simulated_user: approve    # who answers CONFIRM prompts in simulation: approve | deny
   p_llm_max_attempts: 10     # CaMeL code-repair attempts per task
+  p_llm_dialect_rules: true  # append CaMeL's restricted-Python rules to the planner prompt (horizon/stage2/camel_adapter.py)
   json_retries: 2            # re-ask a quarantined run whose output does not parse
   policies: [strict, confirm_untrusted]
   parser: strict             # θ components used at runtime (the sweeps use the lists above)
@@ -137,7 +138,7 @@ stage2:
 
 redteam:                     # §11 third-party attack tools (eval/jailbreak_runner.py --xpia / --garak)
   xpia_configs: [none, stage1, stage2, stage1+2, full]   # paired: the same attacks through every configuration
-  xpia_converters: [none, base64, rot13, leetspeak]      # PyRIT converters applied to δ (horizon/redteam/xpia.py)
+  xpia_converters: [none, base64, leetspeak]      # PyRIT converters applied to δ (horizon/redteam/xpia.py)
   xpia_split: report         # attacks from data/processed/stage1_<split>_attacks.jsonl (never the fit split)
   xpia_suite: workspace      # AgentDojo world for the agent configs (inbox · calendar · files)
   progress_every: 25
@@ -145,8 +146,7 @@ redteam:                     # §11 third-party attack tools (eval/jailbreak_run
   # NAMED probes, one subprocess each (a bare module name such as `dan` expands to every probe in it). The old lists —
   # whole modules `dan, promptinject, encoding` at garak's defaults of 256 prompts × 5 outputs — meant tens of thousands
   # of requests, and every run died at the same prompt (DanInTheWild #22).
-  garak_probes_direct: [dan.Dan_11_0, dan.DanInTheWild, promptinject.HijackHateHumans, encoding.InjectBase64,
-                        encoding.InjectROT13]
+  garak_probes_direct: [dan.Dan_11_0, dan.DanInTheWild, promptinject.HijackHateHumans, encoding.InjectBase64]
   garak_probes_indirect: [latentinjection.LatentWhois, web_injection.MarkdownImageExfil]
   garak_generations: 2       # outputs per prompt (garak default: 5)
   garak_prompt_cap: 12       # garak run.soft_probe_prompt_cap: at most this many prompts per probe (garak default: 256)
@@ -209,6 +209,39 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
         xpia: [--limit, "50", --xpia-converters, none]
         detect: [--limit, "25"]
         pyrit: [--limit, "10"]
+    quick2h:                 # EVERY phase, sized so ONE GPU job ends within a 2 h walltime: a test run of the whole
+                             # pipeline on both models side by side, to catch errors before the multi-day runs
+                             # (cluster/launch_quick2h.sh: Qwen job + Gemma job at the same time).
+                             # Sized from the 31 Oct timings of the SLOWER model (Gemma 3 12B, 2 slots): CaMeL episode
+                             # ≈ 25–70 s, plain agent ≈ 7 s (more now that Gemma sees tool results), PyRIT attack
+                             # 1–5 min, garak ≈ 11–34 s per output.
+                             #   stage1_fit ≈ 190 · stage1_report ≈ 190  (15 attacks + 6 clean + 2 adaptive targets × 3
+                             #   keys, × 7 τ) · detect 200 · calibrate 15 · ablations 5 × 18 · xpia 5 × 8 · pyrit 6 ·
+                             #   agent_adaptive 3 · garak ≤ 36
+                             # Time guarantee: the campaign stops / skips leaf phases after time_budget_min (finished
+                             # tests are kept) and each leaf phase has its own cap (max_minutes); stage1_fit and
+                             # calibrate are never capped (other phases need their output).
+      workers: 4
+      min_tests: 400
+      max_tests: 1500
+      parallel_requests: 4
+      time_budget_min: 90    # campaign process; the PBS job has 120 min: ≈ 5 min start-up, stop at 105 min (PBS script),
+                             # ≈ 3 min for report + charts + PDF, the rest is safety margin
+      max_minutes: {stage1_report: 25, detect: 15, ablation_none: 20, ablation_stage1: 20, ablation_stage2: 30,
+                    "ablation_stage1+2": 30, ablation_full: 30, xpia_none: 12, xpia_stage1: 12, xpia_stage2: 18,
+                    "xpia_stage1+2": 18, xpia_full: 18, agent_adaptive: 20, pyrit: 30, garak: 25}
+      skip: [autotune, stage1_altmodel]
+      set: [stage1.pilot_n=15, stage1.pilot_clean=6, stage1.pilot_adaptive_targets=2, stage1.n_adaptive_eval_keys=3,
+            stage1.attack_budget=3, stage2.adaptive_budget=3, stage2.alpha_user=0.02,
+            redteam.garak_generations=1, redteam.garak_prompt_cap=3]
+      args:
+        stage1: [--pilot]
+        calibrate: [--attacks, important_instructions, value_tamper, --limit-user, "1", --limit-injection, "2"]
+        ablation: [--attacks, important_instructions, value_tamper, --limit-user, "2", --limit-injection, "1"]
+        agent_adaptive: [--limit-user, "1", --limit-injection, "1"]
+        xpia: [--limit, "8", --xpia-converters, none]
+        detect: [--limit, "10"]
+        pyrit: [--limit, "1"]
     cluster:                 # everything at the configured sizes; several agent jobs in parallel
       workers: 4
       # Ollama slots (OLLAMA_NUM_PARALLEL). TU Freiberg GPU nodes = Quadro RTX 5000 16 GB: 8 slots × 16k context
@@ -234,6 +267,10 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
       workers: 1
       min_tests: 0           # no target: it only checks that every phase runs
       parallel_requests: 2
+      # The smoke job has 3 h. On 31 Oct the Gemma smoke hit that walltime (exit 3 = paused) and PBS therefore
+      # deleted both lanes (depend=afterok). Now leaf phases stop after their cap / the budget and the smoke ends.
+      time_budget_min: 150
+      max_minutes: {pyrit: 40, garak: 40, agent_adaptive: 20}
       set: [stage1.pilot_n=5, stage1.pilot_clean=2, stage1.pilot_adaptive_targets=1, redteam.garak_generations=1,
             autotune.n_start=3, autotune.n_max=6, autotune.n_clean=2, autotune.max_rounds=2, autotune.model_n=3,
             autotune.sim_trials=40, "autotune.sim_n=[30]", stage1.attack_budget=3, stage2.adaptive_budget=2,
@@ -306,9 +343,9 @@ theory:
   p_grid: [0.01, 0.03, 0.1, 0.2, 0.3]
   example_static: {s: 20, n: 1000}
   example_adaptive: {s: 60, n: 500}
-  example_U: {none: 1.0, delimiting: 0.98, datamark_fixed: 0.97, datamark_dynamic: 0.96, rot13: 0.7, random_shift: 0.6, random_scramble: 0.5, base64: 0.75}
-  example_p_hat: {none: 0.4, delimiting: 0.25, datamark_fixed: 0.15, datamark_dynamic: 0.08, rot13: 0.2, random_shift: 0.1, random_scramble: 0.05, base64: 0.12}
-  example_p_adp: {none: 0.8, delimiting: 0.6, datamark_fixed: 0.45, datamark_dynamic: 0.2, rot13: 0.5, random_shift: 0.3, random_scramble: 0.15, base64: 0.35}
+  example_U: {none: 1.0, delimiting: 0.98, datamark_fixed: 0.97, datamark_dynamic: 0.96, random_shift: 0.6, random_scramble: 0.5, base64: 0.75}
+  example_p_hat: {none: 0.4, delimiting: 0.25, datamark_fixed: 0.15, datamark_dynamic: 0.08, random_shift: 0.1, random_scramble: 0.05, base64: 0.12}
+  example_p_adp: {none: 0.8, delimiting: 0.6, datamark_fixed: 0.45, datamark_dynamic: 0.2, random_shift: 0.3, random_scramble: 0.15, base64: 0.35}
   n_attacks_sim: 400         # size of the simulated paired matrix used in theory mode
   attack_difficulty_sd: 1.0  # latent per-attack difficulty (logit scale) → correlated failures across τ
   runs_per_attack_sim: 15    # simulated independent-key runs per attack (F9/F10 theory)

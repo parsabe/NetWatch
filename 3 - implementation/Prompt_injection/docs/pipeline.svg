@@ -40,10 +40,10 @@
 <title>s1run</title>
 <path fill="#eeedfb" stroke="#5b4fc9" stroke-width="1.5" d="M570.15,-1946.85C570.15,-1946.85 299.85,-1946.85 299.85,-1946.85 293.85,-1946.85 287.85,-1940.85 287.85,-1934.85 287.85,-1934.85 287.85,-1902.45 287.85,-1902.45 287.85,-1896.45 293.85,-1890.45 299.85,-1890.45 299.85,-1890.45 570.15,-1890.45 570.15,-1890.45 576.15,-1890.45 582.15,-1896.45 582.15,-1902.45 582.15,-1902.45 582.15,-1934.85 582.15,-1934.85 582.15,-1940.85 576.15,-1946.85 570.15,-1946.85"/>
 <text xml:space="preserve" text-anchor="start" x="367.88" y="-1929.25" font-family="DejaVu Sans" font-weight="bold" font-size="12.00" fill="#2e2780">Stage 1 experiment</text>
-<text xml:space="preserve" text-anchor="start" x="339.38" y="-1919.15" font-family="DejaVu Sans" font-size="10.00" fill="#2e2780">every attack document × 8 markings τ</text>
+<text xml:space="preserve" text-anchor="start" x="339.38" y="-1919.15" font-family="DejaVu Sans" font-size="10.00" fill="#2e2780">every attack document × 7 markings τ</text>
 <text xml:space="preserve" text-anchor="start" x="302.25" y="-1909.15" font-family="DejaVu Sans" font-size="10.00" fill="#2e2780">(delimiters · ^ · N</text>
 <text xml:space="preserve" text-anchor="start" x="389.25" y="-1909.15" font-family="DejaVu Sans" baseline-shift="super" font-size="10.00" fill="#2e2780">k</text>
-<text xml:space="preserve" text-anchor="start" x="393.75" y="-1909.15" font-family="DejaVu Sans" font-size="10.00" fill="#2e2780"> · ROT13 · shift · scramble · Base64)</text>
+<text xml:space="preserve" text-anchor="start" x="393.75" y="-1909.15" font-family="DejaVu Sans" font-size="10.00" fill="#2e2780"> · shift · scramble · Base64)</text>
 <text xml:space="preserve" text-anchor="start" x="316.5" y="-1899.15" font-family="DejaVu Sans" font-size="10.00" fill="#2e2780">new secret key κ each time · Qwen3&#45;8B answers</text>
 </g>
 <!-- data&#45;&gt;s1run -->

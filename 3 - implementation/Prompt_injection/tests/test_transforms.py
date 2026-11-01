@@ -48,7 +48,7 @@ def test_key_space_sizes():
     assert math.exp(VARIANTS["random_shift"].log_key_space()) == pytest.approx(25)
     assert VARIANTS["random_scramble"].log_key_space() == pytest.approx(
         math.lgamma(len(s1["scramble_alphabet"]) + 1))
-    for n in ["none", "delimiting", "datamark_fixed", "rot13", "base64"]:
+    for n in ["none", "delimiting", "datamark_fixed", "base64"]:
         assert VARIANTS[n].log_key_space() == 0.0
 
 

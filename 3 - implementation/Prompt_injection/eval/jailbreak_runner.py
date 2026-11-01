@@ -160,6 +160,7 @@ async def _pyrit(cfg, endpoint: str, objectives: list[str], kinds: list[str]) ->
                                                    attack_scoring_config=sc)}
     path = OUT / "pyrit.csv"
     done = set(map(tuple, pd.read_csv(path)[["attack", "objective"]].to_numpy())) if path.exists() else set()
+    n_ok = n_err = 0
     for k in kinds:
         for obj in objectives:
             if (k, obj[:200]) in done:
@@ -179,11 +180,23 @@ async def _pyrit(cfg, endpoint: str, objectives: list[str], kinds: list[str]) ->
                     last, res = e, None
                     print(f"  {k}: attempt {attempt + 1} failed ({type(e).__name__}: {str(e)[:160]})", flush=True)
             if res is None:
-                raise last
+                # Every attempt failed (31 Oct, Gemma 3 as attacker: its JSON reply was cut off → PyRIT's
+                # InvalidJsonException / EmptyResponseException; the old `raise last` killed the whole phase three
+                # times and the smoke job ran out of walltime). Record the objective as ERROR — the campaign tally
+                # leaves ERROR rows out of the tests — and go on with the next one.
+                n_err += 1
+                row = {"attack": k, "objective": obj[:200], "outcome": f"ERROR: {type(last).__name__}",
+                       "turns": None, "seconds": time.time() - t0}
+                pd.DataFrame([row]).to_csv(path, mode="a", header=not path.exists(), index=False)
+                print(f"  {k}: ERROR after all attempts ({type(last).__name__}) — recorded, continuing", flush=True)
+                continue
+            n_ok += 1
             row = {"attack": k, "objective": obj[:200], "outcome": str(res.outcome),
                    "turns": getattr(res, "executed_turns", None), "seconds": time.time() - t0}
             pd.DataFrame([row]).to_csv(path, mode="a", header=not path.exists(), index=False)
             print(f"  {k}: {str(res.outcome)}", flush=True)
+    if n_err and not n_ok:          # not one attack worked in this run: endpoint / model broken, not a result
+        raise RuntimeError(f"PyRIT: all {n_err} attacks failed — is the model / guarded endpoint reachable?")
     return pd.read_csv(path).to_dict("records") if path.exists() else []
 
 
@@ -320,11 +333,16 @@ def garak(cfg, args) -> pd.DataFrame:
     run_cfg.write_text(yaml.safe_dump({"reporting": {"report_dir": str(GARAK_DIR.resolve())},
                                        "run": {"soft_probe_prompt_cap": int(rc["garak_prompt_cap"])}}))
     rows, failed = [], []
+    gens = {}
     for target in rc["garak_targets"]:
         endpoint, model = garak_target(cfg, target, args.endpoint)
-        gen = garak_config(cfg, endpoint, model, target)
-        for family in ("direct", "indirect"):
-            for probe in rc[f"garak_probes_{family}"]:
+        gens[target] = (endpoint, garak_config(cfg, endpoint, model, target))
+    # probe by probe, each on every target (bare, then guarded): a run stopped by the campaign's time cap still has
+    # paired bare/guarded results for every probe it finished
+    for family in ("direct", "indirect"):
+        for probe in rc[f"garak_probes_{family}"]:
+            for target in rc["garak_targets"]:
+                endpoint, gen = gens[target]
                 prefix = f"{target}_{family}_{probe.replace('.', '-')}"
                 report = GARAK_DIR / f"{prefix}.report.jsonl"
                 if report.exists() and not _garak_finished(report):
@@ -346,13 +364,14 @@ def garak(cfg, args) -> pd.DataFrame:
                         report.rename(report.with_suffix(".partial"))
                 if _garak_finished(report):
                     rows += [{"target": target, "family": family, **x} for x in parse_garak(report)]
+                    pd.DataFrame(rows).to_csv(OUT / "garak_items.csv", index=False)   # after every probe (time cap)
                 else:
                     failed.append(f"{target}/{probe}")
-        if target == "guarded":
-            errs, reqs = _guarded_error_rate(endpoint)
-            if reqs and errs / reqs > rc["max_upstream_error_rate"]:
-                failed.append(f"guarded endpoint: {errs} of {reqs} requests hit an upstream error "
-                              f"(> {rc['max_upstream_error_rate']:.0%}): empty answers would read as 'blocked'")
+    if "guarded" in gens:
+        errs, reqs = _guarded_error_rate(gens["guarded"][0])
+        if reqs and errs / reqs > rc["max_upstream_error_rate"]:
+            failed.append(f"guarded endpoint: {errs} of {reqs} requests hit an upstream error "
+                          f"(> {rc['max_upstream_error_rate']:.0%}): empty answers would read as 'blocked'")
     df = pd.DataFrame(rows)
     if len(df):
         summary = _cp_rows(df, ["target", "family", "probe"], "fails", "n", cfg.stage1["alpha"])

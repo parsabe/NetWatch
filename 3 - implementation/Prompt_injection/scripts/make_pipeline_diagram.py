@@ -58,8 +58,8 @@ def flowchart() -> str:
     # ------------------------------------------------------------- ① BEFORE (offline)
     b = n("data", "Datasets", "indirect: BIPIA · LLMail-Inject<BR/>direct: HackAPrompt · HarmBench · JBB · Gandalf · "
           "XSTest · Alpaca", DATA)
-    b += n("s1run", "Stage 1 experiment", "every attack document × 8 markings τ<BR/>(delimiters · ^ · N<SUP>k</SUP> · "
-           "ROT13 · shift · scramble · Base64)<BR/>new secret key κ each time · Qwen3-8B answers", LLM)
+    b += n("s1run", "Stage 1 experiment", "every attack document × 7 markings τ<BR/>(delimiters · ^ · N<SUP>k</SUP> · "
+           "shift · scramble · Base64)<BR/>new secret key κ each time · Qwen3-8B answers", LLM)
     b += n("s1math", "Stage 1 maths", "attack rate bound p̄ = Beta<SUP>−1</SUP>(1−α; s+1, n−s)<BR/>χ²-DRO  g<SUB>ρ</SUB>(p̄) "
            "= p̄ + √(2ρp̄(1−p̄))<BR/>forging q/|K<SUB>τ</SUB>| · adaptive attacker p̄<SUP>adp</SUP><BR/>"
            "R̄<SUB>τ</SUB> = min{1, q/|K<SUB>τ</SUB>| + max(g<SUB>ρ</SUB>, p̄<SUP>adp</SUP>)}", MATH)

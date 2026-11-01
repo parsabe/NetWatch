@@ -20,3 +20,5 @@ campaign:
   profiles:
     bounded:
       parallel_requests: 2       # 12B weights (≈ 8 GB) + KV cache: 2 slots × 16k context stay fully on the 16 GB GPU
+    quick2h:
+      parallel_requests: 2       # same reason (the 2 h sizes were measured on Gemma with 2 slots)

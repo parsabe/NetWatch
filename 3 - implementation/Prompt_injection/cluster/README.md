@@ -6,6 +6,26 @@ in dependency order (several at a time), keeps going after time limits, and fini
 and why, and for every defence configuration how many attacks got through vs. were blocked (with 95 %
 Clopper–Pearson intervals and example cases).
 
+## 0 · Test run of both models in ≤ 2 h
+
+```bash
+./cluster/launch_quick2h.sh        # Qwen3-8B here + Gemma 3 12B in ~/0_runs/gemma3-12b, one 2 h GPU job each
+```
+
+Profile `quick2h` (≈ 730–770 tests, every phase): a check that the whole pipeline runs on both models without errors
+before the multi-day runs (`bounded`, `cluster`). Both jobs start together (teachingq allows 2 per user). The campaign
+stops or skips leaf phases after `time_budget_min` = 90 min and each leaf phase has a cap (`max_minutes`); finished
+tests are kept, and the report marks capped phases ("stopped by time cap"). `stage1_fit` and `calibrate` are never
+capped, because other phases need their output. No smoke job and no follow-up part.
+
+Every run writes `report/campaign/campaign_report.{md,pdf}` with tables **and charts** (`report/campaign/charts/`:
+attack success per Stage 1 marking, adaptive attacker, clean-document utility, AgentDojo attacks and solved tasks per
+defence configuration, guard misses and false alarms, PyRIT, XPIA, garak, and the phase timeline). Compare the models:
+
+```bash
+.venv/bin/python scripts/compare_runs.py . ~/0_runs/gemma3-12b   # → report/compare/compare_runs.{md,pdf} + charts/
+```
+
 ## 1 · Upload
 
 Copy the `Prompt_Injection` folder **without** `.venv/`, `results/`, `report/`, `mlartifacts/`:

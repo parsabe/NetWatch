@@ -1,6 +1,6 @@
 """Indirect red-teaming with PyRIT's XPIA workflow (cross-domain prompt injection, §11).
 
-    plant    PyRIT sends the attack δ, optionally obfuscated by a PyRIT converter (Base64, ROT13, leetspeak, …),
+    plant    PyRIT sends the attack δ, optionally obfuscated by a PyRIT converter (Base64, leetspeak, …),
              to a local document store (LocalDocumentStore; nothing leaves the machine)
     process  the stored text is placed into a clean carrier document D ⊕ δ and processed by ONE Horizon
              configuration: the bare model, Stage 1 (keyed spotlighting) or the agent (Stage 2 / Stage 1+2 / full)
@@ -30,7 +30,7 @@ DOCUMENT_CONFIGS = ("none", "stage1")              # one LLM call on a document
 AGENT_CONFIGS = ("stage2", "stage1+2", "full")     # the CaMeL agent in an AgentDojo world
 
 # converter name in params.yaml → PyRIT class (None = attack text unchanged)
-CONVERTERS = {"none": None, "base64": "Base64Converter", "rot13": "ROT13Converter",
+CONVERTERS = {"none": None, "base64": "Base64Converter",
               "leetspeak": "LeetspeakConverter", "char_space": "CharacterSpaceConverter",
               "confusable": "UnicodeConfusableConverter"}
 

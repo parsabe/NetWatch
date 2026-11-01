@@ -264,7 +264,7 @@ be loaded raises a clear `GatedModelError` and is switched off.
 `scripts/guarded_server.py` exposes the guarded model as an OpenAI-compatible endpoint for PyRIT / garak.
 
 **Red-teaming (§11, `eval/jailbreak_runner.py`).** Direct: PyRIT PAIR / TAP / Crescendo and garak `dan`,
-`promptinject`, `encoding`. Indirect: **PyRIT XPIA** plants each attack δ (optionally Base64 / ROT13 / leetspeak
+`promptinject`, `encoding`. Indirect: **PyRIT XPIA** plants each attack δ (optionally Base64 / leetspeak
 via PyRIT converters) in a document and processes it with every Horizon configuration (none · stage1 · stage2 ·
 stage1+2 · full), scored with the same canary / attacker-tool-call indicator as the other runners; **garak
 `latentinjection` / `web_injection`** measure the bare model and the guarded endpoint (a baseline: garak sends
