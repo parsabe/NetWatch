@@ -1,0 +1,122 @@
+// Horizon overview: which part targets which attack type, the math concepts by name, the worst-case weights,
+// and what is NOT needed for RQ1 (indirect prompt injection).
+// Build:  dot -Tpng -Gdpi=150 docs/horizon_overview.dot -o docs/horizon_overview.png   (also -Tpdf, -Tsvg)
+digraph HorizonOverview {
+  graph [fontname="DejaVu Sans" fontsize=13 rankdir=TB nodesep=0.3 ranksep=0.34 pad=0.4 splines=ortho newrank=true
+         labelloc=t label=<<B><FONT POINT-SIZE="22">Horizon at a glance: what each part is for, and what RQ1 does not need</FONT></B><BR/><FONT POINT-SIZE="12" COLOR="#52514E">RQ1 asks about INDIRECT prompt injection. Grey crossed-out parts target other attacks or only duplicate a test.</FONT><BR/> >];
+  node  [fontname="DejaVu Sans" fontsize=12 shape=box style="rounded,filled" penwidth=1.4 margin="0.16,0.07"
+         fillcolor="#FFFFFF" color="#A8A6A0" fontcolor="#1F1F1E"];
+  edge  [fontname="DejaVu Sans" fontsize=10 color="#7A7974" arrowsize=0.75 penwidth=1.3 fontcolor="#52514E"];
+
+  // ================= ATTACKS =================
+  subgraph cluster_att {
+    label=<<B><FONT POINT-SIZE="16">Attacks we test with</FONT></B>>; style="rounded,dashed" color="#7A7974" margin=14;
+    a_doc  [label=<<B>BIPIA · LLMail-Inject</B><BR/><FONT POINT-SIZE="10">attack hidden in a document</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>>];
+    a_ad   [label=<<B>AgentDojo injections</B><BR/><FONT POINT-SIZE="10">attack hidden in emails, files, web pages</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>>];
+    a_adp  [label=<<B>Adaptive attackers</B><BR/><FONT POINT-SIZE="10">an attacker LLM rewrites δ until it works</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>> penwidth=3 color="#111111"];
+    a_xpia [label=<<B>PyRIT XPIA</B><BR/><FONT POINT-SIZE="10">✕ optional: repeats the AgentDojo test</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>> fillcolor="#EEEEEE" color="#9A9A9A" fontcolor="#6B6B6B" style="rounded,filled,dashed"];
+    a_pyr  [label=<<B>PyRIT PAIR · TAP · Crescendo</B><BR/><FONT POINT-SIZE="10">✕ not needed: jailbreaks, not RQ1</FONT><BR/><FONT COLOR="#7B2D8E" POINT-SIZE="10"><B>● jailbreak</B></FONT>> fillcolor="#EEEEEE" color="#9A9A9A" fontcolor="#6B6B6B" style="rounded,filled,dashed"];
+    a_gar  [label=<<B>garak probes</B><BR/><FONT POINT-SIZE="10">✕ not needed: tests the bare model</FONT><BR/><FONT COLOR="#1F5FAD" POINT-SIZE="10"><B>● direct</B></FONT>  <FONT COLOR="#7B2D8E" POINT-SIZE="10"><B>● jailbreak</B></FONT>> fillcolor="#EEEEEE" color="#9A9A9A" fontcolor="#6B6B6B" style="rounded,filled,dashed"];
+    a_det  [label=<<B>Guard detection sets</B><BR/><FONT POINT-SIZE="10">HackAPrompt · HarmBench · JBB · Gandalf · XSTest</FONT><BR/><FONT POINT-SIZE="10">✕ not needed: tests the guards only</FONT><BR/><FONT COLOR="#1F5FAD" POINT-SIZE="10"><B>● direct</B></FONT>  <FONT COLOR="#7B2D8E" POINT-SIZE="10"><B>● jailbreak</B></FONT>> fillcolor="#EEEEEE" color="#9A9A9A" fontcolor="#6B6B6B" style="rounded,filled,dashed"];
+    {rank=same; a_doc; a_ad; a_adp}
+    {rank=same; a_xpia; a_pyr; a_gar; a_det}
+    a_doc -> a_xpia [style=invis]; a_ad -> a_pyr [style=invis]; a_adp -> a_gar [style=invis];
+  }
+
+  // ================= STAGE 1 =================
+  subgraph cluster_s1 {
+    label=<<B><FONT POINT-SIZE="16">Stage 1 · Keyed spotlighting</FONT></B><BR/><FONT POINT-SIZE="10" COLOR="#52514E">the reader alone: one document, a fixed question, no user agent</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="11"><B>● indirect</B></FONT>>;
+    style="rounded,dashed" color="#5B4FC9" margin=14;
+    s1mark [label=<<B>Mark the document</B><BR/><FONT POINT-SIZE="10">random marking τ, secret key κ</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+    s1read [label=<<B>Reader LLM</B><BR/><FONT POINT-SIZE="10">answers; canary shows if it obeyed δ</FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+    s1m1 [label=<Forging bound> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    s1m2 [label=<Clopper–Pearson bound> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    s1m3 [label=<<B>▼ DRO (χ²)</B>> fillcolor="#E1F3EE" color="#111111" fontcolor="#0B4A37" penwidth=3];
+    s1m4 [label=<<B>▼ Adaptive stress test</B>> fillcolor="#E1F3EE" color="#111111" fontcolor="#0B4A37" penwidth=3];
+    s1m5 [label=<<B>▼ Combined risk (max)</B>> fillcolor="#E1F3EE" color="#111111" fontcolor="#0B4A37" penwidth=3];
+    s1m6 [label=<Choice rule (utility constraint)> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    s1m7 [label=<<B>▼ Sion minimax game, level 1</B><BR/><FONT POINT-SIZE="10">→ π*: which markings, how often</FONT>> fillcolor="#E1F3EE" color="#111111" fontcolor="#0B4A37" penwidth=3];
+    s1m8 [label=<McNemar · bootstrap<BR/><FONT POINT-SIZE="10">support statistics</FONT>> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    s1mark -> s1read;
+    s1read -> s1m2;
+    {rank=same; s1m1; s1m2; s1m4}
+    s1m2 -> s1m3;
+    s1m1 -> s1m5; s1m3 -> s1m5; s1m4 -> s1m5;
+    {rank=same; s1m5; s1m6}
+    s1m5 -> s1m7; s1m6 -> s1m7;
+    {rank=same; s1m7; s1m8}
+  }
+
+  // ================= STAGE 2 =================
+  subgraph cluster_s2 {
+    label=<<B><FONT POINT-SIZE="16">Stage 2 · Deterministic guardrail (agent with tools)</FONT></B><BR/><FONT POINT-SIZE="10" COLOR="#52514E">one user task, AgentDojo tools, the attack hides in the data the tools return</FONT>>;
+    style="rounded,dashed" color="#0F6B50" margin=14;
+    ig   [label=<<B>Input guard (DeBERTa)</B><BR/><FONT POINT-SIZE="10">✕ not needed: checks what the USER types</FONT><BR/><FONT COLOR="#1F5FAD" POINT-SIZE="10"><B>● direct</B></FONT>  <FONT COLOR="#7B2D8E" POINT-SIZE="10"><B>● jailbreak</B></FONT>> fillcolor="#EEEEEE" color="#9A9A9A" fontcolor="#6B6B6B" style="rounded,filled,dashed"];
+    plan [label=<<B>Planner (P-LLM)</B><BR/><FONT POINT-SIZE="10">never sees untrusted data</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+    intp [label=<<B>Interpreter + data labels</B><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>>];
+    quar [label=<<B>Quarantined readers × m</B><BR/><FONT POINT-SIZE="10">Stage 1 marking inside every read</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>> fillcolor="#EEEDFB" color="#5B4FC9" fontcolor="#2E2780"];
+    vote [label=<<B>Typed schema + majority vote</B><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>>];
+    pol  [label=<<B>Policy table</B><BR/><FONT POINT-SIZE="10">ALLOW · CONFIRM · DENY</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>>];
+    gate [label=<<B>Ask the user or deny</B><BR/><FONT POINT-SIZE="10">threshold λ<SUP>^</SUP> on reader agreement</FONT><BR/><FONT COLOR="#B85C00" POINT-SIZE="10"><B>● indirect</B></FONT>>];
+    tool [label=<<B>Tool call</B>>];
+    og   [label=<<B>Output guard (Qwen3Guard) + canary</B><BR/><FONT POINT-SIZE="10">✕ not needed: judges harmful answers</FONT><BR/><FONT COLOR="#7B2D8E" POINT-SIZE="10"><B>● jailbreak</B></FONT>  <FONT COLOR="#1F5FAD" POINT-SIZE="10"><B>● direct</B></FONT>> fillcolor="#EEEEEE" color="#9A9A9A" fontcolor="#6B6B6B" style="rounded,filled,dashed"];
+    ans  [label=<<B>Answer</B>> fillcolor="#F6F5F2"];
+
+    m_q  [label=<Forging bound (per read)> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    m_v  [label=<Leakage bound (QIF) · Hoeffding vote bound> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    m_p  [label=<Noninterference proof (Z3)> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+    m_g  [label=<Conformal risk control> fillcolor="#E1F3EE" color="#0F6B50" fontcolor="#0B4A37"];
+
+    ig -> plan [style=dashed color="#9A9A9A"];
+    plan -> intp -> quar -> vote -> pol -> gate -> tool;
+    tool -> og [style=dashed color="#9A9A9A"];
+    og -> ans [style=dashed color="#9A9A9A"];
+    {rank=same; quar; m_q}  quar -> m_q [style=dashed arrowhead=none color="#0F6B50"];
+    {rank=same; vote; m_v}  vote -> m_v [style=dashed arrowhead=none color="#0F6B50"];
+    {rank=same; pol; m_p}   pol -> m_p  [style=dashed arrowhead=none color="#0F6B50"];
+    {rank=same; gate; m_g}  gate -> m_g [style=dashed arrowhead=none color="#0F6B50"];
+  }
+
+  // ================= HORIZON VALUE =================
+  subgraph cluster_v {
+    label=<<B><FONT POINT-SIZE="16">Horizon value · both stages in one bound</FONT></B><BR/><FONT COLOR="#B85C00" POINT-SIZE="11"><B>● indirect</B></FONT>>;
+    style="rounded,dashed" color="#111111" margin=14;
+    v1 [label=<<B>▼ Weighted loss per attack</B><BR/><FONT POINT-SIZE="10">policy bypass (heaviest) · reached the user · fooled the vote</FONT>> fillcolor="#E1F3EE" color="#111111" fontcolor="#0B4A37" penwidth=3];
+    v2 [label=<<B>▼ DRO on the loss</B>> fillcolor="#E1F3EE" color="#111111" fontcolor="#0B4A37" penwidth=3];
+    v3 [label=<<B>▼ Sion minimax game, level 2 → V<SUB>H</SUB></B><BR/><FONT POINT-SIZE="10">under utility and leakage budgets</FONT>> fillcolor="#E1F3EE" color="#111111" fontcolor="#0B4A37" penwidth=3];
+    {rank=same; v1; v2}
+    v1 -> v3; v2 -> v3;
+  }
+
+  // ================= TEST SETUPS =================
+  subgraph cluster_runs {
+    label=<<B><FONT POINT-SIZE="16">Test setups</FONT></B>>; style="rounded,dashed" color="#7A7974" margin=14;
+    r_keep [label=<<B>No defence  vs  full Horizon</B><BR/><FONT POINT-SIZE="10">the comparison RQ1 needs · + calibration for λ<SUP>^</SUP></FONT>>];
+    r_mid  [label=<<B>Stage 1 only · Stage 2 only · Stage 1+2</B><BR/><FONT POINT-SIZE="10">✕ optional: only if each stage's share is asked</FONT>> fillcolor="#EEEEEE" color="#9A9A9A" fontcolor="#6B6B6B" style="rounded,filled,dashed"];
+    r_one  [label=<<B>Model pairing · autotune</B><BR/><FONT POINT-SIZE="10">✕ one-off choices, not part of the pipeline</FONT>> fillcolor="#EEEEEE" color="#9A9A9A" fontcolor="#6B6B6B" style="rounded,filled,dashed"];
+    {rank=same; r_keep; r_mid; r_one}
+  }
+
+  // ================= flows between blocks =================
+  a_doc -> s1mark [color="#B85C00" xlabel="documents"];
+  s1m7 -> quar [color="#5B4FC9" style=dashed xlabel="π*" constraint=false];
+  a_ad -> intp [color="#B85C00" xlabel="poisoned tool data"];
+  a_adp -> s1m4 [color="#B85C00" style=dashed constraint=false];
+  ans -> v1 [style=dashed xlabel="what got through"];
+  s1m5 -> v2 [style=dashed color="#5B4FC9" constraint=false];
+  v3 -> r_keep [style=invis];
+  {rank=same; s1mark; ig}
+  {rank=same; s1m7; vote}
+
+
+  legend [shape=plaintext style="" label=<
+    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="5">
+      <TR><TD ALIGN="LEFT"><FONT COLOR="#B85C00"><B>● indirect</B></FONT>: attack hidden in data the model reads</TD>
+          <TD ALIGN="LEFT"><FONT COLOR="#1F5FAD"><B>● direct</B></FONT>: attack typed by the user</TD>
+          <TD ALIGN="LEFT"><FONT COLOR="#7B2D8E"><B>● jailbreak</B></FONT>: talk the model into harmful output</TD></TR>
+      <TR><TD ALIGN="LEFT"><B>▼ thick black border</B>: worst case weighs most ("black hole")</TD>
+          <TD ALIGN="LEFT"><FONT COLOR="#0F6B50"><B>green</B></FONT>: math concept · <FONT COLOR="#5B4FC9"><B>lavender</B></FONT>: LLM</TD>
+          <TD ALIGN="LEFT"><FONT COLOR="#6B6B6B"><B>grey, dashed, ✕</B></FONT>: not needed for RQ1</TD></TR>
+    </TABLE>>];
+  r_keep -> legend [style=invis];
+}
