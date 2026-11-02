@@ -1,3 +1,0 @@
-detector,tpr,fpr,fpr_excl_training_sets
-input_guard,0.5666666666666667,0.0,0.0
-output_guard,0.36666666666666664,0.1,0.1

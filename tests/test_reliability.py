@@ -199,3 +199,27 @@ def test_mlflow_failure_never_fails_an_experiment(monkeypatch):
         assert run is None
         mlflow.log_metrics({"x": 1.0})                               # later logging calls are no-ops now
     LU.log_examples([{"a": 1}], "x")                                 # ... and so is the CSV artifact
+
+
+def test_proxy_sends_pyrit_json_schema_requests_to_ollamas_native_constrained_api():
+    """1–2 Nov: mistral:7b behind Ollama's OpenAI endpoint ignored PyRIT's response_format schema (missing keys, or a
+    copy of the schema) → every PyRIT attack burned its retries. The schema now goes into Ollama's native `format`."""
+    from openai_role_proxy import from_native, to_native, wants_native_json
+    schema = {"type": "object", "properties": {"score_value": {"type": "string"}}, "required": ["score_value"]}
+    req = {"model": "mistral:7b", "temperature": 0.0, "max_completion_tokens": 300, "seed": 7,
+           "messages": [{"role": "developer", "content": "judge"},
+                        {"role": "user", "content": [{"type": "text", "text": "a"}, {"type": "text", "text": "b"}]}],
+           "response_format": {"type": "json_schema", "json_schema": {"name": "s", "schema": schema, "strict": True}}}
+    assert wants_native_json(req)
+    assert not wants_native_json({"model": "m", "messages": []})
+    n = to_native(req, think_off=False)
+    assert n["format"] == schema and n["stream"] is False and "think" not in n
+    assert n["messages"] == [{"role": "system", "content": "judge"}, {"role": "user", "content": "a\nb"}]
+    assert n["options"] == {"temperature": 0.0, "seed": 7, "num_predict": 300}
+    assert to_native({**req, "response_format": {"type": "json_object"}}, think_off=True)["format"] == "json"
+    assert to_native(req, think_off=True)["think"] is False
+    out = json.loads(from_native(json.dumps({"model": "mistral:7b", "message": {"role": "assistant",
+                                             "content": '{"score_value": "1"}'}, "done_reason": "stop",
+                                             "prompt_eval_count": 5, "eval_count": 3}).encode(), "mistral:7b"))
+    assert out["choices"][0]["message"]["content"] == '{"score_value": "1"}'
+    assert out["choices"][0]["finish_reason"] == "stop" and out["usage"]["total_tokens"] == 8

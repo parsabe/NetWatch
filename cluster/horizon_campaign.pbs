@@ -51,7 +51,7 @@ print("torch", torch.__version__, "· built for CUDA", torch.version.cuda, "· C
 print("guards run on:", torch.cuda.get_device_name(0) if ok else "CPU (driver too old for this torch build → slower guards)")
 EOF
 
-echo "==== 3. Ollama (Qwen3-8B: Stage 1, planner, readers, attacker)"
+echo "==== 3. Ollama (planner P-LLM, reader Q-LLM, attacker: config/params.yaml models)"
 HORIZON_PARALLEL=$PARALLEL HORIZON_FOREGROUND=1 ./scripts/serve_local.sh &
 SERVE_PID=$!
 PROXY_PORT=$("$UV" run --no-sync python -c "from horizon.config import load_config; print(load_config().models['proxy_port'])")

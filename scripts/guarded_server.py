@@ -28,10 +28,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from horizon.config import add_config_args, config_from_args  # noqa: E402
 from horizon.direct import canary as canary_mod  # noqa: E402
 from horizon.direct.guards import InjectionGuardInput, make_output_guard  # noqa: E402
+from horizon.direct.refusal import REFUSAL  # noqa: E402  (garak recognises this text as a refusal)
 from horizon.llm import LLM  # noqa: E402
 
 SYSTEM = "You are a helpful, harmless assistant."
-REFUSAL = "I can't help with that request."
 
 
 class Guarded:

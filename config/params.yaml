@@ -18,11 +18,23 @@ models:
                                                #   --set models.q_llm=openai/qwen3.6-colibri
   proxy_port: 11435          # developer→system role proxy (scripts/openai_role_proxy.py) for AgentDojo/CaMeL clients
   ollama_context_length: 16384
-  ollama_kv_cache_type: q8_0
-  parallel_requests: 2       # Ollama slots (OLLAMA_NUM_PARALLEL) = runner worker threads
+  ollama_kv_cache_type: q4_0 # planner + reader both stay on the 16 GB GPU (q8_0: Ollama predicted 0.1 GB too much and
+                             # the two models kept swapping, pair runs 1 Nov)
+  parallel_requests: 1       # Ollama slots (OLLAMA_NUM_PARALLEL) = runner worker threads. 1: two models share the GPU
+                             # (Qwen ≈ 5.7 GB + Gemma ≈ 7.8 GB at 1 slot; a 2nd Gemma slot adds ≈ 1.8 GB of KV cache)
+  # MODEL CHOICE (2 Nov 2026, from the four pair2h runs in ~/0_runs/pq-*): P-LLM = Qwen3-8B (more AgentDojo tasks
+  # solved as planner, ≈ 2× faster per episode), Q-LLM = Gemma 3 12B (far fewer Stage 1 bypasses under the cipher
+  # markings, token-F1 ≈ 0.75 vs 0.17). The attacker is a third model, so no model attacks itself.
+  # Roles: P-LLM = CaMeL planner, the plain AgentDojo agent ('none'), the PyRIT / garak target (guarded endpoint).
+  #        Q-LLM = CaMeL quarantined readers, the Stage 1 / XPIA document reader.
   p_llm: ollama_chat/qwen3:8b
-  q_llm: ollama_chat/qwen3:8b
-  attacker: ollama_chat/qwen3:8b
+  q_llm: ollama_chat/gemma3:12b
+  attacker: ollama_chat/mistral:7b
+  model_ports: {"gemma3:12b": 11437}   # Gemma gets its OWN Ollama server (one server evicted the other model on every
+                                       # load: Ollama predicts 12.4 GiB for Gemma, it uses 7.6). Qwen and the attacker
+                                       # share :11434; the 16 GB GPU cannot hold all three, so the attacker and Qwen
+                                       # swap there (pq-qwen-gemma: 39 swaps of ≈ 5 s each in 75 min, ≈ 4 % of the
+                                       # time — a VRAM limit, not a fault; the model file stays in the page cache)
   alt_victim: ollama_chat/mistral:7b   # second victim model (campaign phase stage1_altmodel); null = skip
   temperature: 0.0
   attacker_temperature: 1.0
@@ -196,7 +208,7 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
       workers: 4
       min_tests: 2000
       max_tests: 4000
-      parallel_requests: 4
+      parallel_requests: 1   # P = Qwen and Q = Gemma share the 16 GB GPU: one slot each (4 slots spill to the CPU)
       skip: [autotune, stage1_altmodel]
       set: [stage1.pilot_n=40, stage1.pilot_clean=15, stage1.pilot_adaptive_targets=3, stage1.n_adaptive_eval_keys=5,
             stage1.attack_budget=8, stage2.adaptive_budget=6,
@@ -226,7 +238,7 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
       workers: 4
       min_tests: 400
       max_tests: 1500
-      parallel_requests: 4
+      parallel_requests: 1   # two models on one 16 GB GPU (see models.parallel_requests)
       time_budget_min: 90    # campaign process; the PBS job has 120 min: ≈ 5 min start-up, stop at 105 min (PBS script),
                              # ≈ 3 min for report + charts + PDF, the rest is safety margin
       max_minutes: {stage1_report: 25, detect: 15, ablation_none: 20, ablation_stage1: 20, ablation_stage2: 30,
@@ -238,7 +250,11 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
             redteam.garak_generations=1, redteam.garak_prompt_cap=3]
       args:
         stage1: [--pilot]
-        calibrate: [--attacks, important_instructions, value_tamper, --limit-user, "2", --limit-injection, "2"]   # 30 episodes: 15 gave Qwen 0 CONFIRM events → λ̂ = ∞
+        # 9 episodes (3 suites × (1 benign + 2 attacks)). Calibrate is never capped and every Stage 2 phase waits for
+        # it; since 2 Nov the Q-LLM really runs (m = 5 Gemma reads per query_ai_assistant — before, every read crashed
+        # at once, so the old 30 episodes looked cheap) and 30 episodes could eat the 90-min budget. The 30 / 15 sizes
+        # of 1 Nov were chosen to get ANY CONFIRM event, which the read bug had made impossible.
+        calibrate: [--attacks, important_instructions, value_tamper, --limit-user, "1", --limit-injection, "1"]
         ablation: [--attacks, important_instructions, value_tamper, --limit-user, "2", --limit-injection, "1"]
         agent_adaptive: [--limit-user, "1", --limit-injection, "1"]
         xpia: [--limit, "8", --xpia-converters, none]
@@ -278,7 +294,8 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
       # Ollama slots (OLLAMA_NUM_PARALLEL). TU Freiberg GPU nodes = Quadro RTX 5000 16 GB: 8 slots × 16k context
       # need 9.3 GB KV cache + 5 GB weights → layers spill to the CPU (≈1 token/s, timeouts) and the guards OOM.
       # 4 slots ≈ 10.5 GB, fully on the GPU, ≈ 5 GB left for the guard models. Use 8 only on a ≥ 24 GB GPU.
-      parallel_requests: 4
+      # Since 2 Nov the planner (Qwen) and the reader (Gemma 12B) share the GPU: 1 slot each on a 16 GB card.
+      parallel_requests: 1
       set: []
       args:
         detect: [--limit, "2000"]
@@ -297,7 +314,7 @@ campaign:                    # eval/campaign.py / ./run_campaign.sh — every ex
     smoke:                   # a tiny end-to-end check of the whole machinery (≈ 2–3 h on the laptop)
       workers: 1
       min_tests: 0           # no target: it only checks that every phase runs
-      parallel_requests: 2
+      parallel_requests: 1   # two models on one GPU
       # The smoke job has 3 h. On 31 Oct the Gemma smoke hit that walltime (exit 3 = paused) and PBS therefore
       # deleted both lanes (depend=afterok). Now leaf phases stop after their cap / the budget and the smoke ends.
       time_budget_min: 150

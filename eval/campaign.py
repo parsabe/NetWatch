@@ -715,6 +715,18 @@ def _row(area, group, config, phase, attacks=0, through=0, benign=0, benign_ok=0
     return r
 
 
+def _lambda_note() -> str:
+    """λ̂ and how much it rests on: the calibration row says it, instead of a bare G/C/F (1–2 Nov: λ̂ = 0 from 0
+    dangerous calls and no vote at all — every score was the 'unvoted' default — looked like a normal result)."""
+    lj = RES / "stage2" / "lambda_hat.json"
+    if not lj.exists():
+        return "; λ̂: not calibrated (no lambda_hat.json)"
+    d = json.loads(lj.read_text())
+    note = (f"; λ̂ = {d.get('lambda_hat')} ({d.get('status')}; n = {d.get('n')}, dangerous {d.get('n_dangerous')}"
+            + (f", voted {d['n_voted']}" if "n_voted" in d else "") + ")")
+    return note + (f" — {d['warning']}" if d.get("warning") else "")
+
+
 def tally(cfg) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
     """One row per (area, group, configuration): tests, attacks through / blocked, benign outcomes."""
     a = cfg.stage1["alpha"]
@@ -747,12 +759,28 @@ def tally(cfg) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
         if not len(ep):
             continue
         ep["ablation"] = ep["config"].str.split("|").str[0]
+        ans = pd.to_numeric(ep["answered"], errors="coerce") if "answered" in ep else pd.Series(float("nan"), ep.index)
         for ab, g in ep.groupby("ablation"):
             att, ben = g[g["style"] != "benign"], g[g["style"] == "benign"]
             note = f"G={int(att['G'].sum())} C={int(att['C'].sum())} F={int(att['F'].sum())}"
             phase = "calibrate" if split == "calibration" else f"ablation_{ab}"
-            rows.append(_row("Stage 2", f"AgentDojo ({split})", ab, phase, len(att), att["asr"].sum(), len(ben),
-                             ben["utility"].sum(), note=note, alpha=a))
+            a_ans = ans.loc[att.index]
+            extra = {}
+            if a_ans.notna().any():
+                # A CaMeL episode in which no planner attempt ran to the end has no tool call and no output: a "blocked"
+                # attack only in the sense that nothing happened (57–78 % of 'full' on 1–2 Nov). The count is shown,
+                # and the ASR over the episodes that DID answer goes into extra columns of the SAME row (an extra row
+                # would be counted twice by the totals, the charts and compare_runs.py).
+                ok_att = att[a_ans == 1]
+                no_a, no_b = int((a_ans == 0).sum()), int((ans.loc[ben.index] == 0).sum())
+                note += (f"; no answer: {no_a}/{len(att)} attacks, {no_b}/{len(ben)} benign; ASR among answered "
+                         f"{int(ok_att['asr'].sum())}/{len(ok_att)}")
+                extra = {"answered_attacks": len(ok_att),
+                         "asr_answered": ok_att["asr"].mean() if len(ok_att) else float("nan")}
+            if split == "calibration":
+                note += _lambda_note()
+            rows.append({**_row("Stage 2", f"AgentDojo ({split})", ab, phase, len(att), att["asr"].sum(), len(ben),
+                                ben["utility"].sum(), note=note, alpha=a), **extra})
         examples[f"stage2_{split}"] = ep
     ad = _read(RES / "stage2" / "report" / "adaptive_trace.csv")
     if len(ad):
@@ -763,8 +791,12 @@ def tally(cfg) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
     if len(x):
         x["round"] = x["round"] if "round" in x else 0
         for (c, conv), g in x.groupby(["config", "converter"]):
+            note = f"rounds {sorted(g['round'].unique().tolist())}"
+            no = int((pd.to_numeric(g["answered"], errors="coerce") == 0).sum()) if "answered" in g else 0
+            if no:
+                note += f"; no answer from the agent in {no}/{len(g)} (nothing ran — not a measured block)"
             rows.append(_row("Red team · indirect", f"PyRIT XPIA ({conv})", c, f"xpia_{c}", len(g), g["success"].sum(),
-                             note=f"rounds {sorted(g['round'].unique().tolist())}", alpha=a))
+                             note=note, alpha=a))
         examples["xpia"] = x
     di = _read(RES / "testing" / "direct_items.csv")
     if len(di):
@@ -795,19 +827,32 @@ def tally(cfg) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
                              benign_ok=len(be) - be["both"].sum(), alarms=be["both"].sum()))
     py = _read(RES / "testing" / "pyrit.csv")
     if len(py):
-        py = py[~py["outcome"].astype(str).str.startswith("ERROR")]    # attacks that never ran are not tests
-        for k, g in py.groupby("attack"):
-            rows.append(_row("Red team · direct", "PyRIT jailbreak", k, "pyrit", len(g),
-                             g["outcome"].astype(str).str.contains("SUCCESS").sum(), alpha=a))
-    ga = _read(RES / "testing" / "garak_items.csv")
+        err = py["outcome"].astype(str).str.startswith("ERROR")          # attacks that never ran are not tests,
+        for k, g in py.groupby("attack"):                               # but they are shown, not silently dropped
+            ok = g[~err.loc[g.index]]
+            n_err = int(err.loc[g.index].sum())
+            rows.append(_row("Red team · direct", "PyRIT jailbreak", k, "pyrit", len(ok),
+                             ok["outcome"].astype(str).str.contains("SUCCESS").sum(), alpha=a,
+                             note=f"{n_err} attack(s) never ran (errors)" if n_err else ""))
+    # garak: re-scored from garak's own report files whenever they exist, so a run from before 2 Nov (when Horizon's
+    # refusal counted as a jailbreak) gets correct numbers too; garak_items.csv only when the raw reports are gone
+    from horizon.redteam.garak_parse import reparse_dir
+    raw = reparse_dir(RES / "testing" / "garak") if (RES / "testing" / "garak").exists() else []
+    ga = pd.DataFrame(raw) if raw else _read(RES / "testing" / "garak_items.csv")
     if len(ga):
+        if "excluded_hits" not in ga:
+            ga["excluded_hits"] = 0
         # garak scores every output with several detectors (one row each): a TEST is an output, so take the most
         # sensitive detector per probe — n = outputs evaluated, fails = outputs that ANY detector flagged at most as
         # often as the strictest one did (a lower bound on "got through"). Summing detectors counted each output 2–3×.
-        ga = ga.groupby(["target", "family", "probe"], as_index=False).agg(n=("n", "max"), fails=("fails", "max"))
+        ga = ga.groupby(["target", "family", "probe"], as_index=False).agg(n=("n", "max"), fails=("fails", "max"),
+                                                                            excluded=("excluded_hits", "max"))
         for (tgt, fam), g in ga.groupby(["target", "family"]):
+            note = ", ".join(sorted({p.split('.')[0] for p in g["probe"]}))
+            if g["excluded"].sum():
+                note += f"; {int(g['excluded'].sum())} detector hit(s) were Horizon's own refusal / empty → blocked"
             rows.append(_row("Red team · " + fam, "garak probes", tgt, "garak", g["n"].sum(), g["fails"].sum(),
-                             alpha=a, note=", ".join(sorted({p.split('.')[0] for p in g["probe"]}))))
+                             alpha=a, note=note))
     return pd.DataFrame(rows), examples
 
 

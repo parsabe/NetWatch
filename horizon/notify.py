@@ -74,12 +74,15 @@ def _chat_id(token: str) -> str | None:
 
 def run_tag() -> str:
     """Which campaign a message comes from (two runs with different models notify the same chat): HORIZON_RUN if
-    set, else the victim model of this copy's config, e.g. 'qwen3:8b' or 'gemma3:12b'."""
+    set, else the model(s) of this copy's config: 'qwen3:8b', or 'P qwen3:8b · Q gemma3:12b' when planner and reader
+    differ (since 2 Nov the main campaign uses both; the old tag named only the reader)."""
     if os.environ.get("HORIZON_RUN"):
         return os.environ["HORIZON_RUN"]
     try:
         from horizon.config import load_config
-        return load_config().models["q_llm"].split("/", 1)[-1]
+        m = load_config().models
+        p, q = (m[k].split("/", 1)[-1] for k in ("p_llm", "q_llm"))
+        return q if p == q else f"P {p} · Q {q}"
     except Exception:
         return ""
 

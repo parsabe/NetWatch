@@ -30,7 +30,8 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from horizon.config import ROOT, add_config_args, config_from_args, load_config  # noqa: E402
 from horizon.direct.guards import GatedModelError, InjectionGuardInput, make_output_guard  # noqa: E402
-from horizon.logging_utils import log_examples, mlflow_run  # noqa: E402
+from horizon.redteam.garak_parse import parse_garak  # noqa: E402,F401  (re-exported: tests, campaign)
+from horizon.logging_utils import append_csv, log_examples, mlflow_run  # noqa: E402
 from horizon.stage1 import stats  # noqa: E402
 
 RAW = ROOT / "data" / "raw"
@@ -122,18 +123,40 @@ def detect(cfg, limit: int | None) -> pd.DataFrame:
     return df
 
 
+def _json_schema_configuration(target_cls):
+    """The target class's default configuration with supports_json_schema switched on."""
+    from pyrit.prompt_target.common.target_configuration import TargetConfiguration
+    caps = target_cls._DEFAULT_CONFIGURATION.capabilities.model_copy(update={"supports_json_schema": True})
+    return TargetConfiguration(capabilities=caps)
+
+
 def pyrit_targets(cfg, endpoint: str):
     """(adversary, judge, target). PyRIT ≥ 1.0 hands the endpoint to AsyncOpenAI(base_url=…), which appends
     /chat/completions itself: pass the /v1 base, else every request hits …/chat/completions/chat/completions (404)."""
     from pyrit.prompt_target import OpenAIChatTarget
     base = f"http://127.0.0.1:{cfg.models['proxy_port']}/v1"
     model = cfg.models["attacker"].split("/", 1)[1]
+    # The role proxy enforces JSON schemas (Ollama's native `format`, scripts/openai_role_proxy.py), so the adversary and
+    # the judge declare supports_json_schema. Without it PyRIT's JsonSchemaNormalizer pastes the schema into the
+    # prompt as prose and drops it from the request: on 1–2 Nov mistral:7b then left keys out or echoed the schema,
+    # every PAIR / TAP / Crescendo step burned its JSON retries, and the pyrit phase finished 1 test in 4 × 25 min.
+    json_cfg = _json_schema_configuration(OpenAIChatTarget)
     adversary = OpenAIChatTarget(endpoint=base, api_key="local", model_name=model,
-                                 temperature=cfg.models["attacker_temperature"])
-    judge = OpenAIChatTarget(endpoint=base, api_key="local", model_name=model)
+                                 temperature=cfg.models["attacker_temperature"], custom_configuration=json_cfg)
+    judge = OpenAIChatTarget(endpoint=base, api_key="local", model_name=model, custom_configuration=json_cfg)
     target = OpenAIChatTarget(endpoint=endpoint.removesuffix("/chat/completions"), api_key="local",
                               model_name="horizon-guarded")
     return adversary, judge, target
+
+
+# PAIR / TAP judge. PyRIT's bundled tree-of-attacks scale prompt names its keys only in the prompt text and asks for
+# plain `json_object`, so even a constrained decoder may leave keys out; with this schema the request carries
+# `json_schema`, and the role proxy hands it to Ollama's native `format` (the reply then always has all three keys).
+# The refusal scorer and the adversarial chat already declare their schemas in PyRIT's own prompt files.
+SCALE_SCORE_SCHEMA = {"type": "object",
+                      "properties": {"score_value": {"type": "string"}, "description": {"type": "string"},
+                                     "rationale": {"type": "string"}},
+                      "required": ["score_value", "description", "rationale"], "additionalProperties": False}
 
 
 async def _pyrit(cfg, endpoint: str, objectives: list[str], kinds: list[str]) -> list[dict]:
@@ -143,6 +166,7 @@ async def _pyrit(cfg, endpoint: str, objectives: list[str], kinds: list[str]) ->
     from pyrit.executor.attack.multi_turn.tree_of_attacks import TAPAttackScoringConfig
     from pyrit.score import FloatScaleThresholdScorer, SelfAskScaleScorer
     from pyrit.score import SelfAskRefusalScorer, TrueFalseInverterScorer
+    from pyrit.score.response_handler import JsonSchemaResponseHandler
     from pyrit.setup import IN_MEMORY, initialize_pyrit_async
 
     await initialize_pyrit_async(memory_db_type=IN_MEMORY)
@@ -151,7 +175,9 @@ async def _pyrit(cfg, endpoint: str, objectives: list[str], kinds: list[str]) ->
     adv = AttackAdversarialConfig(target=adversary)
     sc = AttackScoringConfig(objective_scorer=scorer)
     tap_sc = TAPAttackScoringConfig(objective_scorer=FloatScaleThresholdScorer(
-        scorer=SelfAskScaleScorer.from_scale(chat_target=judge), threshold=cfg.direct["pyrit_success_threshold"]))
+        scorer=SelfAskScaleScorer.from_scale(chat_target=judge, response_handler=JsonSchemaResponseHandler(
+            response_schema=SCALE_SCORE_SCHEMA, numeric_value=True)),
+        threshold=cfg.direct["pyrit_success_threshold"]))
     makers = {"pair": lambda: PAIRAttack(objective_target=target, attack_adversarial_config=adv,
                                          attack_scoring_config=tap_sc),
               "tap": lambda: TAPAttack(objective_target=target, attack_adversarial_config=adv,
@@ -252,7 +278,7 @@ def xpia(cfg, args) -> pd.DataFrame:
                                   f"({type(e).__name__}: {str(e)[:160]})", flush=True)
                     if it is None:
                         raise last
-                    pd.DataFrame([it.__dict__]).to_csv(items, mode="a", header=not items.exists(), index=False)
+                    append_csv(items, [it.__dict__])
                     if i % rc["progress_every"] == 0 or i == len(todo):
                         print(f"  xpia {c:9s} {conv:10s} {i}/{len(todo)}", flush=True)
 
@@ -291,17 +317,6 @@ def garak_config(cfg, endpoint: str, model: str, name: str) -> Path:
     return p
 
 
-def parse_garak(report: Path) -> list[dict]:
-    """garak 'eval' records: per probe × detector, fails = outputs where the attack succeeded."""
-    rows = []
-    for line in report.read_text().splitlines():
-        r = json.loads(line)
-        if r.get("entry_type") == "eval":
-            rows.append({"probe": r["probe"], "detector": r["detector"], "fails": r["fails"],
-                         "n": r["total_evaluated"]})
-    return rows
-
-
 def _garak_finished(report: Path) -> bool:
     return report.exists() and '"entry_type": "completion"' in report.read_text()
 
@@ -330,8 +345,17 @@ def garak(cfg, args) -> pd.DataFrame:
     rc = cfg.redteam
     GARAK_DIR.mkdir(parents=True, exist_ok=True)
     run_cfg = GARAK_DIR / "garak_run.yaml"
+    # follow_prompt_cap for EVERY probe we run: some probes opt out of run.soft_probe_prompt_cap by default
+    # (latentinjection.LatentWhois: follow_prompt_cap = False → all 168 prompts instead of 3). On 1–2 Nov it then ran
+    # into the 20-min phase cap in all four pair runs, so no indirect garak result exists from them.
+    probe_opts: dict = {}
+    for name in [*rc["garak_probes_direct"], *rc["garak_probes_indirect"]]:
+        module, _, cls = name.partition(".")
+        if cls:
+            probe_opts.setdefault(module, {})[cls] = {"follow_prompt_cap": True}
     run_cfg.write_text(yaml.safe_dump({"reporting": {"report_dir": str(GARAK_DIR.resolve())},
-                                       "run": {"soft_probe_prompt_cap": int(rc["garak_prompt_cap"])}}))
+                                       "run": {"soft_probe_prompt_cap": int(rc["garak_prompt_cap"])},
+                                       "plugins": {"probes": probe_opts}}))
     rows, failed = [], []
     gens = {}
     for target in rc["garak_targets"]:

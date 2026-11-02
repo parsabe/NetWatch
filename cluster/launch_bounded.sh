@@ -36,17 +36,23 @@ st = [json.loads(p.read_text()) for p in pathlib.Path("results/campaign").glob("
 print(next((s.get("profile") for s in st if s.get("profile")), ""))
 EOF
 )
-if [ "$PREV" = "$PROFILE" ]; then
-  echo "  results/ already belong to a '$PROFILE' campaign → kept (the jobs continue it)"
+# The models are part of a campaign's identity too: on 2 Nov the reader changed from Qwen to Gemma (and the attacker to
+# mistral), and continuing an older campaign of the same profile would have mixed both into one report.
+MODELS_NOW=$("${PY[@]}" -c "from horizon.config import load_config; m = load_config().models; print(m['p_llm'], m['q_llm'], m['attacker'])")
+MODELS_PREV=$(cat results/campaign/models.txt 2>/dev/null || true)
+if [ "$PREV" = "$PROFILE" ] && [ "$MODELS_PREV" = "$MODELS_NOW" ]; then
+  echo "  results/ already belong to a '$PROFILE' campaign with these models → kept (the jobs continue it)"
 elif [ -n "$(ls -d results/stage1 results/stage2 results/testing results/campaign results/autotune 2>/dev/null)" ]; then
   DEST="results/archive/before_${PROFILE}_$(date +%Y%m%d-%H%M%S)"
   mkdir -p "$DEST"
   for d in stage1 stage2 testing campaign autotune; do [ -e "results/$d" ] && mv "results/$d" "$DEST/"; done
   [ -e report/campaign ] && mv report/campaign "$DEST/report_campaign"
-  echo "  moved to $DEST (profile was '${PREV:-unknown}')"
+  echo "  moved to $DEST (profile was '${PREV:-unknown}', models '${MODELS_PREV:-not recorded}')"
 else
   echo "  nothing to archive"
 fi
+mkdir -p results/campaign && echo "$MODELS_NOW" > results/campaign/models.txt
+echo "  models (planner reader attacker): $MODELS_NOW"
 
 say "3. plan and test budget"
 PLAN=$("${PY[@]}" eval/campaign.py --plan --profile "$PROFILE")

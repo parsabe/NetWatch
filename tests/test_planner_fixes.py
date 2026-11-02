@@ -86,3 +86,41 @@ def test_a_repaired_program_may_define_its_schema_class_again():
     again = "```python\nclass Item(BaseModel):\n    name: str\nprint('ok')\n```"
     _, _, err, namespace, _ = p.run_code(again, functions_runtime.EmptyEnv(), namespace, deps)
     assert err is None, err
+
+
+def test_full_pipeline_structured_read_reaches_the_q_llm(monkeypatch):
+    """The REAL registration in HorizonPrivilegedLLM.query (module with `from __future__ import annotations`).
+
+    The test above registers its own function, so it passed while production failed: in camel_adapter the annotation
+    `type[_T]` was a string, AgentDojo's argument model stayed "not fully defined", and every query_ai_assistant call
+    raised a (redacted) PydanticUserError before the Q-LLM was asked — 0 Q-LLM calls in the 1–2 Nov pair runs."""
+    import json as _json
+    import agentdojo.task_suite  # noqa: F401
+    from agentdojo.task_suite.load_suites import get_suite
+    from horizon import llm as hllm
+    from horizon.config import load_config
+    from horizon.pipeline import build_pipeline
+
+    program = ('```python\nclass Slot(BaseModel):\n    title: str\n    start_time: str\n'
+               'events = search_calendar_events(query="", date=get_current_day())\n'
+               'slot = query_ai_assistant("Find the yoga class: " + str(events), Slot)\nprint(slot.start_time)\n```')
+    q_calls, planner_errors = [], []
+
+    def chat(self, msgs, use_cache=True, **extra):
+        if "parses unstructured data" in msgs[0]["content"]:
+            q_calls.append(1)
+            return _json.dumps({"title": "Yoga", "start_time": "18:00", "have_enough_information": True})
+        if len(msgs) > 2:
+            planner_errors.append(msgs[-1]["content"][:300])
+        return program
+
+    monkeypatch.setattr(hllm.LLM, "chat", chat)
+    cfg = load_config(None, ["flags.use_firewall=false", "flags.use_output_guard=false", "flags.use_conformal=false",
+                             "flags.stage1_variant=datamark_dynamic", "flags.m=3", "stage2.p_llm_max_attempts=2"])
+    suite = get_suite(cfg.stage2["benchmark_version"], "workspace")
+    built = build_pipeline(cfg, suite)
+    built.state.reset()
+    suite.run_task_with_pipeline(built.pipeline, suite.get_user_task_by_id("user_task_0"), None, {})
+    assert not planner_errors, planner_errors
+    assert len(q_calls) == 3                       # m = 3 quarantined runs
+    assert built.state.answered is True and built.state.attempts == [{"ok": True, "error": None}]

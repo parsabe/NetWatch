@@ -115,3 +115,19 @@ def log_examples(rows: list[dict], name: str) -> None:
 def save_json(obj, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, indent=2, default=float))
+
+
+def append_csv(path: Path, rows: list[dict]) -> None:
+    """Append rows to a results CSV at once (resumable). A file written by an older version with FEWER columns is
+    rewritten with the union of columns: a plain append would put the new values under the wrong headers."""
+    if not rows:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new = pd.DataFrame(rows)
+    if path.exists():
+        header = pd.read_csv(path, nrows=0).columns.tolist()
+        if set(new.columns) - set(header):
+            pd.concat([pd.read_csv(path), new], ignore_index=True).to_csv(path, index=False)
+            return
+        new = new.reindex(columns=header)
+    new.to_csv(path, mode="a", header=not path.exists(), index=False)
